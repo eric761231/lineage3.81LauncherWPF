@@ -78,9 +78,20 @@ namespace LinLauncher.Services
             using (var rsa = new RSACryptoServiceProvider(384)) // Smallest possible for compatibility
             {
                 var paras = rsa.ExportParameters(true);
-                uint e = BitConverter.ToUInt32(paras.Exponent, 0);
-                uint d = BitConverter.ToUInt32(paras.D, 0); // Note: This might be larger than uint if 384 bit
-                uint n = BitConverter.ToUInt32(paras.Modulus, 0);
+
+                // Helper to safely convert a possibly-null byte[] to uint (pads/truncates to 4 bytes)
+                static uint ToUInt32Safe(byte[]? arr)
+                {
+                    if (arr == null || arr.Length == 0) return 0u;
+                    byte[] tmp = new byte[4];
+                    // Copy up to 4 bytes from the start of arr. If arr is shorter, remaining bytes stay 0.
+                    Array.Copy(arr, 0, tmp, 0, Math.Min(arr.Length, 4));
+                    return BitConverter.ToUInt32(tmp, 0);
+                }
+
+                uint e = ToUInt32Safe(paras.Exponent);
+                uint d = ToUInt32Safe(paras.D); // Note: This might be larger than uint if 384 bit; we take a truncated/padded value
+                uint n = ToUInt32Safe(paras.Modulus);
                 return (e, d, n);
             }
         }
@@ -141,7 +152,9 @@ namespace LinLauncher.Services
                 }
 
                 string outPath = Path.Combine(outDir, fileName + ".bin");
-                Directory.CreateDirectory(Path.GetDirectoryName(outPath));
+                // Path.GetDirectoryName may return null (e.g. when outPath has no directory part), guard against that.
+                var outDirPath = Path.GetDirectoryName(outPath);
+                if (!string.IsNullOrEmpty(outDirPath)) Directory.CreateDirectory(outDirPath);
                 File.WriteAllBytes(outPath, result);
                 
                 lines.Add(fileName);

@@ -11,6 +11,8 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- 指定 Encoder 可執行檔的圖示（請放置實際檔案在 Encoder\Assets\Encoder.ico） -->
+    <ApplicationIcon>Assets\Encoder.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +26,7 @@
     <None Update="LinLauncher.dat">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Assets\Encoder.ico" />
   </ItemGroup>
 
 </Project>

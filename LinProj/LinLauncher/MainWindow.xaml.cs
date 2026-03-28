@@ -2,6 +2,7 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
+using LinLauncher.ViewModels;
 
 namespace LinLauncher
 {
@@ -10,6 +11,8 @@ namespace LinLauncher
         public MainWindow()
         {
             InitializeComponent();
+            // Set DataContext here so the XAML designer won't need to resolve MainViewModel at design time
+            this.DataContext = new MainViewModel();
             InitializeWebView();
         }
         private async void InitializeWebView()

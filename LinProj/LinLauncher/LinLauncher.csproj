@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -8,6 +8,8 @@
     <UseWPF>true</UseWPF>
     <Platforms>x86</Platforms>
     <PlatformTarget>x86</PlatformTarget>
+    
+    <ApplicationIcon>Assets\LinLauncher.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,5 +19,10 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Copy SourceFiles="$(TargetPath)" DestinationFiles="..\Encoder\LinLauncher.dat" />
   </Target>
+
+  <ItemGroup>
+    
+    <None Include="Assets\LinLauncher.ico" />
+  </ItemGroup>
 
 </Project>
