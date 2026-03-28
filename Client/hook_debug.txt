@@ -1,0 +1,34 @@
+[56068] setup_hooks called
+[56068] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[52032] setup_hooks called
+[52032] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[26256] setup_hooks called
+[26256] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[56816] setup_hooks called
+[56816] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[47364] setup_hooks called
+[47364] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[30116] setup_hooks called
+[30116] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[57532] setup_hooks called
+[57532] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[8872] setup_hooks called
+[8872] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[56844] setup_hooks called
+[56844] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[43716] setup_hooks called
+[43716] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[40256] setup_hooks called
+[40256] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[56476] setup_hooks called
+[56476] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[15888] setup_hooks called
+[15888] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[52068] setup_hooks called
+[52068] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[42664] setup_hooks called
+[42664] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[52896] setup_hooks called
+[52896] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0
+[40888] setup_hooks called
+[40888] Commit=0, conn=0, send=0, cwnd=0, cwndW=0, pos=0, msgA=0, msgW=0

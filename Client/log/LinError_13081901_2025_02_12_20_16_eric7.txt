@@ -1,0 +1,327 @@
+
+Client Version = 13081901
+Client Build Code = 13081901
+Internet Explorer Ver. = 9.11.26100.0
+WindowMode = 5(0)
+TW13081901 caused an Access Violation in module TW13081901.bin at 0023:00585aa1.
+2130706433 4294967176 55 97 32699 32896
+Error occurred at 2/12/2025 20:16:26.
+C:\3.81代刚胕\TW13081901.bin, run by eric7.
+24 processor(s), type 586.
+Cpu Vendor = GenuineIntel   [Signature = b0671]
+CPU Features = bfcbfbff
+This CPU has a floating point unit
+This CPU supports MMX instructions
+OS Version = 6.2 (9200)
+33318560 total KB of physical memory.
+20319476 free  KB of physical memory.
+
+Registers:
+EAX=00000000 CS=0023 EIP=00585aa1 EFLGS=00210286
+EBX=0019f8c4 SS=002b ESP=0019f368 EBP=0019f3b0
+ECX=0019f38c DS=002b ESI=00000037 FS=0053
+EDX=00000000 ES=002b EDI=004df150 GS=002b
+Bytes at CS:EIP:
+0f b7 48 0c 39 4d 08 7c 05 e9 03 01 00 00 c7 45 
+Stack dump:
+0019f368: f734f1dd 004df150 00000037 0019f8c4 00000000 00000030 00000000 0019f3b8
+0019f388: 00000024 00000000 0019f3ac 668b4693 0019f368 0019ed74 0019f464 0079a3d2
+0019f3a8: f7bf5295 fffffffe 0019f3d0 005a2b76 00000000 00007f76 0000807f 00000000
+0019f3c8: 0000000a 12f8c950 0019f470 0053190b f734f61d 6eede8c0 0d1c93c8 393fffc6
+0019f3e8: 0d12eee0 6eede490 00000000 0019f480 00000001 00000000 00000020 00000000
+0019f408: 00000008 0000000c 00000000 00000000 011a84e8 000005ac 00000000 0019f404
+0019f428: 00000000 0019f438 0019f3e4 13d7c628 0019f8a8 6eecdac0 57c9194e fffffffe
+0019f448: 0019f494 75c86225 00000afc 0019f480 12f8c950 001900ec 0000000a 0019f8a8
+0019f468: 0088ca9f ffffffff 0019f49c 00544dfc 00ac4d57 00000401 00000008 00ac4d50
+0019f488: 00000037 06cdcb48 0c0c0000 00000008 00bdca54 0019f4b4 0054589d 00ac4d50
+0019f4a8: 00000008 77402a3e 00000008 0019f5b4 0058136d 054b0000 03000003 00000000
+0019f4c8: 00000401 fcb705b5 02000002 f7b0fedb 12f8d958 f7200381 03000300 ee7e0492
+0019f4e8: eb68fe0d e9d2fd45 02000002 00274000 015704d2 174d9490 1798bfcc 1798bffc
+0019f508: 0019f548 773f25d2 00000076 00000020 054c01cc 00000000 054c0000 00000000
+0019f528: 0000007f 00000020 1798bfb8 054c0000 00000000 fffffbea 054c0ba4 054c0ba0
+0019f548: 0019f598 773f1e27 00000003 0000001a 054b0000 067aa170 000007ff 054c07d0
+0019f568: 054b3eec 77443664 00000028 054b0000 00000000 00000000 00000000 00000001
+0019f588: 054c0000 00000005 054c0ba0 00000157 f734f7d9 00000000 00000000 00000050
+0019f5a8: 0000003c 00000370 0000021c 0019f790 004e077b 00160f7c 00000401 00000afc
+0019f5c8: 00000001 00000020 0019f610 0019f608 773ef299 00000401 7ffe8000 0000aa64
+0019f5e8: 77412011 0019f640 0019f644 668a3c3a 0019f6ac ffffffff 2eb46c04 fffffffe
+0019f608: 0019f620 765a32fb 011583fb 00c32610 0019f644 004e7586 011583fb 00c32610
+0019f628: c6c3a8a5 d3ac6ba4 00000000 00000000 00000000 00000000 00000000 00000000
+0019f648: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019f668: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019f688: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019f6a8: 182c7b50 31343100 7f003131 0000aa64 011583fb 00000000 0000000f f734fb55
+0019f6c8: 00000002 183974b0 000000d1 004e7586 182c7854 182c7844 00000da0 0019f6f8
+0019f6e8: 182c7710 0019f750 00000013 0019f708 182c7710 0019f760 183974b0 000000d1
+0019f708: 00000008 1830ad45 00000005 00000000 f734f5fd 00c32610 011583fb 00000000
+0019f728: 13131288 00007f76 00008080 00007f76 183974b0 000000d1 00000000 00000000
+0019f748: 00000000 00000320 00000258 000001d6 000000f5 000001ed 00000131 000001c8
+0019f768: 000000f1 00007f76 004df150 773eaad4 0019f928 005a78f9 00002d60 183974b0
+0019f788: 004df150 ffffe000 0019f7bc 763e7943 00160f7c 00000401 00000afc 00000001
+0019f7a8: 00000401 dcbaabcd 0019f8c4 004df150 00000401 0019f8b8 763d601d 004df150
+0019f7c8: 00160f7c 00000401 00000afc 00000001 8a637a2d 009aaee4 00000afc 00000024
+0019f7e8: 00000001 00000000 00000000 00000030 ffffffff ffffffff 763d5d09 00000000
+0019f808: 00008082 00007f78 00008082 0000006c 0019f7e8 000000c3 0019f914 00000000
+0019f828: f7bf5295 00000001 00000079 005a2b76 00000003 00007f76 80006010 00000000
+0019f848: 00000000 00000000 00000001 00000000 00000000 00000000 01951348 00000000
+0019f868: 00004252 00000000 004df150 00000000 00008082 01951348 00000000 00000000
+0019f888: 00160f7c 00000000 00000000 00000001 009aaee4 0019f8c4 00160f7c 0019ed94
+0019f8a8: 0019f928 763ea580 fc3cad3d 00000000 0019f938 763d54aa 00000000 01b82b50
+0019f8c8: 763d54aa 004df150 00000000 00000401 00000afc 00000001 00000000 00000001
+0019f8e8: 8a637bad 00c32610 011583fb 00000000 00c32610 011583fb 0019f944 0019f918
+0019f908: 004df150 00000000 00000000 00000001 00c32610 00000afc 0019f8e8 0019ed94
+0019f928: 0019fd20 763ea580 fc3cadfd fffffffe 0019f944 03180139 00000401 0019fd2c
+0019f948: 004e3175 009aaee4 f734ff41 0019f968 0000011c 0019fc18 7740db96 00000000
+0019f968: 00000004 00000001 00000004 00000040 063dc298 00000410 063dc298 773b8b70
+0019f988: 0019f9e4 00000001 00000000 7742968c 76afafe0 00000410 063dc298 063dc298
+0019f9a8: 211137de 00000410 00000000 063dc298 063dc298 07a6f7d8 76afafe0 00000410
+0019f9c8: 00000000 00000001 21113650 00000410 06479d60 ffffffff 00000000 00020001
+0019f9e8: 00005622 00015888 00100004 00502014 00005622 00000010 00000002 00502025
+0019fa08: 0019fbe0 00000001 0000058e 00000000 3c157aa8 0018df58 6973756d 6d2e3063
+0019fa28: 00003370 0208002a 0019fa60 773b12a0 00000002 00000000 0208002a 0019fa60
+0019fa48: 011aa9a2 00000000 0019fcd0 0019fce0 00000005 00020020 003a0043 0033005c
+0019fa68: 0038002e 6e2c0031 61f68a66 53054eba 006c005c 006e0069 002e0074 00690062
+0019fa88: 0000006e 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019faa8: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fac8: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fae8: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fb08: 00000000 00000000 00000000 00000000 06478848 000003e8 00000001 00000000
+0019fb28: 00000000 00000000 00000000 00000000 a548a469 6f735c5d 5c646e75 6973756d
+0019fb48: 6d2e2a63 00003370 00000000 00000000 00000000 07a6f7d8 25281147 00000000
+0019fb68: 31312e39 3136322e 302e3030 00000000 00000000 00000000 00000000 00000000
+0019fb88: 00000000 0000756f 00000000 00000000 00000000 00000000 0019fbe0 00000000
+0019fba8: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fbc8: 00000000 00000000 00000000 00000000 00000000 59e127e8 30333132 34363037
+0019fbe8: 76003333 0000009c 009aab30 0019fd38 76af9edb 0019fc18 00c32610 76af9f61
+0019fc08: 00000000 00000000 00000000 00000000 0000011c 00000006 00000002 000023f0
+0019fc28: 00000002 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fc48: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fc68: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fc88: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fca8: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0019fcc8: 00000000 00000000 00000000 00000000 00000000 00000000 f734ff41 00000002
+0019fce8: 81b60000 00000001 00000000 00000002 0000013b 67ac9080 67ac9080 659e3df4
+0019fd08: 00000000 01000000 00000001 07a76d47 0000058e 00000000 0019fd94 00889eab
+0019fd28: ffffffff 0019fda0 004e4bc6 00400000 00000000 011583fb 0000000a f734ffcd
+0019fd48: 00000dc8 37323533 6c69742e 0019fd00 668638b3 00000000 00c32610 0019fd84
+0019fd68: 668638c5 0019fd84 6687c40c 011583f9 0019fd94 6688028d 00000000 054b04b0
+0019fd88: 054b1890 f734ffcd 0019fd01 0019fe20 00889ffe ffffffff 0019fe30 0079aaa8
+0019fda8: 00400000 00000000 011583fb 0000000a f734fc5d 054a0022 00db3f67 00db2199
+0019fdc8: 00000044 0116c3a8 01168140 0116a3e8 00000000 00000000 00000000 00000000
+0019fde8: 00000000 00000000 00000000 00000000 00000000 00000000 ffffffff ffffffff
+0019fe08: ffffffff c0000005 011583fb 00000000 0019fdb8 0019ed74 0019ffcc 0079a3d2
+0019fe28: f7b9944d 00000001 00000000 054a006c 00db3f67 00000000 763f7aed 00db2199
+0019fe48: 054a002a 00db3f67 00000000 76415138 00db2199 054a002a 00db3f67 00000000
+0019fe68: 764151b8 00db2199 054a001b 00db3f67 00000000 7645ba89 00db2199 054a000a
+0019fe88: 00db3f67 00000000 7644c61f 00db2199 054a0020 00db3f67 00000000 7645bb7e
+0019fea8: 00db2199 054a004c 00db3f67 00000000 765e376d 00db2199 054a0080 00db3f67
+0019fec8: 00000000 765e3382 00db2199 054a0048 00db3f67 00000000 765e6e26 00db2199
+0019fee8: 054a002f 00db3f67 00000000 765dcd7d 00db2199 054a0025 00db3f67 00000000
+0019ff08: 765e6db3 00db2199 054a002b 00db3f67 00000000 765e6f9d 00db2199 ffe59800
+0019ff28: 00d04f05 00004a6b ed630014 0019ff48 00004000 0019fce4 00ea4a6b 00ea4a6b
+0019ff48: 0019ff70 00cf0b5b 00f0a000 00f0a000 0019ff84 0019ff70 00271000 0019ff70
+0019ff68: 00f0a000 c9d1229b 0019ffcc 00dca0a5 76595d49 00271000 76595d30 0019ffdc
+0019ff88: 7741cdeb 00271000 59e12150 00000000 00000000 00271000 c0000005 76be2180
+0019ffa8: 91af7a0d d06c8d7b 00000000 00000000 0019ed74 e7115b8d 00000000 0019ff90
+0019ffc8: 0019ed74 0019ffe4 774320c0 2eb4656c 00000000 0019ffec 7741cd71 ffffffff
+0019ffe8: 774615ea 00000000 00000000 00f0a000 00271000 00000000
+
+[Last Sprite Ref] 11616 3
+
+[Last Tile Ref] 343768
+
+[Last Surf Ref] 2937
+
+[Last Png Ref] 1 264
+
+[Last Gif Ref] 0
+
+[Last Icon Ref] 0
+
+[Last Global Effect Id] 34
+
+[Surf Unlock Error Code] DDERR_NOTLOCKED
+
+[Surf Lock Error Code] DD_OK
+
+[Error Handler Code] 0
+
+[virtSurf Address] 0e27d028 ~ 0e3b2f28
+
+[Outbound Check Failed Function] -1
+
+[uishoplev.xml] Loading... OK.
+[music.xml] Loading... OK.
+[uistatus86.xml] Loading... OK.
+[uiextra86.xml] Loading... OK.
+[uistatuswin.xml] Loading... OK.
+[uimagicitem.xml] Loading... OK.
+[uimenu.xml] Loading... OK.
+[mapsystem86.xml] Loading... OK.
+[globaleffect86.xml] Loading... OK.
+[effectlist2.xml] Loading... OK.
+[CollisionZone.xml] Loading... OK.
+[BookmarkUI.xml] Loading... OK.
+[BookmarkMemUI.xml] Loading... OK.
+[StoryPaperUI.xml] Loading... OK.
+[StoryBookUI.xml] Loading... OK.
+[CutScene.xml] Loading... OK.
+[PledgeUI.xml] Loading... OK.
+[FightPlaceUI.xml] Loading... OK.
+[map_config.xml] Loading... OK.
+[SmithUI.xml] Loading... OK.
+[SummonUI.xml] Loading... OK.
+[PolymorphUI.xml] Loading... OK.
+[summonList.xml] Loading... OK.
+[polymorphList.xml] Loading... OK.
+[FriendUI.xml] Loading... OK.
+[ExcludeUI.xml] Loading... OK.
+[MailExcludeUI.xml] Loading... OK.
+[ActionUI.xml] Loading... OK.
+[UserPlayUI.xml] Loading... OK.
+[UserObtainUI.xml] Loading... OK.
+[ReNStatusWinUI.xml] Loading... OK.
+[MatchMakingUI.xml] Loading... OK.
+[hpasslvlist.xml] Loading... OK.
+[PledgeFocusUI.xml] Loading... OK.
+[LinHelperUI.xml] Loading... OK.
+[QuestInfo.xml] Loading... OK.
+[PersonalShopUI.xml] Loading... OK.
+
+[start call-stack]
+00585aa1
+005a2b76
+0053190b
+00544dfc
+0054589d
+0058136d
+004e077b
+763e7943
+763d601d
+763d54aa
+03180139
+004e3175
+004e4bc6
+0079aaa8
+[end call-stack]
+
+	Module list: names, addresses, sizes, time stamps and file times:
+C:\3.81代刚胕\TW13081901.bin, loaded at 0x00400000 - 3113320 bytes - 52120c68 - file date is 8/21/2013 11:02:28
+C:\3.81代刚胕\zlib1.dll, loaded at 0x10000000 - 55808 bytes - 4161e5de - file date is 9/21/2005 16:04:04
+C:\3.81代刚胕\mss32.dll, loaded at 0x21100000 - 372736 bytes - 406ceaa3 - file date is 12/16/2004 10:51:54
+C:\3.81代刚胕\mssmp3.asi, loaded at 0x26f00000 - 149504 bytes - 406ceb16 - file date is 12/16/2004 10:51:54
+C:\Windows\System32\IME\SHARED\imelm.dll, loaded at 0x63330000 - 309192 bytes - d6c03cc0 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\HID.DLL, loaded at 0x633c0000 - 27648 bytes - 1a8366e0 - file date is 4/1/2024 15:22:16
+C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_47bb6e20853337c8\nvd3dum.dll, loaded at 0x633d0000 - 47930848 bytes - 64af3d49 - file date is 7/21/2023 00:22:10
+C:\WINDOWS\SYSTEM32\drvstore.dll, loaded at 0x66130000 - 1207640 bytes - 43553e05 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_47bb6e20853337c8\nvldumd.dll, loaded at 0x66260000 - 618664 bytes - 64af3d66 - file date is 7/21/2023 00:22:42
+C:\WINDOWS\SYSTEM32\avrt.dll, loaded at 0x66300000 - 30032 bytes - 8a24f66a - file date is 4/1/2024 15:22:14
+C:\WINDOWS\SYSTEM32\AUDIOSES.DLL, loaded at 0x66310000 - 1526936 bytes - 359a95dd - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\inputhost.dll, loaded at 0x66490000 - 1502048 bytes - 3ac19554 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\SYSTEM32\ResampleDmo.DLL, loaded at 0x66610000 - 631104 bytes - 8b0ac46f - file date is 4/2/2024 00:37:08
+C:\Windows\System32\IME\SHARED\imebrokerps.dll, loaded at 0x666b0000 - 24384 bytes - daab0eaf - file date is 4/1/2024 15:22:20
+C:\WINDOWS\SYSTEM32\resourcepolicyclient.dll, loaded at 0x666c0000 - 57920 bytes - c4b36a4f - file date is 4/1/2024 15:22:16
+C:\WINDOWS\SYSTEM32\DINPUT.dll, loaded at 0x666e0000 - 141824 bytes - b5fb905c - file date is 11/22/2024 23:23:48
+C:\WINDOWS\SYSTEM32\msdmo.dll, loaded at 0x66710000 - 33000 bytes - 2b054916 - file date is 4/1/2024 15:22:14
+C:\WINDOWS\SYSTEM32\winmmbase.dll, loaded at 0x66720000 - 118768 bytes - 347027b4 - file date is 4/1/2024 15:22:14
+C:\WINDOWS\SYSTEM32\DDRAW.dll, loaded at 0x66750000 - 539648 bytes - c1d78c94 - file date is 4/1/2024 15:22:14
+C:\WINDOWS\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9635_none_508ff82ebcbafee0\MSVCR90.dll, loaded at 0x66840000 - 656272 bytes - 6090b812 - file date is 4/1/2024 15:22:18
+C:\3.81代刚胕\Login.dll, loaded at 0x668f0000 - 613888 bytes - 52afe34c - file date is 7/5/2023 21:17:38
+C:\3.81代刚胕\libpng13.dll, loaded at 0x67580000 - 203264 bytes - 41b1003b - file date is 9/21/2005 16:04:02
+C:\Windows\System32\ieframe.dll, loaded at 0x68560000 - 6632448 bytes - bfcc4a4d - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\WININET.dll, loaded at 0x68bc0000 - 2206584 bytes - e4a594f9 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\DSOUND.dll, loaded at 0x68f80000 - 458752 bytes - d7268bfb - file date is 1/29/2025 06:32:28
+C:\WINDOWS\System32\DEVOBJ.dll, loaded at 0x69360000 - 143032 bytes - 7d891815 - file date is 4/1/2024 15:22:36
+C:\WINDOWS\System32\MMDevApi.dll, loaded at 0x69390000 - 483008 bytes - b9526d67 - file date is 1/29/2025 06:32:32
+C:\Windows\System32\Windows.UI.dll, loaded at 0x69830000 - 1099704 bytes - f8e5c397 - file date is 1/29/2025 06:32:38
+C:\WINDOWS\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.9635_none_508ff82ebcbafee0\MSVCP90.dll, loaded at 0x6a820000 - 572816 bytes - 6090b816 - file date is 4/1/2024 15:22:36
+C:\WINDOWS\SYSTEM32\dxcore.dll, loaded at 0x6a8b0000 - 218048 bytes - 6fa71513 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\DCIMAN32.dll, loaded at 0x6a920000 - 12288 bytes - b6eedbeb - file date is 11/22/2024 23:23:46
+C:\WINDOWS\SYSTEM32\UMPDC.dll, loaded at 0x6a9c0000 - 51608 bytes - 9661d207 - file date is 11/22/2024 23:23:46
+C:\WINDOWS\SYSTEM32\powrprof.dll, loaded at 0x6a9e0000 - 275896 bytes - b9d3c121 - file date is 4/1/2024 15:22:16
+C:\WINDOWS\SYSTEM32\msIso.dll, loaded at 0x6aa50000 - 205312 bytes - 9309dc25 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\system32\wshbth.dll, loaded at 0x6b080000 - 54784 bytes - 3cfb4785 - file date is 11/22/2024 23:23:44
+C:\WINDOWS\System32\winrnr.dll, loaded at 0x6b0a0000 - 46112 bytes - 51386f06 - file date is 11/22/2024 23:23:44
+C:\WINDOWS\system32\napinsp.dll, loaded at 0x6b0c0000 - 69272 bytes - e9aa200c - file date is 4/1/2024 15:22:16
+C:\WINDOWS\SYSTEM32\DUser.dll, loaded at 0x6b550000 - 485888 bytes - dc6846f8 - file date is 11/22/2024 23:23:44
+C:\Windows\System32\IME\shared\mscand20.dll, loaded at 0x6b5d0000 - 1629624 bytes - bd04363c - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\wer.dll, loaded at 0x6b770000 - 818736 bytes - 8856e3db - file date is 1/29/2025 06:32:30
+C:\Windows\System32\IME\shared\imecfm.dll, loaded at 0x6b840000 - 209712 bytes - 456b05f8 - file date is 11/22/2024 23:23:46
+C:\WINDOWS\system32\IME\IMETC\IMTCCORE.DLL, loaded at 0x6b880000 - 1042864 bytes - 33ed6094 - file date is 11/22/2024 23:23:48
+C:\WINDOWS\system32\IME\IMETC\IMTCCFG.DLL, loaded at 0x6b990000 - 293680 bytes - aa86df57 - file date is 11/22/2024 23:24:00
+C:\Windows\System32\IME\shared\imetip.dll, loaded at 0x6b9e0000 - 913336 bytes - 83af39ef - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\DUI70.dll, loaded at 0x6bad0000 - 1440256 bytes - 4fc1a51a - file date is 11/22/2024 23:23:44
+C:\WINDOWS\system32\IME\IMETC\IMTCTIP.DLL, loaded at 0x6bc40000 - 1215416 bytes - 793d38a0 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\CoreUIComponents.dll, loaded at 0x6bd70000 - 2706552 bytes - 9e991dd9 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\CoreMessaging.dll, loaded at 0x6c010000 - 899800 bytes - c2911247 - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\OLEACC.dll, loaded at 0x6c0f0000 - 378368 bytes - 9a3b4c20 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\SYSTEM32\textinputframework.dll, loaded at 0x6c4b0000 - 1050136 bytes - 09dc3c2f - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\WINSPOOL.DRV, loaded at 0x6cb40000 - 573440 bytes - d593fa2e - file date is 1/29/2025 06:32:34
+C:\WINDOWS\SYSTEM32\apphelp.dll, loaded at 0x6cbe0000 - 698936 bytes - 9fbe522f - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\coreprivacysettingsstore.dll, loaded at 0x6cc90000 - 155064 bytes - 3ace1db8 - file date is 11/22/2024 23:23:46
+C:\WINDOWS\SYSTEM32\cryptnet.dll, loaded at 0x6d690000 - 170008 bytes - e49f608d - file date is 1/29/2025 06:32:28
+C:\WINDOWS\System32\fwpuclnt.dll, loaded at 0x6e950000 - 378368 bytes - ef6cb700 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\SYSTEM32\ime_textinputhelpers.dll, loaded at 0x6eba0000 - 87040 bytes - 1e929f59 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\wldp.dll, loaded at 0x6ed90000 - 326000 bytes - 329d474a - file date is 1/15/2025 07:35:46
+C:\WINDOWS\SYSTEM32\BCRYPT.DLL, loaded at 0x6ee30000 - 102312 bytes - c1fdf843 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\CRYPTBASE.DLL, loaded at 0x6ee50000 - 33184 bytes - 62f7d155 - file date is 1/15/2025 07:35:46
+C:\WINDOWS\system32\rsaenh.dll, loaded at 0x6ee60000 - 193768 bytes - 42d83443 - file date is 1/15/2025 07:35:46
+C:\WINDOWS\System32\CRYPTSP.dll, loaded at 0x6eea0000 - 79640 bytes - 5fa3dfd6 - file date is 11/23/2024 11:20:58
+C:\WINDOWS\System32\mswsock.dll, loaded at 0x6eec0000 - 326584 bytes - b3a63e2d - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\DNSAPI.dll, loaded at 0x6ef80000 - 894632 bytes - e3045e2f - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\gpapi.dll, loaded at 0x6fa80000 - 120832 bytes - 4a580853 - file date is 11/22/2024 23:23:44
+C:\Windows\System32\rasadhlp.dll, loaded at 0x6fab0000 - 13312 bytes - 2d1f4740 - file date is 4/1/2024 15:22:36
+C:\WINDOWS\system32\nlansp_c.dll, loaded at 0x6fb70000 - 85504 bytes - b4afb815 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\SYSTEM32\cfgmgr32.dll, loaded at 0x6fbb0000 - 289840 bytes - 0d454c1c - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\wintypes.dll, loaded at 0x6fc00000 - 1023752 bytes - 8b3e9ebc - file date is 1/15/2025 07:35:46
+C:\WINDOWS\SYSTEM32\TextShaping.dll, loaded at 0x6fd00000 - 654424 bytes - b40b0e27 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\PROPSYS.dll, loaded at 0x6fe40000 - 835288 bytes - c49d0720 - file date is 1/29/2025 06:32:34
+C:\WINDOWS\SYSTEM32\profapi.dll, loaded at 0x6ff10000 - 128688 bytes - afa8f88c - file date is 1/29/2025 06:32:34
+C:\WINDOWS\SYSTEM32\ntmarta.dll, loaded at 0x6ff40000 - 156080 bytes - 354454ea - file date is 4/1/2024 15:22:16
+C:\WINDOWS\SYSTEM32\NTASN1.dll, loaded at 0x71480000 - 164272 bytes - bd0d2b0a - file date is 11/22/2024 23:23:46
+C:\WINDOWS\SYSTEM32\msasn1.dll, loaded at 0x714b0000 - 52240 bytes - 82e9dd51 - file date is 1/15/2025 07:35:46
+C:\WINDOWS\SYSTEM32\directxdatabasehelper.dll, loaded at 0x714d0000 - 300200 bytes - f562c833 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\srvcli.dll, loaded at 0x71520000 - 82112 bytes - e635287e - file date is 4/1/2024 15:22:16
+C:\WINDOWS\SYSTEM32\windows.storage.dll, loaded at 0x71550000 - 7077152 bytes - b7997eaf - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\iertutil.dll, loaded at 0x71c10000 - 2373432 bytes - 28fa9604 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\dwmapi.dll, loaded at 0x72020000 - 131800 bytes - df642763 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\dxgi.dll, loaded at 0x72050000 - 1008816 bytes - d53cf41f - file date is 1/29/2025 06:32:30
+C:\WINDOWS\SYSTEM32\ncrypt.dll, loaded at 0x72150000 - 152448 bytes - 7b3d1f27 - file date is 1/15/2025 07:35:46
+C:\WINDOWS\SYSTEM32\netutils.dll, loaded at 0x72260000 - 39328 bytes - 2fbcac35 - file date is 11/22/2024 23:23:46
+C:\WINDOWS\SYSTEM32\IPHLPAPI.DLL, loaded at 0x72270000 - 144696 bytes - b9511c7b - file date is 2/12/2025 02:58:32
+C:\WINDOWS\SYSTEM32\kernel.appcore.dll, loaded at 0x72a80000 - 71888 bytes - da83515f - file date is 11/22/2024 23:23:40
+C:\WINDOWS\SYSTEM32\SspiCli.dll, loaded at 0x72b30000 - 166944 bytes - 45d48e07 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\SYSTEM32\VERSION.dll, loaded at 0x72b60000 - 28976 bytes - ef5e2440 - file date is 4/1/2024 15:22:16
+C:\WINDOWS\WinSxS\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.3037_none_85b65d03f7afec7e\comctl32.dll, loaded at 0x72b70000 - 2244016 bytes - 5b06d0f7 - file date is 1/24/2025 21:34:44
+C:\WINDOWS\system32\uxtheme.dll, loaded at 0x72da0000 - 511488 bytes - 12e317f6 - file date is 1/29/2025 06:32:36
+C:\WINDOWS\SYSTEM32\winmm.dll, loaded at 0x72e30000 - 195888 bytes - aa9dabef - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\MSIMG32.dll, loaded at 0x72fb0000 - 7168 bytes - c0bc2f00 - file date is 11/22/2024 23:23:46
+C:\WINDOWS\System32\shcore.dll, loaded at 0x74fe0000 - 806368 bytes - 47ac749d - file date is 2/12/2025 02:58:32
+C:\WINDOWS\System32\msvcp_win.dll, loaded at 0x750b0000 - 505776 bytes - 39a737ed - file date is 11/22/2024 23:23:58
+C:\WINDOWS\System32\SHELL32.dll, loaded at 0x75140000 - 6236280 bytes - 09d4f2fa - file date is 1/29/2025 06:32:36
+C:\WINDOWS\System32\win32u.dll, loaded at 0x757f0000 - 105936 bytes - 51848355 - file date is 2/12/2025 02:58:32
+C:\WINDOWS\System32\OLEAUT32.dll, loaded at 0x75810000 - 640040 bytes - d48131f8 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\System32\MSCTF.dll, loaded at 0x758c0000 - 1140496 bytes - 8555a84d - file date is 1/29/2025 06:32:36
+C:\WINDOWS\System32\SHLWAPI.dll, loaded at 0x75bb0000 - 302776 bytes - ae9d6a94 - file date is 1/29/2025 06:32:34
+C:\WINDOWS\System32\WS2_32.dll, loaded at 0x75c70000 - 391984 bytes - 1b0e988e - file date is 11/22/2024 23:23:44
+C:\WINDOWS\System32\clbcatq.dll, loaded at 0x75ce0000 - 519504 bytes - f0a3d7ac - file date is 4/1/2024 15:22:14
+C:\WINDOWS\System32\wintrust.dll, loaded at 0x75d70000 - 410696 bytes - df75162e - file date is 1/29/2025 06:32:38
+C:\WINDOWS\System32\sechost.dll, loaded at 0x75de0000 - 529504 bytes - 59c1b594 - file date is 1/29/2025 06:32:34
+C:\WINDOWS\System32\NSI.dll, loaded at 0x75e80000 - 21808 bytes - 0a647930 - file date is 1/15/2025 07:35:48
+C:\WINDOWS\System32\SETUPAPI.DLL, loaded at 0x75e90000 - 4551984 bytes - a54ddd99 - file date is 1/29/2025 06:32:34
+C:\WINDOWS\System32\RPCRT4.dll, loaded at 0x762f0000 - 758280 bytes - b2330e98 - file date is 1/29/2025 06:32:34
+C:\WINDOWS\System32\USER32.dll, loaded at 0x763b0000 - 1850688 bytes - c8d707d3 - file date is 2/12/2025 02:58:32
+C:\WINDOWS\System32\KERNEL32.DLL, loaded at 0x76580000 - 679152 bytes - 33b92743 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\System32\ole32.dll, loaded at 0x76720000 - 1387368 bytes - 2fa86b56 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\System32\ucrtbase.dll, loaded at 0x76880000 - 1114168 bytes - eb1445d0 - file date is 1/29/2025 06:32:36
+C:\WINDOWS\System32\KERNELBASE.dll, loaded at 0x769a0000 - 2796400 bytes - 3ff9f933 - file date is 1/29/2025 06:32:32
+C:\WINDOWS\System32\gdi32full.dll, loaded at 0x76c50000 - 954608 bytes - 48bfcbd7 - file date is 1/29/2025 06:32:30
+C:\WINDOWS\System32\ADVAPI32.dll, loaded at 0x76d40000 - 513976 bytes - 1a74db9e - file date is 11/22/2024 23:23:44
+C:\WINDOWS\System32\GDI32.dll, loaded at 0x76dd0000 - 132296 bytes - 55828c7b - file date is 11/22/2024 23:23:46
+C:\WINDOWS\System32\bcryptPrimitives.dll, loaded at 0x76e00000 - 427248 bytes - 3e180b5e - file date is 1/29/2025 06:32:28
+C:\WINDOWS\System32\msvcrt.dll, loaded at 0x76e70000 - 809440 bytes - 3234eece - file date is 11/22/2024 23:23:44
+C:\WINDOWS\System32\CRYPT32.dll, loaded at 0x76f40000 - 1063552 bytes - d7e07a3c - file date is 1/29/2025 06:32:28
+C:\WINDOWS\System32\imagehlp.dll, loaded at 0x770c0000 - 102728 bytes - f1c1f4ec - file date is 4/1/2024 15:22:12
+C:\WINDOWS\System32\IMM32.DLL, loaded at 0x770e0000 - 145224 bytes - 64ff4478 - file date is 4/1/2024 15:22:14
+C:\WINDOWS\System32\combase.dll, loaded at 0x77110000 - 2626992 bytes - 38469484 - file date is 1/29/2025 06:32:28
+C:\WINDOWS\SYSTEM32\ntdll.dll, loaded at 0x773b0000 - 1801216 bytes - 392faaea - file date is 1/29/2025 06:32:32

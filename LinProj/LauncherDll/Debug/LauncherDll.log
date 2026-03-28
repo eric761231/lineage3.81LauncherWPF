@@ -1,0 +1,23 @@
+﻿  stdafx.cpp
+  encdec.cpp
+  aes.cpp
+  configenc.cpp
+  ShareMemory.cpp
+  HelperDlg.cpp
+  LauncherDll.cpp
+  正在產生程式碼...
+  dllmain.cpp
+encdec.obj : warning LNK4075: 忽略 '/EDITANDCONTINUE'，由於 '/SAFESEH' 規格
+     正在建立程式庫 C:\python_training\LinProject3.8\LinProj\Debug\LauncherDll.lib 和物件 C:\python_training\LinProject3.8\LinProj\Debug\LauncherDll.exp
+LINK : warning LNK4098: 預設的程式庫 'LIBCMT' 與其他使用的程式庫衝突，請使用 /NODEFAULTLIB:library
+detours.lib(detours.obj) : warning LNK4099: 找不到 PDB 'detours.pdb' (有 'detours.lib(detours.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\detours.pdb')，當做沒有偵錯資訊，連結物件
+detours.lib(modules.obj) : warning LNK4099: 找不到 PDB 'detours.pdb' (有 'detours.lib(modules.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\detours.pdb')，當做沒有偵錯資訊，連結物件
+detours.lib(disasm.obj) : warning LNK4099: 找不到 PDB 'detours.pdb' (有 'detours.lib(disasm.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\detours.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(adler32.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(adler32.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(crc32.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(crc32.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(inflate.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(inflate.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(inftrees.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(inftrees.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(inffast.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(inffast.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(uncompr.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(uncompr.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+zlib.lib(zutil.obj) : warning LNK4099: 找不到 PDB 'zlib.pdb' (有 'zlib.lib(zutil.obj)' 或位於 'C:\python_training\LinProject3.8\LinProj\Debug\zlib.pdb')，當做沒有偵錯資訊，連結物件
+  LauncherDll.vcxproj -> C:\python_training\LinProject3.8\LinProj\Debug\LauncherDll.dll

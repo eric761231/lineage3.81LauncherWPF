@@ -1,0 +1,5 @@
+     2>C:\python_training\LauncherWPF381\LinProj\LinLauncher\ViewModels\MainViewModel.cs(59,48): error CS0103: 名稱 'Marshal' 不存在於目前的內容中 [C:\python_training\LauncherWPF381\LinProj\LinLauncher\LinLauncher_zefndcjr_wpftmp.csproj]
+     2>C:\python_training\LauncherWPF381\LinProj\LinLauncher\ViewModels\MainViewModel.cs(65,30): error CS0103: 名稱 'Marshal' 不存在於目前的內容中 [C:\python_training\LauncherWPF381\LinProj\LinLauncher\LinLauncher_zefndcjr_wpftmp.csproj]
+     2>C:\python_training\LauncherWPF381\LinProj\LinLauncher\ViewModels\MainViewModel.cs(68,21): error CS0103: 名稱 'Marshal' 不存在於目前的內容中 [C:\python_training\LauncherWPF381\LinProj\LinLauncher\LinLauncher_zefndcjr_wpftmp.csproj]
+     2>C:\python_training\LauncherWPF381\LinProj\LinLauncher\ViewModels\MainViewModel.cs(69,46): error CS0103: 名稱 'Marshal' 不存在於目前的內容中 [C:\python_training\LauncherWPF381\LinProj\LinLauncher\LinLauncher_zefndcjr_wpftmp.csproj]
+     2>C:\python_training\LauncherWPF381\LinProj\LinLauncher\ViewModels\MainViewModel.cs(84,27): error CS0103: 名稱 'Marshal' 不存在於目前的內容中 [C:\python_training\LauncherWPF381\LinProj\LinLauncher\LinLauncher_zefndcjr_wpftmp.csproj]

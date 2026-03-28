@@ -1,0 +1,1006 @@
+[2026-03-25 19:49:53.930][PID=19620][TID=21132] init: encrypt=0 randenc=0 port=2005 rsa_d(raw)=338586129 rsa_n(raw)=1813454975
+[2026-03-25 19:50:06.784][PID=27912][TID=32304] init: encrypt=0 randenc=0 port=2005 rsa_d(raw)=338586129 rsa_n(raw)=1813454975
+[2026-03-25 19:58:28.511][PID=37636][TID=37680] init: magicWait finished waited=0 curMagic=0x12345678
+[2026-03-25 19:58:28.511][PID=37636][TID=37680] init: encrypt=0 randenc=0 port=2005 rsa_d(raw)=338586129 rsa_n(raw)=1813454975
+[2026-03-25 19:58:28.512][PID=37636][TID=37680] init: forced ShareInfo.encrypt=false (server uses native Blowfish only)
+[2026-03-25 19:59:01.072][PID=36908][TID=35124] init: magicWait finished waited=0 curMagic=0x12345678
+[2026-03-25 19:59:01.072][PID=36908][TID=35124] init: encrypt=0 randenc=0 port=2005 rsa_d(raw)=338586129 rsa_n(raw)=1813454975
+[2026-03-25 19:59:01.072][PID=36908][TID=35124] init: forced ShareInfo.encrypt=false (server uses native Blowfish only)
+[2026-03-25 21:37:01.033][PID=14648][TID=30972] init: encrypt=0 randenc=0 port=2005 rsa_d(raw)=338586129 rsa_n(raw)=1813454975
+[2026-03-25 21:37:07.630][PID=14648][TID=36116] mm: hook-status reason=hook-installed changeLabel@0x0064CCD0= 55 8B EC 83 EC 14 89 4D register@0x6506E0= 55 8B EC E8 48 21 DB FF
+[2026-03-25 21:37:07.645][PID=14648][TID=36116] compat: DISABLEDXMAXIMIZEDWINDOWEDMODE set for C:\3.81Lineage\TW13081901.bin ret=0
+[2026-03-25 21:37:07.645][PID=14648][TID=36116] ime: disable-tsf reason=CreateWindowEx tid=36116 ok=0
+[2026-03-25 21:37:07.648][PID=14648][TID=36116] ime: refreshed hwnd=0x005605DA imewnd=0x002E1A1A comp=(8,8) source=fallback
+[2026-03-25 21:37:07.649][PID=14648][TID=36116] ime: game window created hwnd=0x005605DA class=Lineage
+[2026-03-25 21:37:07.649][PID=14648][TID=36116] mm:auto: AutoRegisterMonitorThread started handle=0x000006EC
+[2026-03-25 21:37:07.649][PID=14648][TID=36116] hook: WH_GETMESSAGE installed tid=36116 hook=0x21040C87
+[2026-03-25 21:37:07.649][PID=14648][TID=36116] ime: guard thread started handle=0x000006E4
+[2026-03-25 21:37:21.402][PID=14648][TID=32964] ime: create context result=0x4243177F
+[2026-03-25 21:37:21.405][PID=14648][TID=36116] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(1022,530) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 21:37:21.405][PID=14648][TID=32964] ime: associate context hwnd=0x005605DA okExChildren=0 okEx=1 old=0x00000000 new=0x4243177F
+[2026-03-25 21:37:21.405][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:21.407][PID=14648][TID=32964] ime: force-show-ui reason=ImeGuardThread hwnd=0x005605DA flags=0x8000000F
+[2026-03-25 21:37:21.408][PID=14648][TID=32964] ime: guard target game=0x005605DA target=0x005605DA class=Lineage
+[2026-03-25 21:37:21.512][PID=14648][TID=36116] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(1022,530) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 21:37:21.820][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:22.002][PID=14648][TID=36116] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(1022,530) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 21:37:22.231][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:22.635][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:23.053][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:23.470][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:23.876][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:24.293][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:24.699][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:24.702][PID=14648][TID=32964] ime: force-show-ui reason=ImeGuardThread hwnd=0x005605DA flags=0x8000000F
+[2026-03-25 21:37:24.703][PID=14648][TID=32964] ime: guard target game=0x005605DA target=0x005605DA class=Lineage
+[2026-03-25 21:37:25.108][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:25.341][PID=14648][TID=36116] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(966,600) obj=0x16848008 stateOff=0x30 state=0x00000000
+[2026-03-25 21:37:25.468][PID=14648][TID=36116] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(966,600) obj=0x16848008 stateOff=0x30 state=0x00000000
+[2026-03-25 21:37:25.512][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:25.930][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 21:37:25.941][PID=14648][TID=36116] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(844,607) obj=0x16848008 stateOff=0x30 state=0x00000000
+[2026-03-25 21:37:26.074][PID=14648][TID=36116] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x005605DA class=Lineage gamePt=(844,607) obj=0x16848008 stateOff=0x30 state=0x00000000
+[2026-03-25 21:37:26.361][PID=14648][TID=32964] ime: force-enable reason=ImeGuardThread hwnd=0x005605DA open_before=0 open_after=0
+[2026-03-25 23:01:52.485][PID=34788][TID=37740] init: encrypt=0 randenc=1 port=2005 rsa_d(raw)=878082068 rsa_n(raw)=778703212
+[2026-03-25 23:02:07.945][PID=34788][TID=26720] mm: hook-status reason=hook-installed changeLabel@0x0064CCD0= 55 8B EC 83 EC 14 89 4D register@0x6506E0= 55 8B EC E8 48 21 DB FF
+[2026-03-25 23:02:07.958][PID=34788][TID=26720] compat: DISABLEDXMAXIMIZEDWINDOWEDMODE set for C:\3.81Lineage\TW13081901.bin ret=0
+[2026-03-25 23:02:07.958][PID=34788][TID=26720] ime: disable-tsf reason=CreateWindowEx tid=26720 ok=0
+[2026-03-25 23:02:07.961][PID=34788][TID=26720] ime: refreshed hwnd=0x00C0093E imewnd=0x002E1426 comp=(8,8) source=fallback
+[2026-03-25 23:02:07.961][PID=34788][TID=26720] ime: game window created hwnd=0x00C0093E class=Lineage
+[2026-03-25 23:02:07.961][PID=34788][TID=26720] mm:auto: AutoRegisterMonitorThread started handle=0x000006E8
+[2026-03-25 23:02:07.962][PID=34788][TID=26720] hook: WH_GETMESSAGE installed tid=26720 hook=0x179505EF
+[2026-03-25 23:02:07.962][PID=34788][TID=26720] ime: guard thread started handle=0x000006EC
+[2026-03-25 23:02:08.772][PID=34788][TID=29960] ime: create context result=0x0AE919F9
+[2026-03-25 23:02:08.773][PID=34788][TID=29960] ime: associate context hwnd=0x00C0093E okExChildren=0 okEx=1 old=0x00000000 new=0x0AE919F9
+[2026-03-25 23:02:08.773][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:08.775][PID=34788][TID=29960] ime: force-show-ui reason=ImeGuardThread hwnd=0x00C0093E flags=0x8000000F
+[2026-03-25 23:02:08.775][PID=34788][TID=29960] ime: guard target game=0x00C0093E target=0x00C0093E class=Lineage
+[2026-03-25 23:02:09.177][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:09.308][PID=34788][TID=26720] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(911,585) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:02:09.434][PID=34788][TID=26720] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(910,585) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:02:09.581][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:09.919][PID=34788][TID=26720] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(910,585) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:02:09.987][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:10.390][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:10.442][PID=34788][TID=26720] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(910,586) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:02:10.609][PID=34788][TID=26720] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(910,586) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:02:10.795][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:11.201][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:11.604][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:12.012][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:12.021][PID=34788][TID=29960] ime: force-show-ui reason=ImeGuardThread hwnd=0x00C0093E flags=0x8000000F
+[2026-03-25 23:02:12.021][PID=34788][TID=29960] ime: guard target game=0x00C0093E target=0x00C0093E class=Lineage
+[2026-03-25 23:02:12.429][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=0 open_after=0
+[2026-03-25 23:02:12.908][PID=24696][TID=8596] init: encrypt=0 randenc=1 port=2005 rsa_d(raw)=878082068 rsa_n(raw)=778703212
+[2026-03-25 23:02:16.027][PID=34788][TID=26720] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(593,397) obj=0x168DDE28 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:16.091][PID=34788][TID=29960] ime: force-enable reason=ImeGuardThread hwnd=0x00C0093E open_before=1 open_after=1
+[2026-03-25 23:02:16.094][PID=34788][TID=29960] ime: force-show-ui reason=ImeGuardThread hwnd=0x00C0093E flags=0x8000000F
+[2026-03-25 23:02:16.094][PID=34788][TID=29960] ime: guard target game=0x00C0093E target=0x00C0093E class=Lineage
+[2026-03-25 23:02:16.104][PID=34788][TID=26720] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(596,398) obj=0x168DDE28 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:16.959][PID=34788][TID=26720] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(865,612) obj=0x168DDE28 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:17.092][PID=34788][TID=26720] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00C0093E class=Lineage gamePt=(865,612) obj=0x168DDE28 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:28.413][PID=24696][TID=27428] mm: hook-status reason=hook-installed changeLabel@0x0064CCD0= 55 8B EC 83 EC 14 89 4D register@0x6506E0= 55 8B EC E8 48 21 DB FF
+[2026-03-25 23:02:28.427][PID=24696][TID=27428] compat: DISABLEDXMAXIMIZEDWINDOWEDMODE set for C:\3.81Lineage\TW13081901.bin ret=0
+[2026-03-25 23:02:28.427][PID=24696][TID=27428] ime: disable-tsf reason=CreateWindowEx tid=27428 ok=0
+[2026-03-25 23:02:28.429][PID=24696][TID=27428] ime: refreshed hwnd=0x00131A08 imewnd=0x000E147C comp=(8,8) source=fallback
+[2026-03-25 23:02:28.429][PID=24696][TID=27428] ime: game window created hwnd=0x00131A08 class=Lineage
+[2026-03-25 23:02:28.429][PID=24696][TID=27428] mm:auto: AutoRegisterMonitorThread started handle=0x000006D8
+[2026-03-25 23:02:28.429][PID=24696][TID=27428] hook: WH_GETMESSAGE installed tid=27428 hook=0x28D41981
+[2026-03-25 23:02:28.430][PID=24696][TID=27428] ime: guard thread started handle=0x000006F0
+[2026-03-25 23:02:31.664][PID=24696][TID=34768] ime: create context result=0x0E8C1A81
+[2026-03-25 23:02:31.665][PID=24696][TID=34768] ime: associate context hwnd=0x00131A08 okExChildren=0 okEx=1 old=0x00000000 new=0x0E8C1A81
+[2026-03-25 23:02:31.665][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:31.665][PID=24696][TID=34768] ime: force-show-ui reason=ImeGuardThread hwnd=0x00131A08 flags=0x8000000F
+[2026-03-25 23:02:31.667][PID=24696][TID=34768] ime: guard target game=0x00131A08 target=0x00131A08 class=Lineage
+[2026-03-25 23:02:32.077][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:32.481][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:32.885][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:33.290][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:33.711][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:34.116][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:34.520][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:34.927][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:34.928][PID=24696][TID=34768] ime: force-show-ui reason=ImeGuardThread hwnd=0x00131A08 flags=0x8000000F
+[2026-03-25 23:02:34.928][PID=24696][TID=34768] ime: guard target game=0x00131A08 target=0x00131A08 class=Lineage
+[2026-03-25 23:02:35.335][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:35.741][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:36.145][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:36.548][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:36.954][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:37.358][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:37.774][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:38.181][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:38.184][PID=24696][TID=34768] ime: force-show-ui reason=ImeGuardThread hwnd=0x00131A08 flags=0x8000000F
+[2026-03-25 23:02:38.185][PID=24696][TID=34768] ime: guard target game=0x00131A08 target=0x00131A08 class=Lineage
+[2026-03-25 23:02:38.588][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:38.994][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:39.399][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:39.802][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:40.208][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:40.616][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:41.032][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:41.438][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:41.438][PID=24696][TID=34768] ime: force-show-ui reason=ImeGuardThread hwnd=0x00131A08 flags=0x8000000F
+[2026-03-25 23:02:41.438][PID=24696][TID=34768] ime: guard target game=0x00131A08 target=0x00131A08 class=Lineage
+[2026-03-25 23:02:41.844][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:42.248][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:42.652][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:43.055][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:43.464][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:43.883][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:44.288][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:44.695][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:44.696][PID=24696][TID=34768] ime: force-show-ui reason=ImeGuardThread hwnd=0x00131A08 flags=0x8000000F
+[2026-03-25 23:02:44.696][PID=24696][TID=34768] ime: guard target game=0x00131A08 target=0x00131A08 class=Lineage
+[2026-03-25 23:02:45.098][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:45.516][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:45.919][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:46.322][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:46.728][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:51.586][PID=24696][TID=34768] ime: force-enable reason=ImeGuardThread hwnd=0x00131A08 open_before=0 open_after=0
+[2026-03-25 23:02:51.602][PID=24696][TID=27428] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00131A08 class=Lineage gamePt=(627,806) obj=0x16F5C390 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:51.603][PID=24696][TID=34768] ime: force-show-ui reason=ImeGuardThread hwnd=0x00131A08 flags=0x8000000F
+[2026-03-25 23:02:51.603][PID=24696][TID=34768] ime: guard target game=0x00131A08 target=0x00131A08 class=Lineage
+[2026-03-25 23:02:51.698][PID=24696][TID=27428] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00131A08 class=Lineage gamePt=(627,806) obj=0x16F5C390 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:53.010][PID=24696][TID=27428] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00131A08 class=Lineage gamePt=(875,633) obj=0x16F5C390 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:53.092][PID=24696][TID=27428] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00131A08 class=Lineage gamePt=(875,633) obj=0x16F5C390 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:53.694][PID=24696][TID=27428] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00131A08 class=Lineage gamePt=(858,618) obj=0x16F5C390 stateOff=0x30 state=0x00000000
+[2026-03-25 23:02:53.778][PID=24696][TID=27428] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00131A08 class=Lineage gamePt=(858,618) obj=0x16F5C390 stateOff=0x30 state=0x00000000
+[2026-03-25 23:07:11.567][PID=32812][TID=20192] init: encrypt=0 randenc=1 port=2005 rsa_d(raw)=878082068 rsa_n(raw)=778703212
+[2026-03-25 23:07:26.971][PID=32812][TID=37020] mm: hook-status reason=hook-installed changeLabel@0x0064CCD0= 55 8B EC 83 EC 14 89 4D register@0x6506E0= 55 8B EC E8 48 21 DB FF
+[2026-03-25 23:07:26.986][PID=32812][TID=37020] compat: DISABLEDXMAXIMIZEDWINDOWEDMODE set for C:\3.81Lineage\TW13081901.bin ret=0
+[2026-03-25 23:07:26.987][PID=32812][TID=37020] ime: disable-tsf reason=CreateWindowEx tid=37020 ok=0
+[2026-03-25 23:07:26.990][PID=32812][TID=37020] ime: refreshed hwnd=0x009D0618 imewnd=0x00310B3C comp=(8,8) source=fallback
+[2026-03-25 23:07:26.990][PID=32812][TID=37020] ime: game window created hwnd=0x009D0618 class=Lineage
+[2026-03-25 23:07:26.990][PID=32812][TID=37020] mm:auto: AutoRegisterMonitorThread started handle=0x00000678
+[2026-03-25 23:07:26.991][PID=32812][TID=37020] hook: WH_GETMESSAGE installed tid=37020 hook=0x3CD11AF7
+[2026-03-25 23:07:26.991][PID=32812][TID=37020] ime: guard thread started handle=0x000006F0
+[2026-03-25 23:07:37.274][PID=32812][TID=37020] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(272,424) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:07:37.367][PID=32812][TID=37020] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(272,424) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:07:37.521][PID=32812][TID=33992] ime: create context result=0x02701A2F
+[2026-03-25 23:07:37.522][PID=32812][TID=33992] ime: associate context hwnd=0x009D0618 okExChildren=0 okEx=1 old=0x00000000 new=0x02701A2F
+[2026-03-25 23:07:37.522][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:37.522][PID=32812][TID=33992] ime: force-show-ui reason=ImeGuardThread hwnd=0x009D0618 flags=0x8000000F
+[2026-03-25 23:07:37.523][PID=32812][TID=33992] ime: guard target game=0x009D0618 target=0x009D0618 class=Lineage
+[2026-03-25 23:07:37.822][PID=32812][TID=37020] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(272,424) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:07:37.926][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:38.339][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:38.773][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:39.178][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:39.582][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:40.000][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:40.365][PID=32812][TID=37020] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(1106,811) obj=0x1709B770 stateOff=0x30 state=0x00000000
+[2026-03-25 23:07:40.421][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:40.523][PID=32812][TID=37020] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(1106,811) obj=0x1709B770 stateOff=0x30 state=0x00000000
+[2026-03-25 23:07:40.840][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:40.842][PID=32812][TID=33992] ime: force-show-ui reason=ImeGuardThread hwnd=0x009D0618 flags=0x8000000F
+[2026-03-25 23:07:40.842][PID=32812][TID=33992] ime: guard target game=0x009D0618 target=0x009D0618 class=Lineage
+[2026-03-25 23:07:41.244][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:41.647][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:42.069][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:42.489][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:42.820][PID=32812][TID=37020] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(860,603) obj=0x1709B770 stateOff=0x30 state=0x00000000
+[2026-03-25 23:07:42.894][PID=32812][TID=33992] ime: force-enable reason=ImeGuardThread hwnd=0x009D0618 open_before=0 open_after=0
+[2026-03-25 23:07:42.946][PID=32812][TID=37020] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x009D0618 class=Lineage gamePt=(860,603) obj=0x1709B770 stateOff=0x30 state=0x00000000
+[2026-03-25 23:10:32.273][PID=35328][TID=34208] init: encrypt=0 randenc=1 port=2005 rsa_d(raw)=878082068 rsa_n(raw)=778703212
+[2026-03-25 23:10:45.849][PID=35328][TID=14088] mm: hook-status reason=hook-installed changeLabel@0x0064CCD0= 55 8B EC 83 EC 14 89 4D register@0x6506E0= 55 8B EC E8 48 21 DB FF
+[2026-03-25 23:10:45.864][PID=35328][TID=14088] compat: DISABLEDXMAXIMIZEDWINDOWEDMODE set for C:\3.81Lineage\TW13081901.bin ret=0
+[2026-03-25 23:10:45.864][PID=35328][TID=14088] ime: disable-tsf reason=CreateWindowEx tid=14088 ok=0
+[2026-03-25 23:10:45.868][PID=35328][TID=14088] ime: refreshed hwnd=0x007F103E imewnd=0x0037185A comp=(8,8) source=fallback
+[2026-03-25 23:10:45.868][PID=35328][TID=14088] ime: game window created hwnd=0x007F103E class=Lineage
+[2026-03-25 23:10:45.869][PID=35328][TID=14088] mm:auto: AutoRegisterMonitorThread started handle=0x000006C4
+[2026-03-25 23:10:45.869][PID=35328][TID=14088] hook: WH_GETMESSAGE installed tid=14088 hook=0x04250CEB
+[2026-03-25 23:10:45.869][PID=35328][TID=14088] ime: guard thread started handle=0x000006E4
+[2026-03-25 23:10:50.722][PID=35328][TID=34572] ime: create context result=0x294712B5
+[2026-03-25 23:10:50.727][PID=35328][TID=34572] ime: associate context hwnd=0x007F103E okExChildren=0 okEx=1 old=0x00000000 new=0x294712B5
+[2026-03-25 23:10:50.727][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:50.727][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:10:50.727][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:10:51.139][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:51.543][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:51.949][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:52.183][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(845,580) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:10:52.261][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(845,580) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:10:52.369][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:52.775][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:52.873][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(845,580) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:10:53.178][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:53.582][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:53.997][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:53.998][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:10:53.998][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:10:54.414][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:54.558][PID=35328][TID=14088] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:10:54.558][PID=35328][TID=14088] net: recv-raw len=16 pktLen=2966 op=0xDD enc=0 inited=0 ascii='...C;Gq.l`~.....' hex=96 0B DD 43 3B 47 71 D6 6C 60 7E 01 00 04 08 00
+[2026-03-25 23:10:54.559][PID=35328][TID=14088] net: send-plain len=22 pktLen=22 op=0xC0 enc=0 rand=1 ascii='...S#n...R...4.hG.p...' hex=16 00 C0 53 23 6E 11 14 FC 52 A8 F1 C9 34 F0 68 47 E9 70 1D CC 98
+[2026-03-25 23:10:54.559][PID=35328][TID=14088] net: send-cipher len=22 pktLen=22 op=0xC0 enc=0 inited=0 mode=randenc key=0 ascii='...S#n...R...4.hG.p...' hex=16 00 C0 53 23 6E 11 14 FC 52 A8 F1 C9 34 F0 68 47 E9 70 1D CC 98
+[2026-03-25 23:10:54.611][PID=35328][TID=14088] net: recv-raw len=2 pktLen=58 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 00
+[2026-03-25 23:10:54.611][PID=35328][TID=14088] net: recv-raw len=56 pktLen=57289 op=0x1E enc=0 inited=0 ascii='.............).q~.*QB...3..$2;-y"py.......}.7;<..0....O.' hex=C9 DF 1E E3 08 FF 1F DB D4 1D 80 E8 D1 29 B6 71 7E B7 2A 51 42 84 05 AB 33 0B 1C 24 32 3B 2D 79 22 70 79 9E 82 8F 82 DD B6 85 7D DF 37 3B 3C 93 0B 30 E8 D5 AB A7 4F E1
+[2026-03-25 23:10:54.831][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:55.236][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:55.648][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:55.754][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(973,599) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:10:55.888][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(973,599) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:10:56.067][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:56.470][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:56.875][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:57.294][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:57.296][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:10:57.296][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:10:57.702][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:58.118][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:58.534][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:58.894][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1005,642) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:10:58.952][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:59.088][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1005,642) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:10:59.376][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:10:59.794][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:00.201][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:00.607][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:00.610][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:00.611][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:00.750][PID=35328][TID=14088] cred: username-capture text='test001' ascii='test001.........................' hex=74 65 73 74 30 30 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[2026-03-25 23:11:00.751][PID=35328][TID=14088] cred: password-capture len=1 last=0x31 ascii='1' hex=31
+[2026-03-25 23:11:00.751][PID=35328][TID=14088] cred: password-capture len=2 last=0x32 ascii='12' hex=31 32
+[2026-03-25 23:11:00.751][PID=35328][TID=14088] cred: password-capture len=3 last=0x33 ascii='123' hex=31 32 33
+[2026-03-25 23:11:00.751][PID=35328][TID=14088] cred: password-capture len=4 last=0x34 ascii='1234' hex=31 32 33 34
+[2026-03-25 23:11:00.751][PID=35328][TID=14088] cred: password-capture len=5 last=0x00 ascii='1234.' hex=31 32 33 34 00
+[2026-03-25 23:11:00.753][PID=35328][TID=14088] net: send-plain len=22 pktLen=22 op=0x50 enc=0 rand=1 ascii='..P...... ..,.vG .an..' hex=16 00 50 11 F0 AB E1 90 C7 20 87 88 2C E9 76 47 20 F7 61 6E FB 0C
+[2026-03-25 23:11:00.753][PID=35328][TID=14088] cred: packet-scan op=0x50 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:00.754][PID=35328][TID=14088] net: send-cipher len=22 pktLen=22 op=0x50 enc=0 inited=0 mode=randenc key=0 ascii='..P...... ..,.vG .an..' hex=16 00 50 11 F0 AB E1 90 C7 20 87 88 2C E9 76 47 20 F7 61 6E FB 0C
+[2026-03-25 23:11:00.831][PID=35328][TID=14088] net: recv-raw len=2 pktLen=26 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=1A 00
+[2026-03-25 23:11:00.831][PID=35328][TID=14088] net: recv-raw len=24 pktLen=63750 op=0x94 enc=0 inited=0 ascii='....36Q...:.\Y>.........' hex=06 F9 94 0B 33 36 51 86 95 AE 3A F0 5C 59 3E E9 FA C1 D9 13 BF BA DD 0A
+[2026-03-25 23:11:00.876][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:00.876][PID=35328][TID=14088] net: recv-raw len=8 pktLen=15222 op=0x24 enc=0 inited=0 ascii='v;$...T.' hex=76 3B 24 09 1A FE 54 AB
+[2026-03-25 23:11:00.876][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:00.876][PID=35328][TID=14088] net: recv-raw len=8 pktLen=40850 op=0x97 enc=0 inited=0 ascii='...B..(.' hex=92 9F 97 42 E7 E2 28 C7
+[2026-03-25 23:11:00.884][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:00.885][PID=35328][TID=14088] net: recv-raw len=40 pktLen=4416 op=0x24 enc=0 inited=0 ascii='@.$....N...N..c3....71'..0...`.3<...'#..' hex=40 11 24 B2 08 B8 A6 4E 93 A1 0C 4E 83 87 63 33 C9 84 94 EF 37 31 27 14 08 30 A9 C5 00 60 84 33 3C 0E 9B D2 27 23 C7 97
+[2026-03-25 23:11:00.885][PID=35328][TID=14088] net: recv-raw len=2 pktLen=34 op=0xFFFFFFFF enc=0 inited=0 ascii='".' hex=22 00
+[2026-03-25 23:11:00.885][PID=35328][TID=14088] net: recv-raw len=32 pktLen=4124 op=0x7C enc=0 inited=0 ascii='..|......Kw...e.e......J...U....' hex=1C 10 7C 00 94 90 F2 8B DE 4B 77 BC 05 01 65 1D 65 E0 C2 00 B4 B8 DB 4A 18 8D A1 55 ED E9 8A F3
+[2026-03-25 23:11:00.885][PID=35328][TID=14088] net: recv-raw len=2 pktLen=34 op=0xFFFFFFFF enc=0 inited=0 ascii='".' hex=22 00
+[2026-03-25 23:11:00.885][PID=35328][TID=14088] net: recv-raw len=32 pktLen=37057 op=0x52 enc=0 inited=0 ascii='..R#;?.|...e+.>...W...[....M62.q' hex=C1 90 52 23 3B 3F DD 7C 08 D4 EE 65 2B 2E 3E FC D7 19 57 C1 B7 B9 5B 13 1C C0 A3 4D 36 32 D0 71
+[2026-03-25 23:11:00.900][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:00.900][PID=35328][TID=14088] net: recv-raw len=8 pktLen=54469 op=0x53 enc=0 inited=0 ascii='..S.~z..' hex=C5 D4 53 13 7E 7A 1B D1
+[2026-03-25 23:11:00.901][PID=35328][TID=14088] net: recv-raw len=2 pktLen=26 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=1A 00
+[2026-03-25 23:11:00.901][PID=35328][TID=14088] net: recv-raw len=24 pktLen=762 op=0x53 enc=0 inited=0 ascii='..S...L...T......P.%$ .2' hex=FA 02 53 FA A8 AC 4C BE AB 07 54 FE FF FB 1B E9 FC 50 8F 25 24 20 C0 32
+[2026-03-25 23:11:01.025][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:01.432][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:01.851][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:01.967][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(93,323) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:02.059][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(93,323) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:02.267][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:03.369][PID=35328][TID=14088] net: send-plain len=14 pktLen=14 op=0x94 enc=0 rand=1 ascii='...\P....G..?.' hex=0E 00 94 5C 50 F9 AD 1C 00 47 D6 DF 3F ED
+[2026-03-25 23:11:03.369][PID=35328][TID=14088] cred: packet-scan op=0x94 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.369][PID=35328][TID=14088] net: send-cipher len=14 pktLen=14 op=0x94 enc=0 inited=0 mode=randenc key=0 ascii='...\P....G..?.' hex=0E 00 94 5C 50 F9 AD 1C 00 47 D6 DF 3F ED
+[2026-03-25 23:11:03.381][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(93,323) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:03.698][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.698][PID=35328][TID=14088] net: recv-raw len=8 pktLen=6971 op=0x53 enc=0 inited=0 ascii=';.S&....' hex=3B 1B 53 26 B1 B2 ED F6
+[2026-03-25 23:11:03.786][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x16 enc=0 rand=1 ascii='.....H' hex=06 00 16 81 8F 48
+[2026-03-25 23:11:03.786][PID=35328][TID=14088] cred: packet-scan op=0x16 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.788][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x16 enc=0 inited=0 mode=randenc key=0 ascii='.....H' hex=06 00 16 81 8F 48
+[2026-03-25 23:11:03.789][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:03.789][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x8A enc=0 rand=1 ascii='.....:' hex=06 00 8A E2 D8 3A
+[2026-03-25 23:11:03.789][PID=35328][TID=14088] cred: packet-scan op=0x8A idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.789][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x8A enc=0 inited=0 mode=randenc key=0 ascii='.....:' hex=06 00 8A E2 D8 3A
+[2026-03-25 23:11:03.789][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:03.790][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:03.805][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.805][PID=35328][TID=14088] net: recv-raw len=8 pktLen=32188 op=0x12 enc=0 inited=0 ascii='.}.....@' hex=BC 7D 12 02 DE DD 03 40
+[2026-03-25 23:11:03.807][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.807][PID=35328][TID=14088] net: recv-raw len=8 pktLen=53553 op=0x7F enc=0 inited=0 ascii='1.. :9d.' hex=31 D1 7F 20 3A 39 64 08
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] net: recv-raw len=8 pktLen=40025 op=0x50 enc=0 inited=0 ascii='Y.P.[X..' hex=59 9C 50 06 5B 58 84 10
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] net: recv-raw len=45 pktLen=17038 op=0x51 enc=0 inited=0 ascii='.BQ...2....5...!bdt.GG1...b3......H.^\..|{*.<' hex=8E 42 51 05 84 E5 32 98 B9 D2 97 35 F3 FB AC 21 62 64 74 BA 47 47 31 8E B4 EF 62 33 99 B3 E8 A7 1E 19 48 8E 5E 5C 07 BA 7C 7B 2A EC 3C
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0xCB enc=0 rand=1 ascii='...]..' hex=06 00 CB 5D D9 C9
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] cred: packet-scan op=0xCB idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.808][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0xCB enc=0 inited=0 mode=randenc key=0 ascii='...]..' hex=06 00 CB 5D D9 C9
+[2026-03-25 23:11:03.830][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.830][PID=35328][TID=14088] net: recv-raw len=8 pktLen=32585 op=0x51 enc=0 inited=0 ascii='I.Qv..l.' hex=49 7F 51 76 B4 B6 6C 89
+[2026-03-25 23:11:03.830][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.830][PID=35328][TID=14088] net: recv-raw len=8 pktLen=5593 op=0x5C enc=0 inited=0 ascii='..\.....' hex=D9 15 5C D9 D3 D1 88 86
+[2026-03-25 23:11:03.831][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.831][PID=35328][TID=14088] net: recv-raw len=8 pktLen=25069 op=0x65 enc=0 inited=0 ascii='.ae%TV..' hex=ED 61 65 25 54 56 8F B8
+[2026-03-25 23:11:03.842][PID=35328][TID=14088] net: recv-raw len=2 pktLen=64 op=0xFFFFFFFF enc=0 inited=0 ascii='@.' hex=40 00
+[2026-03-25 23:11:03.842][PID=35328][TID=14088] net: recv-raw len=62 pktLen=45350 op=0xAF enc=0 inited=0 ascii='&..0w]8Ga..SJ......q..........I.l.L.ol9Ai..7F...'.(.S....<..JK' hex=26 B1 AF 30 77 5D 38 47 61 2E 0B 53 4A 00 E5 15 BB 00 BF 71 9C AA D4 8B 04 97 0C F3 0E 1C 49 1D 6C D7 4C B3 6F 6C 39 41 69 8D BF 37 46 8F E2 9D 27 B4 28 A8 53 F6 02 EA 18 3C CB F7 4A 4B
+[2026-03-25 23:11:03.842][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.842][PID=35328][TID=14088] net: recv-raw len=8 pktLen=42954 op=0xA0 enc=0 inited=0 ascii='...Pml.=' hex=CA A7 A0 50 6D 6C BA 3D
+[2026-03-25 23:11:03.842][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.842][PID=35328][TID=14088] net: recv-raw len=8 pktLen=10160 op=0xA3 enc=0 inited=0 ascii='.'."....' hex=B0 27 A3 22 E3 E2 B7 07
+[2026-03-25 23:11:03.844][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.844][PID=35328][TID=14088] net: recv-raw len=8 pktLen=53154 op=0xAE enc=0 inited=0 ascii='........' hex=A2 CF AE 8D 06 07 D3 0B
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=8 pktLen=28483 op=0xC1 enc=0 inited=0 ascii='Co.w..\\' hex=43 6F C1 77 07 07 5C 5C
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=2 pktLen=58 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 00
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=56 pktLen=27993 op=0x0F enc=0 inited=0 ascii='Ym.6..dta22.?......*..gNc.0.&'.............Y_..vl.<.....' hex=59 6D 0F 36 A4 8F 64 74 61 32 32 AD 3F 06 F4 F9 E4 BD A4 2A A5 9C 67 4E 63 09 30 96 26 27 F7 DD FA 9A A3 05 AE AC 81 8F 05 18 88 59 5F 97 7F 76 6C 06 3C B4 18 07 D0 FB
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=8 pktLen=33103 op=0x56 enc=0 inited=0 ascii='O.V.??n<' hex=4F 81 56 07 3F 3F 6E 3C
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=2 pktLen=3450 op=0xFFFFFFFF enc=0 inited=0 ascii='z.' hex=7A 0D
+[2026-03-25 23:11:03.845][PID=35328][TID=14088] net: recv-raw len=3448 pktLen=65077 op=0x45 enc=0 inited=0 ascii='5.E... ^...?....j.O...8{...8....t.{..[./.L.VGq........c...P...<F...' hex=35 FE 45 AF C6 C6 20 5E 91 E6 AA 3F 0F 0E DE A4 6A 1C 4F EF FE DA 38 7B 85 C7 BF 38 08 0C DF AE 74 03 7B EB FD 5B FC 2F 96 4C FC 56 47 71 A1 DC 0D 7F 05 82 B3 B3 63 19 D7 A0 50 FD EC EC 3C 46 ...
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] net: recv-raw len=2 pktLen=26 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=1A 00
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] net: recv-raw len=24 pktLen=18492 op=0x37 enc=0 inited=0 ascii='<H7...[.2s..".....t.-..?' hex=3C 48 37 E3 DE 15 5B F9 32 73 83 B9 22 EB A5 0E C5 84 74 D9 2D D2 9C 3F
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] net: recv-raw len=2 pktLen=394 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=8A 01
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] net: recv-raw len=392 pktLen=7314 op=0xF3 enc=0 inited=0 ascii='...O..sw.<............6..\{...F.....)...[[...k'^.....!.'..^6.yq....' hex=92 1C F3 4F 0A F5 73 77 BA 3C 8E E7 D0 15 D8 13 8B 8A D7 BC 04 F4 36 FD A3 5C 7B EE 8C 8C 46 8A 06 06 F4 9E 29 D6 1B D0 5B 5B 83 95 A9 6B 27 5E CA DE E9 C0 FC 21 EC 27 AC AC 5E 36 82 79 71 F9 ...
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x38 enc=0 rand=1 ascii='..8...' hex=06 00 38 B4 EF E3
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] cred: packet-scan op=0x38 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.847][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x38 enc=0 inited=0 mode=randenc key=0 ascii='..8...' hex=06 00 38 B4 EF E3
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0xA0 enc=0 rand=1 ascii='...6;.' hex=06 00 A0 36 3B 13
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] cred: packet-scan op=0xA0 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0xA0 enc=0 inited=0 mode=randenc key=0 ascii='...6;.' hex=06 00 A0 36 3B 13
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x65 enc=0 rand=1 ascii='..e...' hex=06 00 65 E9 CB 11
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] cred: packet-scan op=0x65 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x65 enc=0 inited=0 mode=randenc key=0 ascii='..e...' hex=06 00 65 E9 CB 11
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x80 enc=0 rand=1 ascii='...\.J' hex=06 00 80 5C EC 4A
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] cred: packet-scan op=0x80 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.848][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x80 enc=0 inited=0 mode=randenc key=0 ascii='...\.J' hex=06 00 80 5C EC 4A
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x85 enc=0 rand=1 ascii='......' hex=06 00 85 0E AB 82
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] cred: packet-scan op=0x85 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x85 enc=0 inited=0 mode=randenc key=0 ascii='......' hex=06 00 85 0E AB 82
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x6E enc=0 rand=1 ascii='..n...' hex=06 00 6E B2 8F 12
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] cred: packet-scan op=0x6E idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x6E enc=0 inited=0 mode=randenc key=0 ascii='..n...' hex=06 00 6E B2 8F 12
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: send-plain len=10 pktLen=10 op=0x01 enc=0 rand=1 ascii='......pS..' hex=0A 00 01 BE A6 DB 70 53 BC 1A
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] cred: packet-scan op=0x01 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: send-cipher len=10 pktLen=10 op=0x01 enc=0 inited=0 mode=randenc key=0 ascii='......pS..' hex=0A 00 01 BE A6 DB 70 53 BC 1A
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:11:03.849][PID=35328][TID=14088] net: recv-raw len=45 pktLen=44584 op=0x8E enc=0 inited=0 ascii='(..1.Y.z..3<P..!..2Q...l...>>. &(....a-....d.' hex=28 AE 8E 31 C5 59 99 7A EC A9 33 3C 50 A5 E5 21 D5 FD 32 51 06 FB 9A 6C E5 90 C2 3E 3E E9 20 26 28 01 8F E4 9E 61 2D D9 A8 81 0F 64 1E
+[2026-03-25 23:11:03.851][PID=35328][TID=14088] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:11:03.851][PID=35328][TID=14088] net: recv-raw len=16 pktLen=2883 op=0x8E enc=0 inited=0 ascii='C...a.UI0....4..' hex=43 0B 8E D2 61 9E 55 49 30 13 9D F6 CB 34 FF E3
+[2026-03-25 23:11:03.851][PID=35328][TID=14088] net: recv-raw len=2 pktLen=52 op=0xFFFFFFFF enc=0 inited=0 ascii='4.' hex=34 00
+[2026-03-25 23:11:03.852][PID=35328][TID=14088] net: recv-raw len=50 pktLen=3601 op=0x9E enc=0 inited=0 ascii='...j.o%`..W....n.&.\#{.|.....&l-p.3X`...'h.ss.9.4;' hex=11 0E 9E 6A 9A 6F 25 60 D7 D8 57 12 12 ED A7 6E CE 26 C5 5C 23 7B 88 7C 11 AA DF 0C D9 26 6C 2D 70 B6 33 58 60 A7 D5 90 27 68 18 73 73 8C 39 83 34 3B
+[2026-03-25 23:11:03.898][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.898][PID=35328][TID=14088] net: recv-raw len=8 pktLen=12098 op=0x0F enc=0 inited=0 ascii='B/..U.b.' hex=42 2F 0F 99 55 AB 62 0F
+[2026-03-25 23:11:03.898][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.898][PID=35328][TID=14088] net: recv-raw len=8 pktLen=20231 op=0x0F enc=0 inited=0 ascii='.O..4...' hex=07 4F 0F BD 34 CA 82 14
+[2026-03-25 23:11:03.898][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.898][PID=35328][TID=14088] net: recv-raw len=8 pktLen=65357 op=0x0E enc=0 inited=0 ascii='M....v..' hex=4D FF 0E CF 88 76 B1 0F
+[2026-03-25 23:11:03.900][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.900][PID=35328][TID=14088] net: recv-raw len=8 pktLen=61952 op=0x02 enc=0 inited=0 ascii='.....q7.' hex=00 F2 02 82 8F 71 37 D0
+[2026-03-25 23:11:03.901][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.901][PID=35328][TID=14088] net: recv-raw len=8 pktLen=40342 op=0x06 enc=0 inited=0 ascii='....{.CL' hex=96 9D 06 B2 7B 86 43 4C
+[2026-03-25 23:11:03.901][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.901][PID=35328][TID=14088] net: recv-raw len=8 pktLen=36220 op=0xE6 enc=0 inited=0 ascii='|.......' hex=7C 8D E6 DF C5 C7 83 BB
+[2026-03-25 23:11:03.902][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.902][PID=35328][TID=14088] net: recv-raw len=8 pktLen=46526 op=0xBB enc=0 inited=0 ascii='...].N..' hex=BE B5 BB 5D B3 4E 8D ED
+[2026-03-25 23:11:03.903][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.903][PID=35328][TID=14088] net: recv-raw len=8 pktLen=26518 op=0xBB enc=0 inited=0 ascii='.g..a..W' hex=96 67 BB C2 61 9C DE 57
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=2 pktLen=50 op=0xFFFFFFFF enc=0 inited=0 ascii='2.' hex=32 00
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=48 pktLen=42775 op=0xBB enc=0 inited=0 ascii='.....\.($.WQ.v....y..X.($.WQ.v....y..X.($.WQ.v..' hex=17 A7 BB C0 A0 5C 99 28 24 EC 57 51 8A 76 B7 06 0A C2 79 7F A4 58 99 28 24 EC 57 51 8A 76 B7 06 0A C2 79 7F A4 58 99 28 24 EC 57 51 8A 76 B7 06
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=2 pktLen=50 op=0xFFFFFFFF enc=0 inited=0 ascii='2.' hex=32 00
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=48 pktLen=57360 op=0xBA enc=0 inited=0 ascii='......S..N..l...F.wq..S..N..l...F.wq..S..N..l...' hex=10 E0 BA C3 E7 1B 53 89 C5 4E F4 F2 6C 90 D0 0A 46 CD 77 71 EF 13 53 89 C5 4E F4 F2 6C 90 D0 0A 46 CD 77 71 EF 13 53 89 C5 4E F4 F2 6C 90 D0 0A
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=2 pktLen=6 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=06 00
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=4 pktLen=57686 op=0xBB enc=0 inited=0 ascii='V..=' hex=56 E1 BB 3D
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=8 pktLen=20761 op=0xBB enc=0 inited=0 ascii='.Q..W...' hex=19 51 BB C8 57 AA BD 9E
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:03.904][PID=35328][TID=14088] net: recv-raw len=8 pktLen=56279 op=0xBB enc=0 inited=0 ascii='.....#..' hex=D7 DB BB 81 DD 23 B7 EC
+[2026-03-25 23:11:03.990][PID=35328][TID=14088] net: recv-raw len=2 pktLen=58 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 00
+[2026-03-25 23:11:03.990][PID=35328][TID=14088] net: recv-raw len=56 pktLen=48016 op=0xBB enc=0 inited=0 ascii='.....+~o...k.=.|..C....N. Q|....MZL..8/a.L..F..tJ..N.BO3' hex=90 BB BB AC BD 2B 7E 6F F1 F3 04 6B B2 3D 01 7C 8B F8 43 F3 9B D7 9F 4E F9 20 51 7C E4 1F 8A 0A 4D 5A 4C 0A 09 38 2F 61 96 4C 06 B6 46 7F B4 74 4A FA FA 4E 92 42 4F 33
+[2026-03-25 23:11:03.993][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.993][PID=35328][TID=14088] net: recv-raw len=40 pktLen=63607 op=0xBB enc=0 inited=0 ascii='w..8........p.0.D>..........p.0.D>......' hex=77 F8 BB 38 EE 15 AE 0A DA A0 1B 1D 70 8B 30 94 44 3E 85 83 EE 15 AE 0A DA A0 1B 1D 70 8B 30 94 44 3E 85 83 EE 15 AE 0A
+[2026-03-25 23:11:03.993][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.994][PID=35328][TID=14088] net: recv-raw len=40 pktLen=12570 op=0xAB enc=0 inited=0 ascii='.1..?..3G....{A.....?..3G....{A.....?..3' hex=1A 31 AB A4 3F C4 FE 33 47 1D B6 B0 80 7B 41 8C F8 A2 09 0F 3F C4 FE 33 47 1D B6 B0 80 7B 41 8C F8 A2 09 0F 3F C4 FE 33
+[2026-03-25 23:11:03.994][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.994][PID=35328][TID=14088] net: recv-raw len=40 pktLen=32496 op=0xA3 enc=0 inited=0 ascii='.~.,|.?..`..6.u.P*..|.?..`..6.u.P*..|.?.' hex=F0 7E A3 2C 7C 86 3F CA 1A 60 C3 C5 36 CC 75 80 50 2A 89 8F 7C 86 3F CA 1A 60 C3 C5 36 CC 75 80 50 2A 89 8F 7C 86 3F CA
+[2026-03-25 23:11:03.994][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.995][PID=35328][TID=14088] net: recv-raw len=40 pktLen=48017 op=0xA7 enc=0 inited=0 ascii='.....E}c.M..Z........E}c.M..Z........E}c' hex=91 BB A7 AE BF 45 7D 63 17 4D EA EC 5A A0 98 86 F2 A8 0F 09 BF 45 7D 63 17 4D EA EC 5A A0 98 86 F2 A8 0F 09 BF 45 7D 63
+[2026-03-25 23:11:03.995][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.995][PID=35328][TID=14088] net: recv-raw len=40 pktLen=62333 op=0xA4 enc=0 inited=0 ascii='}..).....T...t..U/.......T...t..U/......' hex=7D F3 A4 29 F5 0F B8 FE 2E 54 F1 F7 8E 74 C3 85 55 2F 8A 8C F5 0F B8 FE 2E 54 F1 F7 8E 74 C3 85 55 2F 8A 8C F5 0F B8 FE
+[2026-03-25 23:11:03.995][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.995][PID=35328][TID=14088] net: recv-raw len=40 pktLen=13081 op=0xA5 enc=0 inited=0 ascii='.3.-.Nx.c9...]k.p*...Nx.c9...]k.p*...Nx.' hex=19 33 A5 2D B4 4E 78 17 63 39 9C 9B A7 5D 6B 04 70 2A 8F 88 B4 4E 78 17 63 39 9C 9B A7 5D 6B 04 70 2A 8F 88 B4 4E 78 17
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=40 pktLen=62585 op=0x25 enc=0 inited=0 ascii='y.%i.J.h......S..nKL.J.h......S..nKL.J.h' hex=79 F4 25 69 B3 4A FF 68 B8 C2 E7 E0 1F E6 53 C4 14 6E 4B 4C B3 4A FF 68 B8 C2 E7 E0 1F E6 53 C4 14 6E 4B 4C B3 4A FF 68
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=40 pktLen=3364 op=0x65 enc=0 inited=0 ascii='$.e.*..'S.lk.Pd.....*..'S.lk.Pd.....*..'' hex=24 0D 65 8D 2A D3 E7 27 53 09 6C 6B A9 50 64 A4 D0 8A EF E8 2A D3 E7 27 53 09 6C 6B A9 50 64 A4 D0 8A EF E8 2A D3 E7 27
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=40 pktLen=58987 op=0x4D enc=0 inited=0 ascii='k.M!...C......d.\&cd...C......d.\&cd...C' hex=6B E6 4D 21 E1 18 AB 43 93 E9 AC AB 2E D7 64 8C 5C 26 63 64 E1 18 AB 43 93 E9 AC AB 2E D7 64 8C 5C 26 63 64 E1 18 AB 43
+[2026-03-25 23:11:03.996][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=40 pktLen=41866 op=0x41 enc=0 inited=0 ascii='..A..Ugv.X..Z........Ugv.X..Z........Ugv' hex=8A A3 41 A1 AC 55 67 76 02 58 1D 12 5A A3 91 80 F4 AE EB E4 AC 55 67 76 02 58 1D 12 5A A3 91 80 F4 AE EB E4 AC 55 67 76
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=40 pktLen=16589 op=0x65 enc=0 inited=0 ascii='.@e.K..:.....,..t.K@K..:.....,..t.K@K..:' hex=CD 40 65 05 4B B2 03 3A EA 90 D5 DE D5 2C 9D A4 74 0E 4B 40 4B B2 03 3A EA 90 D5 DE D5 2C 9D A4 74 0E 4B 40 4B B2 03 3A
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=40 pktLen=12569 op=0x55 enc=0 inited=0 ascii='.1U.........>...............>...........' hex=19 31 55 91 1A E2 D2 B0 C4 9E DB F0 3E C6 F6 94 E0 BA FF D4 1A E2 D2 B0 C4 9E DB F0 3E C6 F6 94 E0 BA FF D4 1A E2 D2 B0
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=40 pktLen=31478 op=0xC5 enc=0 inited=0 ascii='.z..A...L6sH.!......A...L6sH.!......A...' hex=F6 7A C5 95 41 B9 16 9C 4C 36 73 48 D9 21 8E 04 D4 AE EB D0 41 B9 16 9C 4C 36 73 48 D9 21 8E 04 D4 AE EB D0 41 B9 16 9C
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.997][PID=35328][TID=14088] net: recv-raw len=40 pktLen=64467 op=0x05 enc=0 inited=0 ascii='...Q@..%Q.N..Yw.....@..%Q.N..Yw.....@..%' hex=D3 FB 05 51 40 B8 96 25 51 0B 4E F5 A1 59 77 C4 B0 EA AF 14 40 B8 96 25 51 0B 4E F5 A1 59 77 C4 B0 EA AF 14 40 B8 96 25
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=40 pktLen=31984 op=0x45 enc=0 inited=0 ascii='.|E..........._.P*o..{........[.P*o..{..' hex=F0 7C 45 D5 87 7F D2 09 D9 A3 E6 1D 0A F2 5F 84 50 2A 6F 94 83 7B D6 0D DD A7 E2 19 0E F6 5B 80 50 2A 6F 94 83 7B D6 0D
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=40 pktLen=13586 op=0x45 enc=0 inited=0 ascii='.5EQ.9..e?z.[........;..g=x.Y........;..' hex=12 35 45 51 CE 39 15 11 65 3F 7A 81 5B AC 80 84 F2 A8 ED 16 CC 3B 17 13 67 3D 78 83 59 AE 82 86 F2 A8 ED 16 CC 3B 17 13
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=40 pktLen=63093 op=0x45 enc=0 inited=0 ascii='u.E...Q}...i....U/j...P|...h....U/j...P|' hex=75 F6 45 D5 0D FA 51 7D AD D7 92 69 F4 03 A8 84 55 2F 6A 91 0C FB 50 7C AC D6 93 68 F5 02 A9 85 55 2F 6A 91 0C FB 50 7C
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=40 pktLen=36776 op=0x45 enc=0 inited=0 ascii='..EQt......l.......T4......,L......T4...' hex=A8 8F 45 51 74 83 A9 FC 88 D2 97 6C 0C FB D1 84 B0 EA AF 54 34 C3 E9 BC C8 92 D7 2C 4C BB 91 C4 B0 EA AF 54 34 C3 E9 BC
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=40 pktLen=18635 op=0x45 enc=0 inited=0 ascii='.HE..D..@:...P..t.K..d..`._..p..t.K..d..' hex=CB 48 45 D5 B3 44 ED 90 40 3A 7F 84 A7 50 F9 84 74 0E 4B B0 93 64 CD B0 60 1A 5F A4 87 70 D9 A4 74 0E 4B B0 93 64 CD B0
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:03.998][PID=35328][TID=14088] net: recv-raw len=40 pktLen=2351 op=0x45 enc=0 inited=0 ascii='/.EQ..,.......".......<.......2.......<.' hex=2F 09 45 51 F2 04 2C 8A FE A4 E1 1A FC 0A 22 84 E0 BA FF 04 E2 14 3C 9A EE B4 F1 0A EC 1A 32 94 E0 BA FF 04 E2 14 3C 9A
+[2026-03-25 23:11:04.000][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:04.000][PID=35328][TID=14088] net: recv-raw len=40 pktLen=49728 op=0x45 enc=0 inited=0 ascii='@.E.9.h.v.I...J.\&c.1.`.~.A...B.\&c.1.`.' hex=40 C2 45 D5 39 CF 68 A6 76 0C 49 B2 1B ED 4A 84 5C 26 63 98 31 C7 60 AE 7E 04 41 BA 13 E5 42 8C 5C 26 63 98 31 C7 60 AE
+[2026-03-25 23:11:04.000][PID=35328][TID=14088] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:11:04.000][PID=35328][TID=14088] net: recv-raw len=40 pktLen=33701 op=0x45 enc=0 inited=0 ascii='..EQx.._+q4..Us.p*o...(....O#...p*o...(.' hex=A5 83 45 51 78 8E A8 5F 2B 71 34 CF A3 55 73 84 70 2A 6F 94 F8 0E 28 DF AB F1 B4 4F 23 D5 F3 04 70 2A 6F 94 F8 0E 28 DF
+[2026-03-25 23:11:04.034][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.034][PID=35328][TID=14088] net: recv-raw len=8 pktLen=2788 op=0x45 enc=0 inited=0 ascii='..E.....' hex=E4 0A 45 9B F1 07 A2 BD
+[2026-03-25 23:11:04.042][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.042][PID=35328][TID=14088] net: recv-raw len=8 pktLen=7480 op=0x45 enc=0 inited=0 ascii='8.EQ..7.' hex=38 1D 45 51 E6 13 37 7F
+[2026-03-25 23:11:04.043][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.043][PID=35328][TID=14088] net: recv-raw len=8 pktLen=3283 op=0x44 enc=0 inited=0 ascii='..D.....' hex=D3 0C 44 06 F6 03 A0 D0
+[2026-03-25 23:11:04.052][PID=35328][TID=14088] net: recv-raw len=2 pktLen=51 op=0xFFFFFFFF enc=0 inited=0 ascii='3.' hex=33 00
+[2026-03-25 23:11:04.052][PID=35328][TID=14088] net: recv-raw len=49 pktLen=6288 op=0x48 enc=0 inited=0 ascii='..H^...9d.:..Ge...E......VI.......R..%...c'"Z.r.>' hex=90 18 48 5E 1D AE 96 39 64 7F 3A C0 BC 47 65 FC D6 01 45 BF C7 16 06 AE B6 56 49 84 CC 0E 1E B6 C1 16 52 A8 D0 25 07 9E B4 63 27 22 5A AF 72 14 3E
+[2026-03-25 23:11:04.053][PID=35328][TID=14088] net: recv-raw len=2 pktLen=51 op=0xFFFFFFFF enc=0 inited=0 ascii='3.' hex=33 00
+[2026-03-25 23:11:04.053][PID=35328][TID=14088] net: recv-raw len=49 pktLen=63272 op=0xC8 enc=0 inited=0 ascii='(..~..9..=..3.i...D..X.9w..FM.....Z..b...*...)wI4' hex=28 F7 C8 7E FE 80 39 CE C4 3D FA 0C 33 C8 69 A8 D5 80 44 B2 89 58 CA 39 77 1A 85 46 4D 88 1D EB CB 9E 5A AC 97 62 C3 02 7F 2A EE E7 DC 29 77 49 34
+[2026-03-25 23:11:04.072][PID=35328][TID=14088] net: recv-raw len=2 pktLen=106 op=0xFFFFFFFF enc=0 inited=0 ascii='j.' hex=6A 00
+[2026-03-25 23:11:04.072][PID=35328][TID=14088] net: recv-raw len=104 pktLen=9480 op=0x25 enc=0 inited=0 ascii='.%%9...@...]._..+.,.)....\.a.D.....g..`....5.UL....?.*$......b#....' hex=08 25 25 39 CB 95 04 40 0B 1F 00 5D 1A 5F A5 FB 2B BD 2C 8B 29 BC D9 82 CA 5C A1 61 C4 44 01 98 C6 D8 AC 67 C4 1C 60 EB 86 E1 F5 35 90 55 4C 94 90 8F FD 3F EF 2A 24 FF E4 FD E4 14 CA 62 23 8D ...
+[2026-03-25 23:11:04.081][PID=35328][TID=14088] net: recv-raw len=2 pktLen=314 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 01
+[2026-03-25 23:11:04.081][PID=35328][TID=14088] net: recv-raw len=312 pktLen=19744 op=0x18 enc=0 inited=0 ascii=' M..T_?..,......1..jT_?..,......1..jT_?..,......1..jT_?..,.........' hex=20 4D 18 8F 54 5F 3F D2 F4 2C CB AF 91 9A FA 17 31 E9 0E 6A 54 5F 3F D2 F4 2C CB AF 91 9A FA 17 31 E9 0E 6A 54 5F 3F D2 F4 2C CB AF 91 9A FA 17 31 E9 0E 6A 54 5F 3F D2 F4 2C CB AF 91 9A FA 17 ...
+[2026-03-25 23:11:04.082][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.082][PID=35328][TID=14088] net: recv-raw len=8 pktLen=8375 op=0x98 enc=0 inited=0 ascii='. .:&...' hex=B7 20 98 3A 26 D2 CC F7
+[2026-03-25 23:11:04.082][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.082][PID=35328][TID=14088] net: recv-raw len=8 pktLen=57315 op=0x05 enc=0 inited=0 ascii='....D.,O' hex=E3 DF 05 06 44 B1 2C 4F
+[2026-03-25 23:11:04.118][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.118][PID=35328][TID=14088] net: recv-raw len=8 pktLen=10414 op=0x05 enc=0 inited=0 ascii='.(...G[.' hex=AE 28 05 BC B3 47 5B D7
+[2026-03-25 23:11:04.118][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.119][PID=35328][TID=14088] net: recv-raw len=8 pktLen=21615 op=0x05 enc=0 inited=0 ascii='oT...<..' hex=6F 54 05 07 CF 3C A7 13
+[2026-03-25 23:11:04.119][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.119][PID=35328][TID=14088] net: recv-raw len=8 pktLen=45360 op=0x05 enc=0 inited=0 ascii='0...*...' hex=30 B1 05 BF 2A D9 C3 1E
+[2026-03-25 23:11:04.190][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:04.253][PID=35328][TID=14088] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:11:04.253][PID=35328][TID=14088] net: recv-raw len=16 pktLen=23289 op=0x05 enc=0 inited=0 ascii='.Z....&#Q....9..' hex=F9 5A 05 97 C1 C0 26 23 51 07 02 99 CA 39 A0 A5
+[2026-03-25 23:11:04.253][PID=35328][TID=14088] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:11:04.253][PID=35328][TID=14088] net: recv-raw len=16 pktLen=38862 op=0x05 enc=0 inited=0 ascii='...........XN...' hex=CE 97 05 1D 0E FD E4 CA 9A C6 C3 58 4E BD A5 8B
+[2026-03-25 23:11:04.254][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:04.254][PID=35328][TID=14088] net: recv-raw len=8 pktLen=32514 op=0x07 enc=0 inited=0 ascii='...0....' hex=02 7F 07 30 EE 1C 8B DD
+[2026-03-25 23:11:04.254][PID=35328][TID=14088] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:11:04.254][PID=35328][TID=14088] net: recv-raw len=45 pktLen=12871 op=0x0D enc=0 inited=0 ascii='G2.8.8.......tn!+.H.j........2.,...d...c...T.' hex=47 32 0D 38 A9 38 A2 CA A2 E0 F9 06 8C 74 6E 21 2B 04 48 DB 6A 9A A1 DC A1 D3 02 0E E8 32 A1 2C DC F2 FF 64 F8 0A 1C 63 EC C2 CF 54 C8
+[2026-03-25 23:11:04.608][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:05.025][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:05.430][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:05.656][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(627,372) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:05.656][PID=35328][TID=14088] net: send-plain len=10 pktLen=10 op=0x18 enc=0 rand=1 ascii='.....w..s.' hex=0A 00 18 BB A2 77 9F D0 73 82
+[2026-03-25 23:11:05.656][PID=35328][TID=14088] cred: packet-scan op=0x18 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:05.656][PID=35328][TID=14088] net: send-cipher len=10 pktLen=10 op=0x18 enc=0 inited=0 mode=randenc key=0 ascii='.....w..s.' hex=0A 00 18 BB A2 77 9F D0 73 82
+[2026-03-25 23:11:05.785][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(627,372) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:05.850][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:06.233][PID=35328][TID=14088] net: send-plain len=10 pktLen=10 op=0xE5 enc=0 rand=1 ascii='...[..{4..' hex=0A 00 E5 5B DD A4 7B 34 EE 0B
+[2026-03-25 23:11:06.233][PID=35328][TID=14088] cred: packet-scan op=0xE5 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:06.233][PID=35328][TID=14088] net: send-cipher len=10 pktLen=10 op=0xE5 enc=0 inited=0 mode=randenc key=0 ascii='...[..{4..' hex=0A 00 E5 5B DD A4 7B 34 EE 0B
+[2026-03-25 23:11:06.271][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:06.350][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(627,372) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:06.675][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:07.092][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:07.097][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:07.097][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:07.499][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:07.670][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(344,38) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:07.726][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(344,38) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:07.916][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:07.976][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(344,35) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:08.091][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(344,35) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:08.290][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(347,23) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:08.333][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:08.412][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(347,23) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:08.756][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:09.175][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:09.482][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(154,729) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:09.594][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:09.621][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(154,729) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:09.621][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x5F enc=0 rand=1 ascii='.._...' hex=06 00 5F AD A6 98
+[2026-03-25 23:11:09.622][PID=35328][TID=14088] cred: packet-scan op=0x5F idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:09.622][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x5F enc=0 inited=0 mode=randenc key=0 ascii='.._...' hex=06 00 5F AD A6 98
+[2026-03-25 23:11:09.664][PID=35328][TID=14088] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:11:09.664][PID=35328][TID=14088] net: recv-raw len=16 pktLen=63362 op=0x0F enc=0 inited=0 ascii='...>l...+....4..' hex=82 F7 0F 3E 6C 9E 0B AC 2B 0F 02 99 C6 34 A1 06
+[2026-03-25 23:11:09.664][PID=35328][TID=14088] net: recv-raw len=2 pktLen=33 op=0xFFFFFFFF enc=0 inited=0 ascii='!.' hex=21 00
+[2026-03-25 23:11:09.664][PID=35328][TID=14088] net: recv-raw len=31 pktLen=10749 op=0x0D enc=0 inited=0 ascii='.)...B....7.y8.0.z.4.."Hw..A.sg' hex=FD 29 0D 9F B0 42 F3 FB D7 92 37 FD 79 38 89 30 12 7A CB 34 B8 9C 22 48 77 BD 1E 41 C2 73 67
+[2026-03-25 23:11:10.013][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:10.421][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:10.426][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:10.426][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:10.838][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:11.256][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:11.663][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:12.081][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:12.499][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:12.919][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:13.327][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:13.747][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:13.748][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:13.748][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:14.163][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:14.570][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:14.985][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:15.391][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:15.814][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:16.000][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(251,191) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:16.111][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(251,191) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:16.112][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x11 enc=0 rand=1 ascii='......' hex=06 00 11 AF A6 D5
+[2026-03-25 23:11:16.112][PID=35328][TID=14088] cred: packet-scan op=0x11 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:16.112][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x11 enc=0 inited=0 mode=randenc key=0 ascii='......' hex=06 00 11 AF A6 D5
+[2026-03-25 23:11:16.147][PID=35328][TID=14088] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:11:16.147][PID=35328][TID=14088] net: recv-raw len=8 pktLen=61240 op=0x0D enc=0 inited=0 ascii='8...v...' hex=38 EF 0D 9E 76 87 14 EC
+[2026-03-25 23:11:16.219][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:16.632][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:17.050][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:17.054][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:17.054][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:17.386][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(597,409) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:17.458][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:17.510][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(597,409) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:17.875][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:18.295][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:18.326][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(198,206) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:18.470][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(198,206) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:18.714][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:19.130][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:19.450][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(525,373) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:19.550][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:19.584][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(525,373) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:19.970][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:20.170][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(557,416) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:20.310][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(557,416) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:20.374][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:20.381][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:20.381][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:20.790][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:21.208][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:21.519][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(616,386) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:21.613][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:21.680][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(616,386) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:22.029][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:22.445][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:22.521][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(558,421) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:22.664][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(558,421) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:22.851][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:23.254][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:23.310][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(739,383) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:23.444][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(739,383) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:23.659][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:23.664][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:23.664][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:23.886][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(560,424) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:24.003][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(560,424) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:24.078][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:24.431][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(688,437) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:24.494][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:24.529][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(688,437) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:24.913][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:25.321][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:25.519][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1097,139) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:25.633][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1097,139) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:25.738][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:26.155][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:26.226][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1094,149) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:26.375][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1094,149) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:26.574][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:26.665][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1090,145) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:26.810][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1090,145) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:11:26.989][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:26.994][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:26.995][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:27.406][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:27.823][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:28.244][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:28.659][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:29.075][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:29.491][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:29.912][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:30.331][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:30.336][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:30.337][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:30.740][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:31.159][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:31.578][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:31.998][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:32.416][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:32.823][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:33.228][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:33.645][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:33.651][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:33.652][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:34.065][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:34.471][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:34.889][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:35.305][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:35.707][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:36.113][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:36.531][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:36.950][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:36.952][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:36.952][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:37.356][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:37.763][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:38.182][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:38.588][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:39.006][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:39.420][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:39.842][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:40.259][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:40.263][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:40.263][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:40.677][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:41.082][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:41.501][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:41.918][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:42.334][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:42.753][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:43.173][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:43.578][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:43.585][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:43.585][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:43.996][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:44.413][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:44.830][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:45.249][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:45.668][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:46.086][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:46.504][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:46.922][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:46.926][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:46.928][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:47.341][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:47.746][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:48.151][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:48.573][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:48.992][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:49.412][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:49.830][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:50.247][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:50.254][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:50.254][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:50.667][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:51.087][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:51.505][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:51.911][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:52.324][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:52.744][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:53.166][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:53.583][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:53.588][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:11:53.588][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:11:53.990][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:54.392][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:54.812][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:55.229][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:55.646][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:56.066][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=0 open_after=0
+[2026-03-25 23:11:56.474][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0xDA enc=0 rand=1 ascii='.....&' hex=06 00 DA 99 A6 26
+[2026-03-25 23:11:56.474][PID=35328][TID=14088] cred: packet-scan op=0xDA idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:11:56.474][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0xDA enc=0 inited=0 mode=randenc key=0 ascii='.....&' hex=06 00 DA 99 A6 26
+[2026-03-25 23:12:03.794][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x14 enc=0 rand=1 ascii='....Y.' hex=06 00 14 08 59 0B
+[2026-03-25 23:12:03.795][PID=35328][TID=14088] cred: packet-scan op=0x14 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:12:03.795][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x14 enc=0 inited=0 mode=randenc key=0 ascii='....Y.' hex=06 00 14 08 59 0B
+[2026-03-25 23:12:08.074][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0xE4 enc=0 rand=1 ascii='....Y.' hex=06 00 E4 06 59 06
+[2026-03-25 23:12:08.074][PID=35328][TID=14088] cred: packet-scan op=0xE4 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:12:08.074][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0xE4 enc=0 inited=0 mode=randenc key=0 ascii='....Y.' hex=06 00 E4 06 59 06
+[2026-03-25 23:12:08.107][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1177,867) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:12:08.189][PID=35328][TID=34572] ime: force-enable reason=ImeGuardThread hwnd=0x007F103E open_before=1 open_after=1
+[2026-03-25 23:12:08.194][PID=35328][TID=34572] ime: force-show-ui reason=ImeGuardThread hwnd=0x007F103E flags=0x8000000F
+[2026-03-25 23:12:08.194][PID=35328][TID=34572] ime: guard target game=0x007F103E target=0x007F103E class=Lineage
+[2026-03-25 23:12:08.216][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(1177,867) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:12:08.217][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0xAB enc=0 rand=1 ascii='...vX1' hex=06 00 AB 76 58 31
+[2026-03-25 23:12:08.217][PID=35328][TID=14088] cred: packet-scan op=0xAB idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:12:08.217][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0xAB enc=0 inited=0 mode=randenc key=0 ascii='...vX1' hex=06 00 AB 76 58 31
+[2026-03-25 23:12:08.244][PID=35328][TID=14088] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:12:08.244][PID=35328][TID=14088] net: recv-raw len=45 pktLen=41087 op=0x0D enc=0 inited=0 ascii='....9.5....k..0!......6...mc.h.,uTY.h......9.' hex=7F A0 0D 9C 39 AB 35 03 C2 8F 96 6B D5 2E 30 21 82 A2 EE 7F FA 09 36 15 C1 BC 6D 63 B1 68 FF 2C 75 54 59 C0 68 99 8B AA 8C AD A0 39 91
+[2026-03-25 23:12:08.254][PID=35328][TID=14088] net: recv-raw len=2 pktLen=74 op=0xFFFFFFFF enc=0 inited=0 ascii='J.' hex=4A 00
+[2026-03-25 23:12:08.255][PID=35328][TID=14088] net: recv-raw len=72 pktLen=1571 op=0x0D enc=0 inited=0 ascii='#....j.......Bu].(%................X3.P.7...*nI.z.:....!...........' hex=23 06 0D FD 9B 6A FA B3 9D B6 12 D4 16 42 75 5D C9 28 25 80 EB 1A 8B C0 EE C5 C8 E7 C4 91 FA 05 DB F0 C1 58 33 C2 50 19 37 1C B8 F5 2A 6E 49 F0 7A 8B 3A D4 19 89 A2 21 0F 18 15 8C E7 12 83 CA ...
+[2026-03-25 23:12:10.513][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(609,242) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:12:10.646][PID=35328][TID=14088] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(609,242) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:12:10.646][PID=35328][TID=14088] net: send-plain len=22 pktLen=22 op=0x6C enc=0 rand=1 ascii='..lbX.XX....Yc........' hex=16 00 6C 62 58 E8 58 58 0B 0A D6 01 59 63 8B 8B D8 D9 05 D2 8A B0
+[2026-03-25 23:12:10.648][PID=35328][TID=14088] cred: packet-scan op=0x6C idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:12:10.648][PID=35328][TID=14088] net: send-cipher len=22 pktLen=22 op=0x6C enc=0 inited=0 mode=randenc key=0 ascii='..lbX.XX....Yc........' hex=16 00 6C 62 58 E8 58 58 0B 0A D6 01 59 63 8B 8B D8 D9 05 D2 8A B0
+[2026-03-25 23:12:10.648][PID=35328][TID=14088] net: send-plain len=6 pktLen=6 op=0x2F enc=0 rand=1 ascii='../[X.' hex=06 00 2F 5B 58 92
+[2026-03-25 23:12:10.648][PID=35328][TID=14088] cred: packet-scan op=0x2F idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:12:10.648][PID=35328][TID=14088] net: send-cipher len=6 pktLen=6 op=0x2F enc=0 inited=0 mode=randenc key=0 ascii='../[X.' hex=06 00 2F 5B 58 92
+[2026-03-25 23:12:11.094][PID=35328][TID=14088] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x007F103E class=Lineage gamePt=(639,526) obj=0x1722D0B0 stateOff=0x30 state=0x00000000
+[2026-03-25 23:25:30.019][PID=22848][TID=22700] init: encrypt=0 randenc=1 port=2005 rsa_d(raw)=878082068 rsa_n(raw)=778703212
+[2026-03-25 23:25:45.416][PID=22848][TID=37264] mm: hook-status reason=hook-installed changeLabel@0x0064CCD0= 55 8B EC 83 EC 14 89 4D register@0x6506E0= 55 8B EC E8 48 21 DB FF
+[2026-03-25 23:25:45.487][PID=22848][TID=37264] compat: DISABLEDXMAXIMIZEDWINDOWEDMODE set for C:\3.81Lineage\TW13081901.bin ret=0
+[2026-03-25 23:25:45.488][PID=22848][TID=37264] ime: disable-tsf reason=CreateWindowEx tid=37264 ok=0
+[2026-03-25 23:25:45.492][PID=22848][TID=37264] ime: refreshed hwnd=0x00690552 imewnd=0x00330F16 comp=(8,8) source=fallback
+[2026-03-25 23:25:45.492][PID=22848][TID=37264] ime: game window created hwnd=0x00690552 class=Lineage
+[2026-03-25 23:25:45.492][PID=22848][TID=37264] mm:auto: AutoRegisterMonitorThread started handle=0x000007B4
+[2026-03-25 23:25:45.492][PID=22848][TID=37264] hook: WH_GETMESSAGE installed tid=37264 hook=0x094F0A97
+[2026-03-25 23:25:45.494][PID=22848][TID=37264] ime: guard thread started handle=0x000007C4
+[2026-03-25 23:25:45.494][PID=22848][TID=15588] ime: create context result=0x06BF1955
+[2026-03-25 23:25:46.125][PID=22848][TID=15588] ime: associate context hwnd=0x00690552 okExChildren=0 okEx=1 old=0x00000000 new=0x06BF1955
+[2026-03-25 23:25:46.126][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:25:46.127][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:25:46.127][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:25:48.026][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1076,632) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:25:48.117][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1076,632) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:25:48.836][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1076,633) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:25:48.958][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1076,633) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:25:49.392][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:25:49.393][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:25:49.393][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:25:49.500][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1076,633) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:25:49.623][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1076,633) obj=<err>0x00000000 stateOff=0x30 state=<err>0x00000000
+[2026-03-25 23:25:50.215][PID=22848][TID=37264] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:25:50.215][PID=22848][TID=37264] net: recv-raw len=16 pktLen=2966 op=0xDD enc=0 inited=0 ascii='...C;Gq.l`~.....' hex=96 0B DD 43 3B 47 71 D6 6C 60 7E 01 00 04 08 00
+[2026-03-25 23:25:50.216][PID=22848][TID=37264] net: send-plain len=22 pktLen=22 op=0xC0 enc=0 rand=1 ascii='...S#n...R...4.hG.p2..' hex=16 00 C0 53 23 6E 11 14 FC 52 A8 F1 C9 34 F0 68 47 E9 70 32 E3 B7
+[2026-03-25 23:25:50.216][PID=22848][TID=37264] net: send-cipher len=22 pktLen=22 op=0xC0 enc=0 inited=0 mode=randenc key=0 ascii='...S#n...R...4.hG.p2..' hex=16 00 C0 53 23 6E 11 14 FC 52 A8 F1 C9 34 F0 68 47 E9 70 32 E3 B7
+[2026-03-25 23:25:50.217][PID=22848][TID=37264] net: recv-raw len=2 pktLen=58 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 00
+[2026-03-25 23:25:50.217][PID=22848][TID=37264] net: recv-raw len=56 pktLen=57289 op=0x1E enc=0 inited=0 ascii='.............).q~.*QB...3..$2;-y"py.......}.7;<..0....O.' hex=C9 DF 1E E3 08 FF 1F DB D4 1D 80 E8 D1 29 B6 71 7E B7 2A 51 42 84 05 AB 33 0B 1C 24 32 3B 2D 79 22 70 79 9E 82 8F 82 DD B6 85 7D DF 37 3B 3C 93 0B 30 E8 D5 AB A7 4F E1
+[2026-03-25 23:25:52.225][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(994,601) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:25:52.320][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(994,601) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:25:52.668][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:25:52.669][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:25:52.669][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:25:53.962][PID=22848][TID=15588] ime: refreshed hwnd=0x00690552 imewnd=0x00330F16 comp=(11,34) source=fallback
+[2026-03-25 23:25:54.793][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(988,597) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:25:54.926][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(988,597) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:25:55.389][PID=22848][TID=15588] ime: refreshed hwnd=0x00690552 imewnd=0x00330F16 comp=(11,34) source=fallback
+[2026-03-25 23:25:55.794][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:25:55.797][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:25:55.887][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:25:56.845][PID=22848][TID=15588] ime: refreshed hwnd=0x00690552 imewnd=0x00330F16 comp=(11,34) source=fallback
+[2026-03-25 23:25:58.898][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:25:58.899][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:25:58.900][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:26:00.201][PID=22848][TID=15588] ime: refreshed hwnd=0x00690552 imewnd=0x00330F16 comp=(11,34) source=fallback
+[2026-03-25 23:26:01.947][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:26:01.953][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:26:01.953][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:26:05.265][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:26:05.272][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:26:05.272][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:26:05.361][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1004,656) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:05.469][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1004,656) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:05.774][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1007,648) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:05.864][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1007,648) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:07.482][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1030,694) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:07.561][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1030,694) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:07.562][PID=22848][TID=37264] cred: username-capture text='test001' ascii='test001.........................' hex=74 65 73 74 30 30 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[2026-03-25 23:26:07.562][PID=22848][TID=37264] cred: password-capture len=1 last=0x31 ascii='1' hex=31
+[2026-03-25 23:26:07.562][PID=22848][TID=37264] cred: password-capture len=2 last=0x32 ascii='12' hex=31 32
+[2026-03-25 23:26:07.562][PID=22848][TID=37264] cred: password-capture len=3 last=0x33 ascii='123' hex=31 32 33
+[2026-03-25 23:26:07.562][PID=22848][TID=37264] cred: password-capture len=4 last=0x34 ascii='1234' hex=31 32 33 34
+[2026-03-25 23:26:07.563][PID=22848][TID=37264] cred: password-capture len=5 last=0x00 ascii='1234.' hex=31 32 33 34 00
+[2026-03-25 23:26:07.563][PID=22848][TID=37264] net: send-plain len=22 pktLen=22 op=0x50 enc=0 rand=1 ascii='..P...... ..,.vG .an..' hex=16 00 50 11 F0 AB E1 90 C7 20 87 88 2C E9 76 47 20 F7 61 6E FB 0C
+[2026-03-25 23:26:07.563][PID=22848][TID=37264] cred: packet-scan op=0x50 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:07.564][PID=22848][TID=37264] net: send-cipher len=22 pktLen=22 op=0x50 enc=0 inited=0 mode=randenc key=0 ascii='..P...... ..,.vG .an..' hex=16 00 50 11 F0 AB E1 90 C7 20 87 88 2C E9 76 47 20 F7 61 6E FB 0C
+[2026-03-25 23:26:07.594][PID=22848][TID=37264] net: recv-raw len=2 pktLen=26 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=1A 00
+[2026-03-25 23:26:07.594][PID=22848][TID=37264] net: recv-raw len=24 pktLen=63750 op=0x94 enc=0 inited=0 ascii='....36Q...:.\Y>.........' hex=06 F9 94 0B 33 36 51 86 95 AE 3A F0 5C 59 3E E9 FA C1 D9 13 BF BA DD 0A
+[2026-03-25 23:26:07.604][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:07.605][PID=22848][TID=37264] net: recv-raw len=8 pktLen=15222 op=0x24 enc=0 inited=0 ascii='v;$...T.' hex=76 3B 24 09 1A FE 54 AB
+[2026-03-25 23:26:07.605][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:07.605][PID=22848][TID=37264] net: recv-raw len=8 pktLen=40850 op=0x97 enc=0 inited=0 ascii='...B..(.' hex=92 9F 97 42 E7 E2 28 C7
+[2026-03-25 23:26:07.614][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:07.614][PID=22848][TID=37264] net: recv-raw len=40 pktLen=4416 op=0x24 enc=0 inited=0 ascii='@.$....N...N..c3....71'..0...`.3<...'#..' hex=40 11 24 B2 08 B8 A6 4E 93 A1 0C 4E 83 87 63 33 C9 84 94 EF 37 31 27 14 08 30 A9 C5 00 60 84 33 3C 0E 9B D2 27 23 C7 97
+[2026-03-25 23:26:07.616][PID=22848][TID=37264] net: recv-raw len=2 pktLen=34 op=0xFFFFFFFF enc=0 inited=0 ascii='".' hex=22 00
+[2026-03-25 23:26:07.616][PID=22848][TID=37264] net: recv-raw len=32 pktLen=4124 op=0x7C enc=0 inited=0 ascii='..|......Kw...e.e......J...U....' hex=1C 10 7C 00 94 90 F2 8B DE 4B 77 BC 05 01 65 1D 65 E0 C2 00 B4 B8 DB 4A 18 8D A1 55 ED E9 8A F3
+[2026-03-25 23:26:07.616][PID=22848][TID=37264] net: recv-raw len=2 pktLen=34 op=0xFFFFFFFF enc=0 inited=0 ascii='".' hex=22 00
+[2026-03-25 23:26:07.616][PID=22848][TID=37264] net: recv-raw len=32 pktLen=37057 op=0x52 enc=0 inited=0 ascii='..R#;?.|...e+.>...W...[....M62.q' hex=C1 90 52 23 3B 3F DD 7C 08 D4 EE 65 2B 2E 3E FC D7 19 57 C1 B7 B9 5B 13 1C C0 A3 4D 36 32 D0 71
+[2026-03-25 23:26:07.625][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:07.626][PID=22848][TID=37264] net: recv-raw len=8 pktLen=54469 op=0x53 enc=0 inited=0 ascii='..S.~z..' hex=C5 D4 53 13 7E 7A 1B D1
+[2026-03-25 23:26:07.626][PID=22848][TID=37264] net: recv-raw len=2 pktLen=26 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=1A 00
+[2026-03-25 23:26:07.626][PID=22848][TID=37264] net: recv-raw len=24 pktLen=762 op=0x53 enc=0 inited=0 ascii='..S...L...T......P.%$ .2' hex=FA 02 53 FA A8 AC 4C BE AB 07 54 FE FF FB 1B E9 FC 50 8F 25 24 20 C0 32
+[2026-03-25 23:26:08.574][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:26:08.575][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:26:08.575][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:26:08.708][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(249,376) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:08.806][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(249,376) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:10.115][PID=22848][TID=37264] net: send-plain len=14 pktLen=14 op=0x94 enc=0 rand=1 ascii='...\P....G..>.' hex=0E 00 94 5C 50 F9 AD 1C 00 47 D6 DF 3E AC
+[2026-03-25 23:26:10.116][PID=22848][TID=37264] cred: packet-scan op=0x94 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.116][PID=22848][TID=37264] net: send-cipher len=14 pktLen=14 op=0x94 enc=0 inited=0 mode=randenc key=0 ascii='...\P....G..>.' hex=0E 00 94 5C 50 F9 AD 1C 00 47 D6 DF 3E AC
+[2026-03-25 23:26:10.130][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.130][PID=22848][TID=37264] net: recv-raw len=8 pktLen=6971 op=0x53 enc=0 inited=0 ascii=';.S&....' hex=3B 1B 53 26 B1 B2 ED F6
+[2026-03-25 23:26:10.178][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x16 enc=0 rand=1 ascii='.....H' hex=06 00 16 81 8F 48
+[2026-03-25 23:26:10.178][PID=22848][TID=37264] cred: packet-scan op=0x16 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.178][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x16 enc=0 inited=0 mode=randenc key=0 ascii='.....H' hex=06 00 16 81 8F 48
+[2026-03-25 23:26:10.179][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x8A enc=0 rand=1 ascii='.....:' hex=06 00 8A E2 D8 3A
+[2026-03-25 23:26:10.179][PID=22848][TID=37264] cred: packet-scan op=0x8A idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.179][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x8A enc=0 inited=0 mode=randenc key=0 ascii='.....:' hex=06 00 8A E2 D8 3A
+[2026-03-25 23:26:10.179][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(249,376) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:10.254][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.254][PID=22848][TID=37264] net: recv-raw len=8 pktLen=32188 op=0x12 enc=0 inited=0 ascii='.}.....@' hex=BC 7D 12 02 DE DD 03 40
+[2026-03-25 23:26:10.255][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.255][PID=22848][TID=37264] net: recv-raw len=8 pktLen=53553 op=0x7F enc=0 inited=0 ascii='1.. :9d.' hex=31 D1 7F 20 3A 39 64 08
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] net: recv-raw len=8 pktLen=40025 op=0x50 enc=0 inited=0 ascii='Y.P.[X..' hex=59 9C 50 06 5B 58 84 10
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] net: recv-raw len=45 pktLen=17038 op=0x51 enc=0 inited=0 ascii='.BQ...2....5...!bdt.GG1...b3......H.^\..|{*.<' hex=8E 42 51 05 84 E5 32 98 B9 D2 97 35 F3 FB AC 21 62 64 74 BA 47 47 31 8E B4 EF 62 33 99 B3 E8 A7 1E 19 48 8E 5E 5C 07 BA 7C 7B 2A EC 3C
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0xCB enc=0 rand=1 ascii='...]..' hex=06 00 CB 5D D9 C9
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] cred: packet-scan op=0xCB idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.256][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0xCB enc=0 inited=0 mode=randenc key=0 ascii='...]..' hex=06 00 CB 5D D9 C9
+[2026-03-25 23:26:10.258][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.258][PID=22848][TID=37264] net: recv-raw len=8 pktLen=32585 op=0x51 enc=0 inited=0 ascii='I.Qv..l.' hex=49 7F 51 76 B4 B6 6C 89
+[2026-03-25 23:26:10.258][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.258][PID=22848][TID=37264] net: recv-raw len=8 pktLen=5593 op=0x5C enc=0 inited=0 ascii='..\.....' hex=D9 15 5C D9 D3 D1 88 86
+[2026-03-25 23:26:10.259][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.259][PID=22848][TID=37264] net: recv-raw len=8 pktLen=25069 op=0x65 enc=0 inited=0 ascii='.ae%TV..' hex=ED 61 65 25 54 56 8F B8
+[2026-03-25 23:26:10.259][PID=22848][TID=37264] net: recv-raw len=2 pktLen=64 op=0xFFFFFFFF enc=0 inited=0 ascii='@.' hex=40 00
+[2026-03-25 23:26:10.259][PID=22848][TID=37264] net: recv-raw len=62 pktLen=45350 op=0xAF enc=0 inited=0 ascii='&..0w]8Ga..SJ......q..........I.l.L.ol9Ai..7F...'.(.S....<..JK' hex=26 B1 AF 30 77 5D 38 47 61 2E 0B 53 4A 00 E5 15 BB 00 BF 71 9C AA D4 8B 04 97 0C F3 0E 1C 49 1D 6C D7 4C B3 6F 6C 39 41 69 8D BF 37 46 8F E2 9D 27 B4 28 A8 53 F6 02 EA 18 3C CB F7 4A 4B
+[2026-03-25 23:26:10.259][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.260][PID=22848][TID=37264] net: recv-raw len=8 pktLen=42954 op=0xA0 enc=0 inited=0 ascii='...Pml.=' hex=CA A7 A0 50 6D 6C BA 3D
+[2026-03-25 23:26:10.260][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.260][PID=22848][TID=37264] net: recv-raw len=8 pktLen=10160 op=0xA3 enc=0 inited=0 ascii='.'."....' hex=B0 27 A3 22 E3 E2 B7 07
+[2026-03-25 23:26:10.261][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.261][PID=22848][TID=37264] net: recv-raw len=8 pktLen=53154 op=0xAE enc=0 inited=0 ascii='........' hex=A2 CF AE 8D 06 07 D3 0B
+[2026-03-25 23:26:10.261][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=8 pktLen=28483 op=0xC1 enc=0 inited=0 ascii='Co.w..\\' hex=43 6F C1 77 07 07 5C 5C
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=2 pktLen=58 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 00
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=56 pktLen=27993 op=0x0F enc=0 inited=0 ascii='Ym.6..dta22.?......*..gNc.0.&'.............Y_..vl.<.....' hex=59 6D 0F 36 A4 8F 64 74 61 32 32 AD 3F 06 F4 F9 E4 BD A4 2A A5 9C 67 4E 63 09 30 96 26 27 F7 DD FA 9A A3 05 AE AC 81 8F 05 18 88 59 5F 97 7F 76 6C 06 3C B4 18 07 D0 FB
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=8 pktLen=33103 op=0x56 enc=0 inited=0 ascii='O.V.??n<' hex=4F 81 56 07 3F 3F 6E 3C
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=2 pktLen=3450 op=0xFFFFFFFF enc=0 inited=0 ascii='z.' hex=7A 0D
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=3448 pktLen=65077 op=0x45 enc=0 inited=0 ascii='5.E... ^...?....j.O...8{...8....t.{..[./.L.VGq........c...P...<F...' hex=35 FE 45 AF C6 C6 20 5E 91 E6 AA 3F 0F 0E DE A4 6A 1C 4F EF FE DA 38 7B 85 C7 BF 38 08 0C DF AE 74 03 7B EB FD 5B FC 2F 96 4C FC 56 47 71 A1 DC 0D 7F 05 82 B3 B3 63 19 D7 A0 50 FD EC EC 3C 46 ...
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=2 pktLen=26 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=1A 00
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=24 pktLen=18492 op=0x37 enc=0 inited=0 ascii='<H7...[.2s..".....t.-..?' hex=3C 48 37 E3 DE 15 5B F9 32 73 83 B9 22 EB A5 0E C5 84 74 D9 2D D2 9C 3F
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=2 pktLen=394 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=8A 01
+[2026-03-25 23:26:10.262][PID=22848][TID=37264] net: recv-raw len=392 pktLen=7314 op=0xF3 enc=0 inited=0 ascii='...O..sw.<............6..\{...F.....)...[[...k'^.....!.'..^6.yq....' hex=92 1C F3 4F 0A F5 73 77 BA 3C 8E E7 D0 15 D8 13 8B 8A D7 BC 04 F4 36 FD A3 5C 7B EE 8C 8C 46 8A 06 06 F4 9E 29 D6 1B D0 5B 5B 83 95 A9 6B 27 5E CA DE E9 C0 FC 21 EC 27 AC AC 5E 36 82 79 71 F9 ...
+[2026-03-25 23:26:10.264][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x39 enc=0 rand=1 ascii='..9...' hex=06 00 39 B5 EE E2
+[2026-03-25 23:26:10.264][PID=22848][TID=37264] cred: packet-scan op=0x39 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.264][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x39 enc=0 inited=0 mode=randenc key=0 ascii='..9...' hex=06 00 39 B5 EE E2
+[2026-03-25 23:26:10.264][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0xA1 enc=0 rand=1 ascii='...7:.' hex=06 00 A1 37 3A 13
+[2026-03-25 23:26:10.264][PID=22848][TID=37264] cred: packet-scan op=0xA1 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0xA1 enc=0 inited=0 mode=randenc key=0 ascii='...7:.' hex=06 00 A1 37 3A 13
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x65 enc=0 rand=1 ascii='..e...' hex=06 00 65 E9 CB 11
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] cred: packet-scan op=0x65 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x65 enc=0 inited=0 mode=randenc key=0 ascii='..e...' hex=06 00 65 E9 CB 11
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x80 enc=0 rand=1 ascii='...\.E' hex=06 00 80 5C EC 45
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] cred: packet-scan op=0x80 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x80 enc=0 inited=0 mode=randenc key=0 ascii='...\.E' hex=06 00 80 5C EC 45
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x85 enc=0 rand=1 ascii='......' hex=06 00 85 0E AB 8D
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] cred: packet-scan op=0x85 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x85 enc=0 inited=0 mode=randenc key=0 ascii='......' hex=06 00 85 0E AB 8D
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x6E enc=0 rand=1 ascii='..n...' hex=06 00 6E B2 8F 12
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] cred: packet-scan op=0x6E idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x6E enc=0 inited=0 mode=randenc key=0 ascii='..n...' hex=06 00 6E B2 8F 12
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-plain len=10 pktLen=10 op=0x0E enc=0 rand=1 ascii='.......M..' hex=0A 00 0E B1 A9 DB 7F 4D B1 16
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] cred: packet-scan op=0x0E idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:10.265][PID=22848][TID=37264] net: send-cipher len=10 pktLen=10 op=0x0E enc=0 inited=0 mode=randenc key=0 ascii='.......M..' hex=0A 00 0E B1 A9 DB 7F 4D B1 16
+[2026-03-25 23:26:10.266][PID=22848][TID=37264] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:26:10.266][PID=22848][TID=37264] net: recv-raw len=45 pktLen=44584 op=0x8E enc=0 inited=0 ascii='(..1.Y.z..3<P..!..2Q...l...>>. &(....a-....d.' hex=28 AE 8E 31 C5 59 99 7A EC A9 33 3C 50 A5 E5 21 D5 FD 32 51 06 FB 9A 6C E5 90 C2 3E 3E E9 20 26 28 01 8F E4 9E 61 2D D9 A8 81 0F 64 1E
+[2026-03-25 23:26:10.267][PID=22848][TID=37264] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:26:10.267][PID=22848][TID=37264] net: recv-raw len=16 pktLen=2883 op=0x8E enc=0 inited=0 ascii='C...a.UI0....4..' hex=43 0B 8E D2 61 9E 55 49 30 13 9D F6 CB 34 FF E3
+[2026-03-25 23:26:10.267][PID=22848][TID=37264] net: recv-raw len=2 pktLen=52 op=0xFFFFFFFF enc=0 inited=0 ascii='4.' hex=34 00
+[2026-03-25 23:26:10.267][PID=22848][TID=37264] net: recv-raw len=50 pktLen=3601 op=0x9E enc=0 inited=0 ascii='...j.o%`..W....n.&.\#{.|.....&l-p.3X`...'h.ss.9.4;' hex=11 0E 9E 6A 9A 6F 25 60 D7 D8 57 12 12 ED A7 6E CE 26 C5 5C 23 7B 88 7C 11 AA DF 0C D9 26 6C 2D 70 B6 33 58 60 A7 D5 90 27 68 18 73 73 8C 39 83 34 3B
+[2026-03-25 23:26:10.282][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.282][PID=22848][TID=37264] net: recv-raw len=8 pktLen=12098 op=0x0F enc=0 inited=0 ascii='B/..U.b.' hex=42 2F 0F 99 55 AB 62 0F
+[2026-03-25 23:26:10.282][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.282][PID=22848][TID=37264] net: recv-raw len=8 pktLen=20231 op=0x0F enc=0 inited=0 ascii='.O..4...' hex=07 4F 0F BD 34 CA 82 14
+[2026-03-25 23:26:10.282][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.283][PID=22848][TID=37264] net: recv-raw len=8 pktLen=65357 op=0x0E enc=0 inited=0 ascii='M....v..' hex=4D FF 0E CF 88 76 B1 0F
+[2026-03-25 23:26:10.284][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.284][PID=22848][TID=37264] net: recv-raw len=8 pktLen=61952 op=0x02 enc=0 inited=0 ascii='.....q7.' hex=00 F2 02 82 8F 71 37 D0
+[2026-03-25 23:26:10.285][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.285][PID=22848][TID=37264] net: recv-raw len=8 pktLen=40342 op=0x06 enc=0 inited=0 ascii='....{.CL' hex=96 9D 06 B2 7B 86 43 4C
+[2026-03-25 23:26:10.285][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.285][PID=22848][TID=37264] net: recv-raw len=8 pktLen=36220 op=0xE6 enc=0 inited=0 ascii='|.......' hex=7C 8D E6 DF C5 C7 83 BB
+[2026-03-25 23:26:10.285][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.286][PID=22848][TID=37264] net: recv-raw len=8 pktLen=46526 op=0xBB enc=0 inited=0 ascii='...].N..' hex=BE B5 BB 5D B3 4E 8D ED
+[2026-03-25 23:26:10.286][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.286][PID=22848][TID=37264] net: recv-raw len=8 pktLen=26518 op=0xBB enc=0 inited=0 ascii='.g..a..W' hex=96 67 BB C2 61 9C DE 57
+[2026-03-25 23:26:10.287][PID=22848][TID=37264] net: recv-raw len=2 pktLen=50 op=0xFFFFFFFF enc=0 inited=0 ascii='2.' hex=32 00
+[2026-03-25 23:26:10.287][PID=22848][TID=37264] net: recv-raw len=48 pktLen=42775 op=0xBB enc=0 inited=0 ascii='.....\.($.WQ.v....y..X.($.WQ.v....y..X.($.WQ.v..' hex=17 A7 BB C0 A0 5C 99 28 24 EC 57 51 8A 76 B7 06 0A C2 79 7F A4 58 99 28 24 EC 57 51 8A 76 B7 06 0A C2 79 7F A4 58 99 28 24 EC 57 51 8A 76 B7 06
+[2026-03-25 23:26:10.287][PID=22848][TID=37264] net: recv-raw len=2 pktLen=50 op=0xFFFFFFFF enc=0 inited=0 ascii='2.' hex=32 00
+[2026-03-25 23:26:10.287][PID=22848][TID=37264] net: recv-raw len=48 pktLen=57360 op=0xBA enc=0 inited=0 ascii='......S..N..l...F.wq..S..N..l...F.wq..S..N..l...' hex=10 E0 BA C3 E7 1B 53 89 C5 4E F4 F2 6C 90 D0 0A 46 CD 77 71 EF 13 53 89 C5 4E F4 F2 6C 90 D0 0A 46 CD 77 71 EF 13 53 89 C5 4E F4 F2 6C 90 D0 0A
+[2026-03-25 23:26:10.288][PID=22848][TID=37264] net: recv-raw len=2 pktLen=6 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=06 00
+[2026-03-25 23:26:10.288][PID=22848][TID=37264] net: recv-raw len=4 pktLen=57686 op=0xBB enc=0 inited=0 ascii='V..=' hex=56 E1 BB 3D
+[2026-03-25 23:26:10.288][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.288][PID=22848][TID=37264] net: recv-raw len=8 pktLen=20761 op=0xBB enc=0 inited=0 ascii='.Q..W.r^' hex=19 51 BB C8 57 AA 72 5E
+[2026-03-25 23:26:10.288][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.289][PID=22848][TID=37264] net: recv-raw len=8 pktLen=56279 op=0xBB enc=0 inited=0 ascii='.....#x,' hex=D7 DB BB 81 DD 23 78 2C
+[2026-03-25 23:26:10.289][PID=22848][TID=37264] net: recv-raw len=2 pktLen=58 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 00
+[2026-03-25 23:26:10.289][PID=22848][TID=37264] net: recv-raw len=56 pktLen=48016 op=0xBB enc=0 inited=0 ascii='.....+~o...k.=.|..C....N. Q|....MZL..8/a.L..F..tJ..N.BO3' hex=90 BB BB AC BD 2B 7E 6F F1 F3 04 6B B2 3D 01 7C 8B F8 43 F3 9B D7 9F 4E F9 20 51 7C E4 1F 8A 0A 4D 5A 4C 0A 09 38 2F 61 96 4C 06 B6 46 7F B4 74 4A FA FA 4E 92 42 4F 33
+[2026-03-25 23:26:10.289][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.289][PID=22848][TID=37264] net: recv-raw len=40 pktLen=63607 op=0xBB enc=0 inited=0 ascii='w..8........p.0.D>..........p.0.D>......' hex=77 F8 BB 38 EE 15 AE 0A DA A0 1B 1D 70 8B 30 94 44 3E 85 83 EE 15 AE 0A DA A0 1B 1D 70 8B 30 94 44 3E 85 83 EE 15 AE 0A
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=12570 op=0xAB enc=0 inited=0 ascii='.1..?..3G....{A.....?..3G....{A.....?..3' hex=1A 31 AB A4 3F C4 FE 33 47 1D B6 B0 80 7B 41 8C F8 A2 09 0F 3F C4 FE 33 47 1D B6 B0 80 7B 41 8C F8 A2 09 0F 3F C4 FE 33
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=32496 op=0xA3 enc=0 inited=0 ascii='.~.,|.?..`..6.u.P*..|.?..`..6.u.P*..|.?.' hex=F0 7E A3 2C 7C 86 3F CA 1A 60 C3 C5 36 CC 75 80 50 2A 89 8F 7C 86 3F CA 1A 60 C3 C5 36 CC 75 80 50 2A 89 8F 7C 86 3F CA
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=48017 op=0xA7 enc=0 inited=0 ascii='.....E}c.M..Z........E}c.M..Z........E}c' hex=91 BB A7 AE BF 45 7D 63 17 4D EA EC 5A A0 98 86 F2 A8 0F 09 BF 45 7D 63 17 4D EA EC 5A A0 98 86 F2 A8 0F 09 BF 45 7D 63
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=62333 op=0xA4 enc=0 inited=0 ascii='}..).....T...t..U/.......T...t..U/......' hex=7D F3 A4 29 F5 0F B8 FE 2E 54 F1 F7 8E 74 C3 85 55 2F 8A 8C F5 0F B8 FE 2E 54 F1 F7 8E 74 C3 85 55 2F 8A 8C F5 0F B8 FE
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=13081 op=0xA5 enc=0 inited=0 ascii='.3.-.Nx.c9...]k.p*...Nx.c9...]k.p*...Nx.' hex=19 33 A5 2D B4 4E 78 17 63 39 9C 9B A7 5D 6B 04 70 2A 8F 88 B4 4E 78 17 63 39 9C 9B A7 5D 6B 04 70 2A 8F 88 B4 4E 78 17
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=62585 op=0x25 enc=0 inited=0 ascii='y.%i.J.h......S..nKL.J.h......S..nKL.J.h' hex=79 F4 25 69 B3 4A FF 68 B8 C2 E7 E0 1F E6 53 C4 14 6E 4B 4C B3 4A FF 68 B8 C2 E7 E0 1F E6 53 C4 14 6E 4B 4C B3 4A FF 68
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.290][PID=22848][TID=37264] net: recv-raw len=40 pktLen=3364 op=0x65 enc=0 inited=0 ascii='$.e.*..'S.lk.Pd.....*..'S.lk.Pd.....*..'' hex=24 0D 65 8D 2A D3 E7 27 53 09 6C 6B A9 50 64 A4 D0 8A EF E8 2A D3 E7 27 53 09 6C 6B A9 50 64 A4 D0 8A EF E8 2A D3 E7 27
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=40 pktLen=58987 op=0x4D enc=0 inited=0 ascii='k.M!...C......d.\&cd...C......d.\&cd...C' hex=6B E6 4D 21 E1 18 AB 43 93 E9 AC AB 2E D7 64 8C 5C 26 63 64 E1 18 AB 43 93 E9 AC AB 2E D7 64 8C 5C 26 63 64 E1 18 AB 43
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=40 pktLen=41866 op=0x41 enc=0 inited=0 ascii='..A..Ugv.X..Z........Ugv.X..Z........Ugv' hex=8A A3 41 A1 AC 55 67 76 02 58 1D 12 5A A3 91 80 F4 AE EB E4 AC 55 67 76 02 58 1D 12 5A A3 91 80 F4 AE EB E4 AC 55 67 76
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=40 pktLen=16589 op=0x65 enc=0 inited=0 ascii='.@e.K..:.....,..t.K@K..:.....,..t.K@K..:' hex=CD 40 65 05 4B B2 03 3A EA 90 D5 DE D5 2C 9D A4 74 0E 4B 40 4B B2 03 3A EA 90 D5 DE D5 2C 9D A4 74 0E 4B 40 4B B2 03 3A
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.291][PID=22848][TID=37264] net: recv-raw len=40 pktLen=12569 op=0x55 enc=0 inited=0 ascii='.1U.........>...............>...........' hex=19 31 55 91 1A E2 D2 B0 C4 9E DB F0 3E C6 F6 94 E0 BA FF D4 1A E2 D2 B0 C4 9E DB F0 3E C6 F6 94 E0 BA FF D4 1A E2 D2 B0
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=31478 op=0xC5 enc=0 inited=0 ascii='.z..A...L6sH.!......A...L6sH.!......A...' hex=F6 7A C5 95 41 B9 16 9C 4C 36 73 48 D9 21 8E 04 D4 AE EB D0 41 B9 16 9C 4C 36 73 48 D9 21 8E 04 D4 AE EB D0 41 B9 16 9C
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=64467 op=0x05 enc=0 inited=0 ascii='...Q@..%Q.N..Yw.....@..%Q.N..Yw.....@..%' hex=D3 FB 05 51 40 B8 96 25 51 0B 4E F5 A1 59 77 C4 B0 EA AF 14 40 B8 96 25 51 0B 4E F5 A1 59 77 C4 B0 EA AF 14 40 B8 96 25
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=31984 op=0x45 enc=0 inited=0 ascii='.|E..........._.P*o..{........[.P*o..{..' hex=F0 7C 45 D5 87 7F D2 09 D9 A3 E6 1D 0A F2 5F 84 50 2A 6F 94 83 7B D6 0D DD A7 E2 19 0E F6 5B 80 50 2A 6F 94 83 7B D6 0D
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=13586 op=0x45 enc=0 inited=0 ascii='.5EQ.9..e?z.[........;..g=x.Y........;..' hex=12 35 45 51 CE 39 15 11 65 3F 7A 81 5B AC 80 84 F2 A8 ED 16 CC 3B 17 13 67 3D 78 83 59 AE 82 86 F2 A8 ED 16 CC 3B 17 13
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=63093 op=0x45 enc=0 inited=0 ascii='u.E...Q}...i....U/j...P|...h....U/j...P|' hex=75 F6 45 D5 0D FA 51 7D AD D7 92 69 F4 03 A8 84 55 2F 6A 91 0C FB 50 7C AC D6 93 68 F5 02 A9 85 55 2F 6A 91 0C FB 50 7C
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=36776 op=0x45 enc=0 inited=0 ascii='..EQt......l.......T4......,L......T4...' hex=A8 8F 45 51 74 83 A9 FC 88 D2 97 6C 0C FB D1 84 B0 EA AF 54 34 C3 E9 BC C8 92 D7 2C 4C BB 91 C4 B0 EA AF 54 34 C3 E9 BC
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.292][PID=22848][TID=37264] net: recv-raw len=40 pktLen=18635 op=0x45 enc=0 inited=0 ascii='.HE..D..@:...P..t.K..d..`._..p..t.K..d..' hex=CB 48 45 D5 B3 44 ED 90 40 3A 7F 84 A7 50 F9 84 74 0E 4B B0 93 64 CD B0 60 1A 5F A4 87 70 D9 A4 74 0E 4B B0 93 64 CD B0
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=40 pktLen=2351 op=0x45 enc=0 inited=0 ascii='/.EQ..,.......".......<.......2.......<.' hex=2F 09 45 51 F2 04 2C 8A FE A4 E1 1A FC 0A 22 84 E0 BA FF 04 E2 14 3C 9A EE B4 F1 0A EC 1A 32 94 E0 BA FF 04 E2 14 3C 9A
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=40 pktLen=49728 op=0x45 enc=0 inited=0 ascii='@.E.9.h.v.I...J.\&c.1.`.~.A...B.\&c.1.`.' hex=40 C2 45 D5 39 CF 68 A6 76 0C 49 B2 1B ED 4A 84 5C 26 63 98 31 C7 60 AE 7E 04 41 BA 13 E5 42 8C 5C 26 63 98 31 C7 60 AE
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=42 op=0xFFFFFFFF enc=0 inited=0 ascii='*.' hex=2A 00
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=40 pktLen=33701 op=0x45 enc=0 inited=0 ascii='..EQx.._+q4..Us.p*o...(....O#...p*o...(.' hex=A5 83 45 51 78 8E A8 5F 2B 71 34 CF A3 55 73 84 70 2A 6F 94 F8 0E 28 DF AB F1 B4 4F 23 D5 F3 04 70 2A 6F 94 F8 0E 28 DF
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=8 pktLen=2788 op=0x45 enc=0 inited=0 ascii='..E.....' hex=E4 0A 45 9B F1 07 A2 BD
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=6 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=06 00
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=4 pktLen=16277 op=0x45 enc=0 inited=0 ascii='.?E.' hex=95 3F 45 7F
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=8 pktLen=48860 op=0x49 enc=0 inited=0 ascii='..I.E..c' hex=DC BE 49 B9 45 B0 13 63
+[2026-03-25 23:26:10.294][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=8 pktLen=9661 op=0x48 enc=0 inited=0 ascii='.%H..*..' hex=BD 25 48 EE DF 2A 08 91
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=2 pktLen=106 op=0xFFFFFFFF enc=0 inited=0 ascii='j.' hex=6A 00
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=104 pktLen=64918 op=0x29 enc=0 inited=0 ascii='..)(.L\3?}n3....l.1..e...>..o.*....z..8....[;.g...."7.|....za......' hex=96 FD 29 28 13 4C 5C 33 3F 7D 6E 33 B1 F5 8E FB 6C AC 31 96 F1 65 81 F1 FE 3E CF 0F 6F EE 2A 98 81 C9 B1 7A 1C C5 38 98 B2 83 9B 5B 3B FF 67 94 D7 9E E0 22 37 F3 7C 8C D0 9F 8A 7A 61 C8 08 8D ...
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=2 pktLen=314 op=0xFFFFFFFF enc=0 inited=0 ascii=':.' hex=3A 01
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=312 pktLen=28485 op=0x14 enc=0 inited=0 ascii='Eo..v}...X......v..wv}...X......v..wv}...X......v..wv}...X.........' hex=45 6F 14 9E 76 7D A2 B7 D6 58 B3 D7 D6 DD 02 17 76 F8 13 77 76 7D A2 B7 D6 58 B3 D7 D6 DD 02 17 76 F8 13 77 76 7D A2 B7 D6 58 B3 D7 D6 DD 02 17 76 F8 13 77 76 7D A2 B7 D6 58 B3 D7 D6 DD 02 17 ...
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=8 pktLen=30888 op=0x94 enc=0 inited=0 ascii='.x.+~...' hex=A8 78 94 2B 7E 8A 15 07
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=2 pktLen=51 op=0xFFFFFFFF enc=0 inited=0 ascii='3.' hex=33 00
+[2026-03-25 23:26:10.295][PID=22848][TID=37264] net: recv-raw len=49 pktLen=31230 op=0x05 enc=0 inited=0 ascii='.y.......08.#......C..;1'.K.S......T.$:.%,%A.1..0' hex=FE 79 05 EF 1D AF AB A6 F5 30 38 A3 23 D9 C7 FC D8 D1 D8 43 C7 17 3B 31 27 19 4B E7 53 90 BC B6 CF C6 CF 54 D0 24 3A 01 25 2C 25 41 C5 31 D0 14 30
+[2026-03-25 23:26:10.296][PID=22848][TID=37264] net: recv-raw len=2 pktLen=51 op=0xFFFFFFFF enc=0 inited=0 ascii='3.' hex=33 00
+[2026-03-25 23:26:10.296][PID=22848][TID=37264] net: recv-raw len=49 pktLen=5830 op=0x85 enc=0 inited=0 ascii='....~.....x..V...P.N..w&f........N.P..~.n.l.C..I:' hex=C6 16 85 CF 7E 01 84 D1 D5 F2 78 EF AC 56 CB A8 DB 50 D9 4E 09 D9 77 26 66 D5 07 A5 D2 16 BF EB C5 4E C7 50 17 E3 7E 1D 6E E5 6C 04 43 B7 D5 49 3A
+[2026-03-25 23:26:10.296][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.296][PID=22848][TID=37264] net: recv-raw len=8 pktLen=30221 op=0x09 enc=0 inited=0 ascii='.v......' hex=0D 76 09 EE ED 18 04 88
+[2026-03-25 23:26:10.317][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.318][PID=22848][TID=37264] net: recv-raw len=8 pktLen=3021 op=0x09 enc=0 inited=0 ascii='...T.c.L' hex=CD 0B 09 54 90 63 F8 4C
+[2026-03-25 23:26:10.318][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.318][PID=22848][TID=37264] net: recv-raw len=8 pktLen=60817 op=0x09 enc=0 inited=0 ascii='....v..B' hex=91 ED 09 EF 76 85 9F 42
+[2026-03-25 23:26:10.318][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.319][PID=22848][TID=37264] net: recv-raw len=8 pktLen=38480 op=0x09 enc=0 inited=0 ascii='P..W..gb' hex=50 96 09 57 0D FE 67 62
+[2026-03-25 23:26:10.352][PID=22848][TID=37264] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:26:10.352][PID=22848][TID=37264] net: recv-raw len=16 pktLen=64287 op=0x09 enc=0 inited=0 ascii='....`a.(...v`...' hex=1F FB 09 7F 60 61 06 28 1D E4 ED 76 60 93 8B A5
+[2026-03-25 23:26:10.353][PID=22848][TID=37264] net: recv-raw len=2 pktLen=18 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=12 00
+[2026-03-25 23:26:10.353][PID=22848][TID=37264] net: recv-raw len=16 pktLen=48291 op=0x09 enc=0 inited=0 ascii='....%.A....a.J..' hex=A3 BC 09 F5 25 D7 41 17 00 F3 FA 61 B8 4A DD 8B
+[2026-03-25 23:26:10.353][PID=22848][TID=37264] net: recv-raw len=2 pktLen=10 op=0xFFFFFFFF enc=0 inited=0 ascii='..' hex=0A 00
+[2026-03-25 23:26:10.353][PID=22848][TID=37264] net: recv-raw len=8 pktLen=57060 op=0x0B enc=0 inited=0 ascii='....O...' hex=E4 DE 0B D8 4F BD AB D4
+[2026-03-25 23:26:10.353][PID=22848][TID=37264] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:26:10.353][PID=22848][TID=37264] net: recv-raw len=45 pktLen=5415 op=0x01 enc=0 inited=0 ascii=''........ta../.!l..?M....G...iy,.....-...VW..' hex=27 15 01 D0 8E 1F 06 B6 99 74 61 9E D7 2F B6 21 6C EC AC 3F 4D BD 05 A0 9A 47 9A 96 B3 69 79 2C 9B 1A 1B 80 DF 2D B8 1F D7 56 57 CC 93
+[2026-03-25 23:26:11.766][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:26:11.767][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:26:11.768][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:26:11.936][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(706,446) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:11.936][PID=22848][TID=37264] net: send-plain len=10 pktLen=10 op=0x17 enc=0 rand=1 ascii='.....w...?' hex=0A 00 17 B4 AD 77 90 DE C5 3F
+[2026-03-25 23:26:11.936][PID=22848][TID=37264] cred: packet-scan op=0x17 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:11.937][PID=22848][TID=37264] net: send-cipher len=10 pktLen=10 op=0x17 enc=0 inited=0 mode=randenc key=0 ascii='.....w...?' hex=0A 00 17 B4 AD 77 90 DE C5 3F
+[2026-03-25 23:26:12.028][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(708,446) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:12.121][PID=22848][TID=37264] net: send-plain len=10 pktLen=10 op=0x9D enc=0 rand=1 ascii='...#...L.:' hex=0A 00 9D 23 D2 D3 03 4C 01 3A
+[2026-03-25 23:26:12.121][PID=22848][TID=37264] cred: packet-scan op=0x9D idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:12.121][PID=22848][TID=37264] net: send-cipher len=10 pktLen=10 op=0x9D enc=0 inited=0 mode=randenc key=0 ascii='...#...L.:' hex=0A 00 9D 23 D2 D3 03 4C 01 3A
+[2026-03-25 23:26:12.304][PID=22848][TID=37264] net: send-plain len=10 pktLen=10 op=0x8F enc=0 rand=1 ascii='...,.b.L.R' hex=0A 00 8F 2C B3 62 03 4C 82 52
+[2026-03-25 23:26:12.304][PID=22848][TID=37264] cred: packet-scan op=0x8F idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:12.304][PID=22848][TID=37264] net: send-cipher len=10 pktLen=10 op=0x8F enc=0 inited=0 mode=randenc key=0 ascii='...,.b.L.R' hex=0A 00 8F 2C B3 62 03 4C 82 52
+[2026-03-25 23:26:12.489][PID=22848][TID=37264] net: send-plain len=10 pktLen=10 op=0x3D enc=0 rand=1 ascii='..=......^' hex=0A 00 3D 83 F8 EC B6 F9 B6 5E
+[2026-03-25 23:26:12.489][PID=22848][TID=37264] cred: packet-scan op=0x3D idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:12.489][PID=22848][TID=37264] net: send-cipher len=10 pktLen=10 op=0x3D enc=0 inited=0 mode=randenc key=0 ascii='..=......^' hex=0A 00 3D 83 F8 EC B6 F9 B6 5E
+[2026-03-25 23:26:13.446][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1182,878) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:13.562][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(1182,878) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:13.562][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0xA3 enc=0 rand=1 ascii='...!..' hex=06 00 A3 21 A9 AE
+[2026-03-25 23:26:13.562][PID=22848][TID=37264] cred: packet-scan op=0xA3 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:13.562][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0xA3 enc=0 inited=0 mode=randenc key=0 ascii='...!..' hex=06 00 A3 21 A9 AE
+[2026-03-25 23:26:13.573][PID=22848][TID=37264] net: recv-raw len=2 pktLen=47 op=0xFFFFFFFF enc=0 inited=0 ascii='/.' hex=2F 00
+[2026-03-25 23:26:13.574][PID=22848][TID=37264] net: recv-raw len=45 pktLen=27216 op=0x01 enc=0 inited=0 ascii='Pj...`.?....!..!d..=2..)....E..,.....RF.V..Ge' hex=50 6A 01 D2 F1 60 F8 3F 18 FF EA 15 21 D9 C1 21 64 EE AE 3D 32 C2 FB 29 1B CC 11 1D 45 9F 0E 2C 93 18 19 82 A0 52 46 96 56 DD DC 47 65
+[2026-03-25 23:26:13.574][PID=22848][TID=37264] net: recv-raw len=2 pktLen=74 op=0xFFFFFFFF enc=0 inited=0 ascii='J.' hex=4A 00
+[2026-03-25 23:26:13.574][PID=22848][TID=37264] net: recv-raw len=72 pktLen=51211 op=0x01 enc=0 inited=0 ascii='....W.4...-....]/de.'.E.w...w"K.=......f./........z..El^.+*.T.2....' hex=0B C8 01 B3 57 A6 34 CC 04 85 2D E9 A5 F1 C4 5D 2F 64 65 C2 27 D6 45 BF 77 F6 F7 DA 77 22 4B 05 3D BC 81 1A FF 0E 9E 66 AE 2F 87 C8 99 DD F8 F0 9C C7 7A 96 D5 45 6C 5E 96 2B 2A B1 54 A1 32 CA ...
+[2026-03-25 23:26:14.845][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(636,252) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:14.959][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(636,252) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:15.082][PID=22848][TID=15588] ime: force-enable reason=ImeGuardThread hwnd=0x00690552 open_before=1 open_after=1
+[2026-03-25 23:26:15.092][PID=22848][TID=15588] ime: force-show-ui reason=ImeGuardThread hwnd=0x00690552 flags=0x8000000F
+[2026-03-25 23:26:15.092][PID=22848][TID=15588] ime: guard target game=0x00690552 target=0x00690552 class=Lineage
+[2026-03-25 23:26:15.240][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(628,247) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:15.330][PID=22848][TID=37264] mm: click WM_LBUTTONUP tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(628,247) obj=0x18BDADD8 stateOff=0x30 state=0x00000000
+[2026-03-25 23:26:15.330][PID=22848][TID=37264] net: send-plain len=22 pktLen=22 op=0xEB enc=0 rand=1 ascii='.....wA@...E....^.Z.$.' hex=16 00 EB BB A9 77 41 40 96 11 92 45 EC 16 89 88 5E D9 5A 8D 24 DE
+[2026-03-25 23:26:15.330][PID=22848][TID=37264] cred: packet-scan op=0xEB idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:15.331][PID=22848][TID=37264] net: send-cipher len=22 pktLen=22 op=0xEB enc=0 inited=0 mode=randenc key=0 ascii='.....wA@...E....^.Z.$.' hex=16 00 EB BB A9 77 41 40 96 11 92 45 EC 16 89 88 5E D9 5A 8D 24 DE
+[2026-03-25 23:26:15.331][PID=22848][TID=37264] net: send-plain len=6 pktLen=6 op=0x16 enc=0 rand=1 ascii='...<..' hex=06 00 16 3C A9 0D
+[2026-03-25 23:26:15.331][PID=22848][TID=37264] cred: packet-scan op=0x16 idLen=7 idPos=-1 pwdLen=4 pwdPos=-1 pwdCaptureLen=0
+[2026-03-25 23:26:15.331][PID=22848][TID=37264] net: send-cipher len=6 pktLen=6 op=0x16 enc=0 inited=0 mode=randenc key=0 ascii='...<..' hex=06 00 16 3C A9 0D
+[2026-03-25 23:26:15.610][PID=22848][TID=37264] mm: click WM_LBUTTONDOWN tag=Unknown srcHwnd=0x00690552 class=Lineage gamePt=(760,497) obj=0x18BDADD8 stateOff=0x30 state=0x00000000

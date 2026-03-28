@@ -1,0 +1,13 @@
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.doccache
+*.exe
+*.dll
+*.dat
+*.pak
+# Keep templates if needed, but usually we don't upload large binaries
+# Or ignore all binaries but keep the source

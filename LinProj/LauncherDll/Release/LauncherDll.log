@@ -1,0 +1,14 @@
+﻿  stdafx.cpp
+  encdec.cpp
+  aes.cpp
+  configenc.cpp
+  ShareMemory.cpp
+  HelperDlg.cpp
+  LauncherDll.cpp
+  dllmain.cpp
+     正在建立程式庫 C:\python_training\LinProject3.8\LinProj\Release\LauncherDll.lib 和物件 C:\python_training\LinProject3.8\LinProj\Release\LauncherDll.exp
+  正在產生程式碼
+  Previous IPDB not found, fall back to full compilation.
+  All 190 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  已完成程式碼產生
+  LauncherDll.vcxproj -> C:\python_training\LinProject3.8\LinProj\Release\LauncherDll.dll

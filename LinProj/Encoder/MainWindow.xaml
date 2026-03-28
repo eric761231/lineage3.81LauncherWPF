@@ -1,0 +1,309 @@
+<Window x:Class="LinLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:LinLauncher.ViewModels"
+        xmlns:conv="clr-namespace:LinLauncher.Converters"
+        Title="登入器產生工具" Height="650" Width="850" Background="#F0F0F0">
+    <Window.Resources>
+        <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Margin" Value="0,3"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="10,0"/>
+        </Style>
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:EncoderViewModel/>
+    </Window.DataContext>
+    <Grid Margin="5">
+        <TabControl>
+            <!-- TAB 1: 清單產生 (List Generation) -->
+            <TabItem Header=" 清單產生 ">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Header="一般設定">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="通訊金鑰："/>
+                            <TextBox Text="金鑰已儲存於 pack.properties" Grid.Column="1" IsReadOnly="True" Background="#F8F8F8"/>
+                            <Button Content="產生" Command="{Binding GenerateRsaCommand}" Grid.Column="2" Margin="5,0"/>
+                            
+                            <TextBlock Text="登入器版本：" Grid.Column="3" Margin="15,0,5,0"/>
+                            <TextBox Text="{Binding ListVersion}" Grid.Column="4"/>
+
+                            <TextBlock Text="更新網址：" Grid.Row="1"/>
+                            <TextBox Text="{Binding ListUpdateUrl}" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="伺服器設定" Grid.Row="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="150"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="伺服器名稱："/>
+                            <TextBox Text="{Binding SelectedServer.Name, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1"/>
+
+                            <TextBlock Text="伺服器選擇：" Grid.Column="3" HorizontalAlignment="Right"/>
+                            <ComboBox ItemsSource="{Binding Servers}" SelectedItem="{Binding SelectedServer}" Grid.Column="4" Height="24" Margin="0,3">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <TextBlock Text="IP 位址：" Grid.Row="1"/>
+                            <TextBox Text="{Binding SelectedServer.Ip, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1"/>
+
+                            <StackPanel Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="20,0,0,0">
+                                <CheckBox Content="變身檔：" IsChecked="{Binding SelectedServer.UseBd}" VerticalAlignment="Center"/>
+                                <ComboBox ItemsSource="{Binding BdFiles}" SelectedItem="{Binding SelectedServer.BdFile}" Width="120" Height="24" IsEnabled="{Binding SelectedServer.UseBd}" Margin="5,0"/>
+                            </StackPanel>
+
+                            <TextBlock Text="連接：" Grid.Row="2"/>
+                            <TextBox Text="{Binding SelectedServer.Port, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1"/>
+
+                            <CheckBox Content="內建輔助" IsChecked="{Binding SelectedServer.UseHelper}" Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Margin="20,0,0,0" VerticalAlignment="Center"/>
+
+                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Vertical">
+                                <CheckBox Content="啟用此伺服器" IsChecked="{Binding SelectedServer.IsUsed}" Margin="0,5"/>
+                                <CheckBox Content="啟用封包加密" IsChecked="{Binding SelectedServer.Encrypt}" Margin="0,5"/>
+                            </StackPanel>
+
+                            <CheckBox Content="隨機加密" IsChecked="{Binding SelectedServer.RandKey}" Grid.Row="3" Grid.Column="3" Grid.ColumnSpan="2" Margin="20,5,0,0" VerticalAlignment="Top"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox Header="變身檔加密" Grid.Row="2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="選擇檔案："/>
+                            <ComboBox ItemsSource="{Binding BdSourceFiles}" SelectedItem="{Binding SelectedBdSourceFile}" Grid.Column="1" Height="24"/>
+                            <Button Content="加密檔案" Command="{Binding PackagePakCommand}" Grid.Column="2" Margin="10,0"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <Button Content="產生清單" Command="{Binding GenerateListCommand}" 
+                            Grid.Row="4" HorizontalAlignment="Right" Width="120" Height="30" Margin="10"/>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 2: 登入器產生 (Launcher Generation) -->
+            <TabItem Header=" 登入器產生 ">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.2*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,0,10,0">
+                            <GroupBox Header="必填設定">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Text="登入器標題："/>
+                                    <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1"/>
+
+                                    <TextBlock Text="視窗尺寸：" Grid.Row="1"/>
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                                        <TextBox Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                                        <TextBlock Text=" x " Margin="5,0"/>
+                                        <TextBox Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="公告網址：" Grid.Row="2"/>
+                                    <TextBox Text="{Binding Web, UpdateSourceTrigger=PropertyChanged}" Grid.Row="2" Grid.Column="1"/>
+
+                                    <TextBlock Text="清單更新：" Grid.Row="3"/>
+                                    <TextBox Text="{Binding List, UpdateSourceTrigger=PropertyChanged}" Grid.Row="3" Grid.Column="1"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <GroupBox Header="連結設定">
+                                <ItemsControl ItemsSource="{Binding Links}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox Content="{Binding DisplayIndex, StringFormat='連結{0}'}" IsChecked="{Binding Enabled}" VerticalAlignment="Center"/>
+                                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Margin="5,0" IsEnabled="{Binding Enabled}"/>
+                                                <TextBox Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" Grid.Column="2" IsEnabled="{Binding Enabled}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </GroupBox>
+
+                            <Button Content="產 生 登 入 器" Command="{Binding MakeCommand}" Height="40" Margin="10" Background="#7232f2" Foreground="White" FontWeight="Bold" FontSize="16"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Live Preview Panel -->
+                    <GroupBox Header="即時預覽 (Live Preview)" Grid.Column="1">
+                        <Grid Background="#222">
+                            <Viewbox Stretch="Uniform">
+                                <Border Background="#121212" Width="{Binding Width}" Height="{Binding Height}" CornerRadius="10" BorderBrush="#444" BorderThickness="2">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="40"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- Fake Title Bar -->
+                                        <Grid Grid.Row="0" Background="#1a1a1a">
+                                            <TextBlock Text="{Binding Title}" Foreground="#888" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="12" FontWeight="Bold"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
+                                                <Border Width="12" Height="12" CornerRadius="6" Background="#444" Margin="5,0"/>
+                                                <Border Width="12" Height="12" CornerRadius="6" Background="#7232f2" Margin="5,0"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Fake Content -->
+                                        <Grid Grid.Row="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Margin="10" Background="#1a1a1a" CornerRadius="5">
+                                                <TextBlock Text="Web News Area (WebView2)" Foreground="#444" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="10">
+                                                <TextBlock Text="SERVER LIST" Foreground="#7232f2" FontSize="10" FontWeight="Bold" Margin="0,0,0,10"/>
+                                                <Border Height="100" Background="#1a1a1a" BorderBrush="#333" BorderThickness="1"/>
+                                                <Button Content="遊戲開始" Background="#7232f2" Foreground="White" Margin="0,20,0,0" Height="40" IsEnabled="False"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Fake Status -->
+                                        <Border Grid.Row="2" Height="20" Background="#1a1a1a" Opacity="0.5">
+                                            <TextBlock Text="Ready" Foreground="#666" FontSize="10" Margin="10,0"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </Viewbox>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 3: 補丁產生 (Patch Generation) -->
+            <TabItem Header=" 補丁產生 ">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Header="補丁產生">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="補丁目錄："/>
+                            <TextBox Text="{Binding PatchSourceDir}" Grid.Column="1" Margin="5,3"/>
+                            <Button Content="瀏覽" Grid.Column="2"/>
+
+                            <TextBlock Text="輸出目錄：" Grid.Row="1"/>
+                            <TextBox Text="{Binding PatchOutputDir}" Grid.Row="1" Grid.Column="1" Margin="5,3"/>
+                            <Button Content="瀏覽" Grid.Row="1" Grid.Column="2"/>
+
+                            <TextBlock Text="下載網址：" Grid.Row="2"/>
+                            <TextBox Text="{Binding PatchBaseUrl}" Grid.Row="2" Grid.Column="1" Margin="5,3" Grid.ColumnSpan="2"/>
+
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,10">
+                                <TextBlock Text="壓縮選項："/>
+                                <RadioButton Content="預設壓縮" IsChecked="{Binding CompressionLevel, Converter={StaticResource IntToBoolConverter}, ConverterParameter=0}" Margin="10,0"/>
+                                <RadioButton Content="最快速度" IsChecked="{Binding CompressionLevel, Converter={StaticResource IntToBoolConverter}, ConverterParameter=1}" Margin="10,0"/>
+                                <RadioButton Content="最大壓縮" IsChecked="{Binding CompressionLevel, Converter={StaticResource IntToBoolConverter}, ConverterParameter=2}" Margin="10,0"/>
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="4" Grid.ColumnSpan="3" Margin="0,5" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="All">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="索引" Width="50"/>
+                                    <DataGridTextColumn Header="檔案" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </GroupBox>
+
+                    <Button Content="產生補丁" Command="{Binding GeneratePatchCommand}" 
+                            Grid.Row="2" HorizontalAlignment="Right" Width="120" Height="30" Margin="10"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
