@@ -1,1293 +1,0 @@
-[2026-03-20 23:34:23.450][PID=25012][TID=20784] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-20 23:34:23.450][PID=25012][TID=20784] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-20 23:34:23.462][PID=25012][TID=51584] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774020863.txt, remoteVer=1001
-[2026-03-20 23:34:23.462][PID=25012][TID=51584] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-20 23:34:23.462][PID=25012][TID=51584] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-20 23:34:23.462][PID=25012][TID=51584] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-20 23:34:23.463][PID=25012][TID=51584] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-20 23:34:23.463][PID=25012][TID=51584] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-20 23:34:23.463][PID=25012][TID=51584] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-20 23:34:23.463][PID=25012][TID=51584] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-20 23:34:23.464][PID=25012][TID=51584] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-20 23:34:23.464][PID=25012][TID=51584] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-20 23:34:23.464][PID=25012][TID=51584] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-20 23:34:23.464][PID=25012][TID=51584] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-20 23:34:23.464][PID=25012][TID=51584] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-20 23:34:23.465][PID=25012][TID=51584] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-20 23:34:23.465][PID=25012][TID=51584] LoadServerList: done, serverCount=3
-[2026-03-20 23:34:30.010][PID=25012][TID=20784] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-20 23:34:30.011][PID=25012][TID=20784] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-20 23:34:30.011][PID=25012][TID=20784] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-20 23:34:30.012][PID=25012][TID=20784] StartGame: OS version=6.2.9200
-[2026-03-20 23:34:30.012][PID=25012][TID=20784] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-20 23:34:30.021][PID=25012][TID=20784] StartGame: CreateProcess game success, pid=47004 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-20 23:34:30.022][PID=25012][TID=20784] StartGame: get_shm(create=true) success
-[2026-03-20 23:34:30.028][PID=25012][TID=20784] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-20 23:34:30.049][PID=25012][TID=20784] StartGame: ResumeThread success
-[2026-03-20 23:41:39.035][PID=52228][TID=45848] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-20 23:41:39.035][PID=52228][TID=45848] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-20 23:41:39.047][PID=52228][TID=52032] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774021299.txt, remoteVer=1001
-[2026-03-20 23:41:39.047][PID=52228][TID=52032] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-20 23:41:39.047][PID=52228][TID=52032] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-20 23:41:39.047][PID=52228][TID=52032] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-20 23:41:39.047][PID=52228][TID=52032] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-20 23:41:39.047][PID=52228][TID=52032] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-20 23:41:39.049][PID=52228][TID=52032] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-20 23:41:39.050][PID=52228][TID=52032] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-20 23:41:39.050][PID=52228][TID=52032] LoadServerList: done, serverCount=3
-[2026-03-20 23:41:41.062][PID=52228][TID=45848] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-20 23:41:41.062][PID=52228][TID=45848] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-20 23:41:41.062][PID=52228][TID=45848] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-20 23:41:41.062][PID=52228][TID=45848] StartGame: OS version=6.2.9200
-[2026-03-20 23:41:41.063][PID=52228][TID=45848] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-20 23:41:41.069][PID=52228][TID=45848] StartGame: CreateProcess game success, pid=24304 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-20 23:41:41.070][PID=52228][TID=45848] StartGame: get_shm(create=true) success
-[2026-03-20 23:41:41.076][PID=52228][TID=45848] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-20 23:41:41.094][PID=52228][TID=45848] StartGame: ResumeThread success
-[2026-03-20 23:42:07.705][PID=12508][TID=50332] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-20 23:42:07.705][PID=12508][TID=50332] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-20 23:42:07.713][PID=12508][TID=15132] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774021327.txt, remoteVer=1001
-[2026-03-20 23:42:07.714][PID=12508][TID=15132] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-20 23:42:07.714][PID=12508][TID=15132] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-20 23:42:07.714][PID=12508][TID=15132] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-20 23:42:07.714][PID=12508][TID=15132] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-20 23:42:07.714][PID=12508][TID=15132] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-20 23:42:07.714][PID=12508][TID=15132] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-20 23:42:07.716][PID=12508][TID=15132] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-20 23:42:07.716][PID=12508][TID=15132] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-20 23:42:07.716][PID=12508][TID=15132] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-20 23:42:07.716][PID=12508][TID=15132] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-20 23:42:07.716][PID=12508][TID=15132] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-20 23:42:07.716][PID=12508][TID=15132] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-20 23:42:07.717][PID=12508][TID=15132] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-20 23:42:07.717][PID=12508][TID=15132] LoadServerList: done, serverCount=3
-[2026-03-20 23:42:09.500][PID=12508][TID=50332] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-20 23:42:09.500][PID=12508][TID=50332] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-20 23:42:09.500][PID=12508][TID=50332] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-20 23:42:09.500][PID=12508][TID=50332] StartGame: OS version=6.2.9200
-[2026-03-20 23:42:09.500][PID=12508][TID=50332] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-20 23:42:09.508][PID=12508][TID=50332] StartGame: CreateProcess game success, pid=3108 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-20 23:42:09.510][PID=12508][TID=50332] StartGame: get_shm(create=true) success
-[2026-03-20 23:42:09.511][PID=12508][TID=50332] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-20 23:42:09.529][PID=12508][TID=50332] StartGame: ResumeThread success
-[2026-03-21 00:27:02.607][PID=48736][TID=12400] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 00:27:02.607][PID=48736][TID=12400] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 00:27:02.891][PID=48736][TID=18964] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774024022.txt, remoteVer=1001
-[2026-03-21 00:27:02.892][PID=48736][TID=18964] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 00:27:02.892][PID=48736][TID=18964] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 00:27:02.892][PID=48736][TID=18964] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 00:27:02.892][PID=48736][TID=18964] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 00:27:02.892][PID=48736][TID=18964] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 00:27:02.892][PID=48736][TID=18964] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 00:27:02.893][PID=48736][TID=18964] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 00:27:02.893][PID=48736][TID=18964] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 00:27:02.893][PID=48736][TID=18964] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 00:27:02.894][PID=48736][TID=18964] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 00:27:02.894][PID=48736][TID=18964] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 00:27:02.894][PID=48736][TID=18964] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 00:27:02.894][PID=48736][TID=18964] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 00:27:02.894][PID=48736][TID=18964] LoadServerList: done, serverCount=3
-[2026-03-21 00:27:05.161][PID=48736][TID=12400] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 00:27:05.161][PID=48736][TID=12400] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 00:27:05.161][PID=48736][TID=12400] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:27:05.161][PID=48736][TID=12400] StartGame: OS version=6.2.9200
-[2026-03-21 00:27:05.162][PID=48736][TID=12400] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 00:27:05.167][PID=48736][TID=12400] StartGame: CreateProcess game success, pid=53080 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:27:05.169][PID=48736][TID=12400] StartGame: get_shm(create=true) success
-[2026-03-21 00:27:05.175][PID=48736][TID=12400] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 00:27:05.196][PID=48736][TID=12400] StartGame: ResumeThread success
-[2026-03-21 00:27:51.259][PID=24184][TID=36664] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 00:27:51.259][PID=24184][TID=36664] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 00:27:51.268][PID=24184][TID=24632] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774024071.txt, remoteVer=1001
-[2026-03-21 00:27:51.269][PID=24184][TID=24632] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 00:27:51.269][PID=24184][TID=24632] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 00:27:51.269][PID=24184][TID=24632] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 00:27:51.270][PID=24184][TID=24632] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 00:27:51.270][PID=24184][TID=24632] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 00:27:51.270][PID=24184][TID=24632] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 00:27:51.270][PID=24184][TID=24632] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 00:27:51.270][PID=24184][TID=24632] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 00:27:51.270][PID=24184][TID=24632] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 00:27:51.272][PID=24184][TID=24632] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 00:27:51.272][PID=24184][TID=24632] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 00:27:51.272][PID=24184][TID=24632] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 00:27:51.273][PID=24184][TID=24632] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 00:27:51.273][PID=24184][TID=24632] LoadServerList: done, serverCount=3
-[2026-03-21 00:27:54.200][PID=24184][TID=36664] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 00:27:54.200][PID=24184][TID=36664] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 00:27:54.202][PID=24184][TID=36664] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:27:54.202][PID=24184][TID=36664] StartGame: OS version=6.2.9200
-[2026-03-21 00:27:54.202][PID=24184][TID=36664] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 00:27:54.210][PID=24184][TID=36664] StartGame: CreateProcess game success, pid=50020 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:27:54.212][PID=24184][TID=36664] StartGame: get_shm(create=true) success
-[2026-03-21 00:27:54.213][PID=24184][TID=36664] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 00:27:54.229][PID=24184][TID=36664] StartGame: ResumeThread success
-[2026-03-21 00:28:55.703][PID=5676][TID=3272] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 00:28:55.703][PID=5676][TID=3272] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 00:28:55.717][PID=5676][TID=24264] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774024135.txt, remoteVer=1001
-[2026-03-21 00:28:55.718][PID=5676][TID=24264] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 00:28:55.718][PID=5676][TID=24264] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 00:28:55.719][PID=5676][TID=24264] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 00:28:55.720][PID=5676][TID=24264] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 00:28:55.720][PID=5676][TID=24264] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 00:28:55.720][PID=5676][TID=24264] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 00:28:55.720][PID=5676][TID=24264] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 00:28:55.720][PID=5676][TID=24264] LoadServerList: done, serverCount=3
-[2026-03-21 00:28:58.815][PID=5676][TID=3272] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 00:28:58.815][PID=5676][TID=3272] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 00:28:58.816][PID=5676][TID=3272] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:28:58.816][PID=5676][TID=3272] StartGame: OS version=6.2.9200
-[2026-03-21 00:28:58.816][PID=5676][TID=3272] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 00:28:58.823][PID=5676][TID=3272] StartGame: CreateProcess game success, pid=53092 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:28:58.825][PID=5676][TID=3272] StartGame: get_shm(create=true) success
-[2026-03-21 00:28:58.826][PID=5676][TID=3272] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 00:28:58.842][PID=5676][TID=3272] StartGame: ResumeThread success
-[2026-03-21 00:33:30.977][PID=15716][TID=34340] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 00:33:30.978][PID=15716][TID=34340] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774024410.txt, remoteVer=1001
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 00:33:30.994][PID=15716][TID=27436] LoadServerList: done, serverCount=3
-[2026-03-21 00:33:40.251][PID=15716][TID=34340] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 00:33:40.251][PID=15716][TID=34340] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 00:33:40.252][PID=15716][TID=34340] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:33:40.252][PID=15716][TID=34340] StartGame: OS version=6.2.9200
-[2026-03-21 00:33:40.252][PID=15716][TID=34340] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 00:33:40.260][PID=15716][TID=34340] StartGame: CreateProcess game success, pid=39724 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 00:33:40.262][PID=15716][TID=34340] StartGame: get_shm(create=true) success
-[2026-03-21 00:33:40.263][PID=15716][TID=34340] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 00:33:40.282][PID=15716][TID=34340] StartGame: ResumeThread success
-[2026-03-21 12:46:46.960][PID=51228][TID=30184] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 12:46:46.960][PID=51228][TID=30184] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774068407.txt, remoteVer=1001
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 12:46:47.243][PID=51228][TID=48336] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 12:46:47.244][PID=51228][TID=48336] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 12:46:47.244][PID=51228][TID=48336] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 12:46:47.244][PID=51228][TID=48336] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 12:46:47.245][PID=51228][TID=48336] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 12:46:47.245][PID=51228][TID=48336] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 12:46:47.245][PID=51228][TID=48336] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 12:46:47.245][PID=51228][TID=48336] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 12:46:47.245][PID=51228][TID=48336] LoadServerList: done, serverCount=3
-[2026-03-21 12:46:49.444][PID=51228][TID=30184] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 12:46:49.444][PID=51228][TID=30184] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 12:46:49.445][PID=51228][TID=30184] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 12:46:49.445][PID=51228][TID=30184] StartGame: OS version=6.2.9200
-[2026-03-21 12:46:49.445][PID=51228][TID=30184] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 12:46:49.458][PID=51228][TID=30184] StartGame: CreateProcess game success, pid=19504 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 12:46:49.460][PID=51228][TID=30184] StartGame: get_shm(create=true) success
-[2026-03-21 12:46:49.471][PID=51228][TID=30184] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 12:46:49.493][PID=51228][TID=30184] StartGame: ResumeThread success
-[2026-03-21 12:54:01.173][PID=48364][TID=47276] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 12:54:01.173][PID=48364][TID=47276] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 12:54:01.182][PID=48364][TID=39996] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774068841.txt, remoteVer=1001
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 12:54:01.183][PID=48364][TID=39996] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 12:54:01.184][PID=48364][TID=39996] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 12:54:01.184][PID=48364][TID=39996] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 12:54:01.184][PID=48364][TID=39996] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 12:54:01.184][PID=48364][TID=39996] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 12:54:01.184][PID=48364][TID=39996] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 12:54:01.185][PID=48364][TID=39996] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 12:54:01.185][PID=48364][TID=39996] LoadServerList: done, serverCount=3
-[2026-03-21 12:54:03.716][PID=48364][TID=47276] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 12:54:03.716][PID=48364][TID=47276] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 12:54:03.716][PID=48364][TID=47276] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 12:54:03.717][PID=48364][TID=47276] StartGame: OS version=6.2.9200
-[2026-03-21 12:54:03.717][PID=48364][TID=47276] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 12:54:03.723][PID=48364][TID=47276] StartGame: CreateProcess game success, pid=51308 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 12:54:03.724][PID=48364][TID=47276] StartGame: get_shm(create=true) success
-[2026-03-21 12:54:03.730][PID=48364][TID=47276] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 12:54:03.751][PID=48364][TID=47276] StartGame: ResumeThread success
-[2026-03-21 13:05:57.576][PID=53080][TID=14812] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 13:05:57.576][PID=53080][TID=14812] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 13:05:57.585][PID=53080][TID=37516] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774069557.txt, remoteVer=1001
-[2026-03-21 13:05:57.585][PID=53080][TID=37516] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 13:05:57.585][PID=53080][TID=37516] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 13:05:57.586][PID=53080][TID=37516] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 13:05:57.587][PID=53080][TID=37516] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 13:05:57.587][PID=53080][TID=37516] LoadServerList: done, serverCount=3
-[2026-03-21 13:05:59.483][PID=53080][TID=14812] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 13:05:59.483][PID=53080][TID=14812] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 13:05:59.483][PID=53080][TID=14812] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 13:05:59.483][PID=53080][TID=14812] StartGame: OS version=6.2.9200
-[2026-03-21 13:05:59.483][PID=53080][TID=14812] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 13:05:59.489][PID=53080][TID=14812] StartGame: CreateProcess game success, pid=53168 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 13:05:59.492][PID=53080][TID=14812] StartGame: get_shm(create=true) success
-[2026-03-21 13:05:59.499][PID=53080][TID=14812] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 13:05:59.520][PID=53080][TID=14812] StartGame: ResumeThread success
-[2026-03-21 13:13:27.450][PID=54380][TID=34644] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 13:13:27.450][PID=54380][TID=34644] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 13:13:27.463][PID=54380][TID=54976] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774070007.txt, remoteVer=1001
-[2026-03-21 13:13:27.463][PID=54380][TID=54976] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 13:13:27.463][PID=54380][TID=54976] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=!J%ë'∑ç≈Nö*ÏÿÉ¡˝ÈíA'5}yÍ;PÌ name=??2<B???O??.??_i??`?G?.????
-[2026-03-21 13:13:27.463][PID=54380][TID=54976] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 13:13:27.463][PID=54380][TID=54976] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 13:13:27.464][PID=54380][TID=54976] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 13:13:27.464][PID=54380][TID=54976] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=734405708 ip=dí˘VÛ#]ˇbiÇ⁄É¡˝ÈíA'5}yÍ;PÌ name=~??tP.5??????_i??`?G?.???
-[2026-03-21 13:13:27.464][PID=54380][TID=54976] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 13:13:27.464][PID=54380][TID=54976] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 13:13:27.464][PID=54380][TID=54976] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 13:13:27.464][PID=54380][TID=54976] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=800180698 ip=Ò:ØP&<ß;ö9πêÔÉ¡˝ÈíA'5}yÍ;PÌ name=??#??>??Y?????_i??`?G?.??????
-[2026-03-21 13:13:27.465][PID=54380][TID=54976] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 13:13:27.465][PID=54380][TID=54976] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 13:13:27.465][PID=54380][TID=54976] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 13:13:27.465][PID=54380][TID=54976] LoadServerList: done, serverCount=3
-[2026-03-21 13:13:29.596][PID=54380][TID=34644] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 13:13:29.596][PID=54380][TID=34644] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 13:13:29.596][PID=54380][TID=34644] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 13:13:29.597][PID=54380][TID=34644] StartGame: OS version=6.2.9200
-[2026-03-21 13:13:29.597][PID=54380][TID=34644] StartGame: set __COMPAT_LAYER=DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 13:13:29.603][PID=54380][TID=34644] StartGame: CreateProcess game success, pid=54256 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 13:13:29.604][PID=54380][TID=34644] StartGame: get_shm(create=true) success
-[2026-03-21 13:13:29.605][PID=54380][TID=34644] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 13:13:29.625][PID=54380][TID=34644] StartGame: ResumeThread success
-[2026-03-21 14:03:48.787][PID=36508][TID=54392] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 14:03:48.787][PID=36508][TID=54392] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 14:04:18.303][PID=53840][TID=46012] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 14:04:18.304][PID=53840][TID=46012] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 14:11:28.555][PID=10372][TID=6392] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-21 14:11:28.555][PID=10372][TID=6392] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 17:39:32.023][PID=54184][TID=24052] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 17:39:32.023][PID=54184][TID=24052] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 17:43:51.561][PID=53948][TID=47636] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 17:43:51.562][PID=53948][TID=47636] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 17:43:51.768][PID=53948][TID=54232] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774086231.txt, remoteVer=1001
-[2026-03-21 17:43:51.768][PID=53948][TID=54232] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 17:43:51.768][PID=53948][TID=54232] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 17:43:51.768][PID=53948][TID=54232] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 17:43:51.768][PID=53948][TID=54232] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 17:43:51.768][PID=53948][TID=54232] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 17:43:51.769][PID=53948][TID=54232] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 17:43:51.769][PID=53948][TID=54232] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 17:43:51.769][PID=53948][TID=54232] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 17:43:51.769][PID=53948][TID=54232] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 17:43:51.770][PID=53948][TID=54232] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 17:43:51.770][PID=53948][TID=54232] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 17:43:51.770][PID=53948][TID=54232] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 17:43:51.770][PID=53948][TID=54232] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 17:43:51.770][PID=53948][TID=54232] LoadServerList: done, serverCount=3
-[2026-03-21 17:43:55.389][PID=53948][TID=47636] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 17:43:55.389][PID=53948][TID=47636] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 17:43:55.390][PID=53948][TID=47636] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 17:43:55.390][PID=53948][TID=47636] StartGame: OS version=10.0.26200
-[2026-03-21 17:43:55.390][PID=53948][TID=47636] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 17:43:55.397][PID=53948][TID=47636] StartGame: CreateProcess game success, pid=31320 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 17:43:55.399][PID=53948][TID=47636] StartGame: get_shm(create=true) success
-[2026-03-21 17:43:55.407][PID=53948][TID=47636] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 17:43:55.448][PID=53948][TID=47636] StartGame: ResumeThread success
-[2026-03-21 18:35:20.173][PID=51184][TID=42696] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 18:35:20.173][PID=51184][TID=42696] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 18:35:20.630][PID=51184][TID=37452] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774089320.txt, remoteVer=1001
-[2026-03-21 18:35:20.630][PID=51184][TID=37452] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 18:35:20.630][PID=51184][TID=37452] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 18:35:20.630][PID=51184][TID=37452] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 18:35:20.630][PID=51184][TID=37452] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 18:35:20.631][PID=51184][TID=37452] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 18:35:20.632][PID=51184][TID=37452] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 18:35:20.632][PID=51184][TID=37452] LoadServerList: done, serverCount=3
-[2026-03-21 18:35:22.806][PID=51184][TID=42696] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 18:35:22.806][PID=51184][TID=42696] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 18:35:22.807][PID=51184][TID=42696] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:35:22.807][PID=51184][TID=42696] StartGame: OS version=10.0.26200
-[2026-03-21 18:35:22.807][PID=51184][TID=42696] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 18:35:22.813][PID=51184][TID=42696] StartGame: CreateProcess game success, pid=56068 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:35:22.814][PID=51184][TID=42696] StartGame: get_shm(create=true) success
-[2026-03-21 18:35:22.822][PID=51184][TID=42696] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 18:35:22.854][PID=51184][TID=42696] StartGame: ResumeThread success
-[2026-03-21 18:41:33.909][PID=3020][TID=57340] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 18:41:33.909][PID=3020][TID=57340] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 18:41:34.299][PID=3020][TID=40236] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774089694.txt, remoteVer=1001
-[2026-03-21 18:41:34.300][PID=3020][TID=40236] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 18:41:34.300][PID=3020][TID=40236] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 18:41:34.300][PID=3020][TID=40236] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 18:41:34.300][PID=3020][TID=40236] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 18:41:34.300][PID=3020][TID=40236] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 18:41:34.300][PID=3020][TID=40236] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 18:41:34.301][PID=3020][TID=40236] LoadServerList: done, serverCount=3
-[2026-03-21 18:41:46.363][PID=3020][TID=57340] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 18:41:46.363][PID=3020][TID=57340] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 18:41:46.363][PID=3020][TID=57340] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:41:46.363][PID=3020][TID=57340] StartGame: OS version=10.0.26200
-[2026-03-21 18:41:46.363][PID=3020][TID=57340] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 18:41:46.369][PID=3020][TID=57340] StartGame: CreateProcess game success, pid=52032 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:41:46.371][PID=3020][TID=57340] StartGame: get_shm(create=true) success
-[2026-03-21 18:41:46.371][PID=3020][TID=57340] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 18:41:46.401][PID=3020][TID=57340] StartGame: ResumeThread success
-[2026-03-21 18:42:19.152][PID=39692][TID=54260] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 18:42:19.152][PID=39692][TID=54260] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774089739.txt, remoteVer=1001
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 18:42:19.333][PID=39692][TID=57840] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 18:42:19.334][PID=39692][TID=57840] LoadServerList: done, serverCount=3
-[2026-03-21 18:42:21.530][PID=39692][TID=54260] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 18:42:21.530][PID=39692][TID=54260] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 18:42:21.531][PID=39692][TID=54260] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:42:21.531][PID=39692][TID=54260] StartGame: OS version=10.0.26200
-[2026-03-21 18:42:21.531][PID=39692][TID=54260] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 18:42:21.536][PID=39692][TID=54260] StartGame: CreateProcess game success, pid=26256 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:42:21.538][PID=39692][TID=54260] StartGame: get_shm(create=true) success
-[2026-03-21 18:42:21.538][PID=39692][TID=54260] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 18:42:21.565][PID=39692][TID=54260] StartGame: ResumeThread success
-[2026-03-21 18:46:35.895][PID=50352][TID=36496] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 18:46:35.895][PID=50352][TID=36496] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 18:46:36.323][PID=50352][TID=58024] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774089996.txt, remoteVer=1001
-[2026-03-21 18:46:36.323][PID=50352][TID=58024] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 18:46:36.323][PID=50352][TID=58024] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 18:46:36.323][PID=50352][TID=58024] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 18:46:36.323][PID=50352][TID=58024] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 18:46:36.324][PID=50352][TID=58024] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 18:46:36.325][PID=50352][TID=58024] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 18:46:36.325][PID=50352][TID=58024] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 18:46:36.325][PID=50352][TID=58024] LoadServerList: done, serverCount=3
-[2026-03-21 18:46:38.545][PID=50352][TID=36496] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 18:46:38.545][PID=50352][TID=36496] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 18:46:38.547][PID=50352][TID=36496] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:46:38.547][PID=50352][TID=36496] StartGame: OS version=10.0.26200
-[2026-03-21 18:46:38.547][PID=50352][TID=36496] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 18:46:38.554][PID=50352][TID=36496] StartGame: CreateProcess game success, pid=56816 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 18:46:38.555][PID=50352][TID=36496] StartGame: get_shm(create=true) success
-[2026-03-21 18:46:38.561][PID=50352][TID=36496] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 18:46:38.586][PID=50352][TID=36496] StartGame: ResumeThread success
-[2026-03-21 19:14:18.859][PID=47748][TID=21276] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 19:14:18.859][PID=47748][TID=21276] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 19:14:19.288][PID=47748][TID=10676] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774091659.txt, remoteVer=1001
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 19:14:19.289][PID=47748][TID=10676] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 19:14:19.290][PID=47748][TID=10676] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 19:14:19.290][PID=47748][TID=10676] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 19:14:19.290][PID=47748][TID=10676] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 19:14:19.290][PID=47748][TID=10676] LoadServerList: done, serverCount=3
-[2026-03-21 19:14:23.635][PID=47748][TID=21276] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 19:14:23.635][PID=47748][TID=21276] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 19:14:23.636][PID=47748][TID=21276] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 19:14:23.636][PID=47748][TID=21276] StartGame: OS version=10.0.26200
-[2026-03-21 19:14:23.636][PID=47748][TID=21276] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 19:14:23.643][PID=47748][TID=21276] StartGame: CreateProcess game success, pid=47364 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 19:14:23.644][PID=47748][TID=21276] StartGame: get_shm(create=true) success
-[2026-03-21 19:14:23.649][PID=47748][TID=21276] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 19:14:23.679][PID=47748][TID=21276] StartGame: ResumeThread success
-[2026-03-21 19:43:01.102][PID=45900][TID=57956] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 19:43:01.102][PID=45900][TID=57956] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 19:43:01.531][PID=45900][TID=56572] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774093381.txt, remoteVer=1001
-[2026-03-21 19:43:01.531][PID=45900][TID=56572] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 19:43:01.531][PID=45900][TID=56572] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 19:43:01.531][PID=45900][TID=56572] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 19:43:01.531][PID=45900][TID=56572] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 19:43:01.531][PID=45900][TID=56572] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 19:43:01.532][PID=45900][TID=56572] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 19:43:01.532][PID=45900][TID=56572] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 19:43:01.532][PID=45900][TID=56572] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 19:43:01.532][PID=45900][TID=56572] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 19:43:01.532][PID=45900][TID=56572] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 19:43:01.532][PID=45900][TID=56572] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 19:43:01.533][PID=45900][TID=56572] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 19:43:01.533][PID=45900][TID=56572] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 19:43:01.533][PID=45900][TID=56572] LoadServerList: done, serverCount=3
-[2026-03-21 19:43:03.903][PID=45900][TID=57956] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 19:43:03.904][PID=45900][TID=57956] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 19:43:03.904][PID=45900][TID=57956] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 19:43:03.904][PID=45900][TID=57956] StartGame: OS version=10.0.26200
-[2026-03-21 19:43:03.904][PID=45900][TID=57956] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 19:43:03.910][PID=45900][TID=57956] StartGame: CreateProcess game success, pid=30116 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 19:43:03.912][PID=45900][TID=57956] StartGame: get_shm(create=true) success
-[2026-03-21 19:43:03.917][PID=45900][TID=57956] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 19:43:03.945][PID=45900][TID=57956] StartGame: ResumeThread success
-[2026-03-21 20:02:00.517][PID=56360][TID=5228] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 20:02:00.517][PID=56360][TID=5228] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 20:02:00.983][PID=56360][TID=38732] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774094520.txt, remoteVer=1001
-[2026-03-21 20:02:00.983][PID=56360][TID=38732] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 20:02:00.983][PID=56360][TID=38732] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 20:02:00.983][PID=56360][TID=38732] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 20:02:00.984][PID=56360][TID=38732] LoadServerList: done, serverCount=3
-[2026-03-21 20:02:02.748][PID=56360][TID=5228] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 20:02:02.749][PID=56360][TID=5228] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 20:02:02.749][PID=56360][TID=5228] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:02:02.749][PID=56360][TID=5228] StartGame: OS version=10.0.26200
-[2026-03-21 20:02:02.749][PID=56360][TID=5228] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 20:02:02.756][PID=56360][TID=5228] StartGame: CreateProcess game success, pid=57532 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:02:02.757][PID=56360][TID=5228] StartGame: get_shm(create=true) success
-[2026-03-21 20:02:02.762][PID=56360][TID=5228] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 20:02:02.792][PID=56360][TID=5228] StartGame: ResumeThread success
-[2026-03-21 20:08:14.830][PID=51984][TID=37316] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 20:08:14.830][PID=51984][TID=37316] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 20:08:15.270][PID=51984][TID=4228] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774094895.txt, remoteVer=1001
-[2026-03-21 20:08:15.270][PID=51984][TID=4228] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 20:08:15.270][PID=51984][TID=4228] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 20:08:15.270][PID=51984][TID=4228] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 20:08:15.270][PID=51984][TID=4228] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 20:08:15.270][PID=51984][TID=4228] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 20:08:15.271][PID=51984][TID=4228] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 20:08:15.271][PID=51984][TID=4228] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 20:08:15.271][PID=51984][TID=4228] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 20:08:15.271][PID=51984][TID=4228] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 20:08:15.271][PID=51984][TID=4228] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 20:08:15.272][PID=51984][TID=4228] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 20:08:15.272][PID=51984][TID=4228] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 20:08:15.272][PID=51984][TID=4228] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 20:08:15.272][PID=51984][TID=4228] LoadServerList: done, serverCount=3
-[2026-03-21 20:08:18.218][PID=51984][TID=37316] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 20:08:18.219][PID=51984][TID=37316] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 20:08:18.219][PID=51984][TID=37316] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:08:18.219][PID=51984][TID=37316] StartGame: OS version=10.0.26200
-[2026-03-21 20:08:18.219][PID=51984][TID=37316] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 20:08:18.226][PID=51984][TID=37316] StartGame: CreateProcess game success, pid=8872 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:08:18.227][PID=51984][TID=37316] StartGame: get_shm(create=true) success
-[2026-03-21 20:08:18.232][PID=51984][TID=37316] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 20:08:18.257][PID=51984][TID=37316] StartGame: ResumeThread success
-[2026-03-21 20:12:05.460][PID=54344][TID=57796] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 20:12:05.460][PID=54344][TID=57796] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 20:12:05.631][PID=54344][TID=34040] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774095125.txt, remoteVer=1001
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 20:12:05.632][PID=54344][TID=34040] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 20:12:05.633][PID=54344][TID=34040] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 20:12:05.633][PID=54344][TID=34040] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 20:12:05.633][PID=54344][TID=34040] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 20:12:05.633][PID=54344][TID=34040] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 20:12:05.633][PID=54344][TID=34040] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 20:12:05.634][PID=54344][TID=34040] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 20:12:05.634][PID=54344][TID=34040] LoadServerList: done, serverCount=3
-[2026-03-21 20:12:07.383][PID=54344][TID=57796] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 20:12:07.383][PID=54344][TID=57796] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 20:12:07.384][PID=54344][TID=57796] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:12:07.384][PID=54344][TID=57796] StartGame: OS version=10.0.26200
-[2026-03-21 20:12:07.384][PID=54344][TID=57796] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 20:12:07.390][PID=54344][TID=57796] StartGame: CreateProcess game success, pid=56844 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:12:07.392][PID=54344][TID=57796] StartGame: get_shm(create=true) success
-[2026-03-21 20:12:07.397][PID=54344][TID=57796] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 20:12:07.423][PID=54344][TID=57796] StartGame: ResumeThread success
-[2026-03-21 20:15:17.971][PID=53636][TID=57456] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 20:15:17.971][PID=53636][TID=57456] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 20:15:18.387][PID=53636][TID=41140] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774095318.txt, remoteVer=1001
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 20:15:18.388][PID=53636][TID=41140] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 20:15:18.390][PID=53636][TID=41140] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 20:15:18.390][PID=53636][TID=41140] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 20:15:18.390][PID=53636][TID=41140] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 20:15:18.390][PID=53636][TID=41140] LoadServerList: done, serverCount=3
-[2026-03-21 20:15:20.237][PID=53636][TID=57456] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 20:15:20.237][PID=53636][TID=57456] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 20:15:20.237][PID=53636][TID=57456] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:15:20.238][PID=53636][TID=57456] StartGame: OS version=10.0.26200
-[2026-03-21 20:15:20.238][PID=53636][TID=57456] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 20:15:20.244][PID=53636][TID=57456] StartGame: CreateProcess game success, pid=43716 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 20:15:20.246][PID=53636][TID=57456] StartGame: get_shm(create=true) success
-[2026-03-21 20:15:20.250][PID=53636][TID=57456] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 20:15:20.277][PID=53636][TID=57456] StartGame: ResumeThread success
-[2026-03-21 21:17:23.567][PID=44212][TID=29224] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 21:17:23.568][PID=44212][TID=29224] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 21:17:24.071][PID=44212][TID=50552] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774099044.txt, remoteVer=1001
-[2026-03-21 21:17:24.072][PID=44212][TID=50552] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 21:17:24.072][PID=44212][TID=50552] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 21:17:24.072][PID=44212][TID=50552] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 21:17:24.072][PID=44212][TID=50552] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 21:17:24.072][PID=44212][TID=50552] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 21:17:24.072][PID=44212][TID=50552] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 21:17:24.073][PID=44212][TID=50552] LoadServerList: done, serverCount=3
-[2026-03-21 21:17:27.271][PID=44212][TID=29224] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 21:17:27.271][PID=44212][TID=29224] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 21:17:27.273][PID=44212][TID=29224] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 21:17:27.273][PID=44212][TID=29224] StartGame: OS version=10.0.26200
-[2026-03-21 21:17:27.273][PID=44212][TID=29224] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 21:17:27.279][PID=44212][TID=29224] StartGame: CreateProcess game success, pid=40256 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 21:17:27.280][PID=44212][TID=29224] StartGame: get_shm(create=true) success
-[2026-03-21 21:17:27.282][PID=44212][TID=29224] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 21:17:27.312][PID=44212][TID=29224] StartGame: ResumeThread success
-[2026-03-21 22:18:55.792][PID=57704][TID=5824] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-21 22:18:55.792][PID=57704][TID=5824] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-21 22:18:56.194][PID=57704][TID=44868] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774102736.txt, remoteVer=1001
-[2026-03-21 22:18:56.194][PID=57704][TID=44868] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-21 22:18:56.194][PID=57704][TID=44868] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-21 22:18:56.194][PID=57704][TID=44868] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-21 22:18:56.194][PID=57704][TID=44868] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-21 22:18:56.195][PID=57704][TID=44868] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-21 22:18:56.197][PID=57704][TID=44868] LoadServerList: done, serverCount=3
-[2026-03-21 22:18:57.822][PID=57704][TID=5824] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-21 22:18:57.822][PID=57704][TID=5824] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-21 22:18:57.823][PID=57704][TID=5824] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 22:18:57.823][PID=57704][TID=5824] StartGame: OS version=10.0.26200
-[2026-03-21 22:18:57.823][PID=57704][TID=5824] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-21 22:18:57.830][PID=57704][TID=5824] StartGame: CreateProcess game success, pid=56476 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-21 22:18:57.830][PID=57704][TID=5824] StartGame: get_shm(create=true) success
-[2026-03-21 22:18:57.831][PID=57704][TID=5824] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-21 22:18:57.860][PID=57704][TID=5824] StartGame: ResumeThread success
-[2026-03-22 12:38:32.703][PID=55156][TID=54136] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-22 12:38:32.704][PID=55156][TID=54136] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-22 12:38:33.191][PID=55156][TID=40536] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774154313.txt, remoteVer=1001
-[2026-03-22 12:38:33.191][PID=55156][TID=40536] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-22 12:38:33.192][PID=55156][TID=40536] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-22 12:38:33.193][PID=55156][TID=40536] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-22 12:38:33.193][PID=55156][TID=40536] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-22 12:38:33.193][PID=55156][TID=40536] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-22 12:38:33.194][PID=55156][TID=40536] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-22 12:38:33.194][PID=55156][TID=40536] LoadServerList: done, serverCount=3
-[2026-03-22 12:38:36.661][PID=55156][TID=54136] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-22 12:38:36.661][PID=55156][TID=54136] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-22 12:38:36.662][PID=55156][TID=54136] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 12:38:36.662][PID=55156][TID=54136] StartGame: OS version=10.0.26200
-[2026-03-22 12:38:36.662][PID=55156][TID=54136] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-22 12:38:36.670][PID=55156][TID=54136] StartGame: CreateProcess game success, pid=15888 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 12:38:36.672][PID=55156][TID=54136] StartGame: get_shm(create=true) success
-[2026-03-22 12:38:36.679][PID=55156][TID=54136] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-22 12:38:36.715][PID=55156][TID=54136] StartGame: ResumeThread success
-[2026-03-22 12:53:18.241][PID=49756][TID=24228] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-22 12:53:18.241][PID=49756][TID=24228] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-22 12:53:18.665][PID=49756][TID=51432] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774155198.txt, remoteVer=1001
-[2026-03-22 12:53:18.665][PID=49756][TID=51432] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-22 12:53:18.665][PID=49756][TID=51432] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-22 12:53:18.665][PID=49756][TID=51432] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-22 12:53:18.666][PID=49756][TID=51432] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-22 12:53:18.667][PID=49756][TID=51432] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-22 12:53:18.667][PID=49756][TID=51432] LoadServerList: done, serverCount=3
-[2026-03-22 12:53:22.105][PID=49756][TID=24228] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-22 12:53:22.106][PID=49756][TID=24228] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-22 12:53:22.106][PID=49756][TID=24228] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 12:53:22.106][PID=49756][TID=24228] StartGame: OS version=10.0.26200
-[2026-03-22 12:53:22.107][PID=49756][TID=24228] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-22 12:53:22.113][PID=49756][TID=24228] StartGame: CreateProcess game success, pid=52068 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 12:53:22.114][PID=49756][TID=24228] StartGame: get_shm(create=true) success
-[2026-03-22 12:53:22.117][PID=49756][TID=24228] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-22 12:53:22.145][PID=49756][TID=24228] StartGame: ResumeThread success
-[2026-03-22 13:22:46.047][PID=14960][TID=12444] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-22 13:22:46.047][PID=14960][TID=12444] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-22 13:22:46.486][PID=14960][TID=50752] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774156966.txt, remoteVer=1001
-[2026-03-22 13:22:46.487][PID=14960][TID=50752] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-22 13:22:46.487][PID=14960][TID=50752] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-22 13:22:46.487][PID=14960][TID=50752] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-22 13:22:46.488][PID=14960][TID=50752] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-22 13:22:46.489][PID=14960][TID=50752] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-22 13:22:46.489][PID=14960][TID=50752] LoadServerList: done, serverCount=3
-[2026-03-22 13:22:48.255][PID=14960][TID=12444] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-22 13:22:48.255][PID=14960][TID=12444] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-22 13:22:48.256][PID=14960][TID=12444] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 13:22:48.256][PID=14960][TID=12444] StartGame: OS version=10.0.26200
-[2026-03-22 13:22:48.257][PID=14960][TID=12444] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-22 13:22:48.264][PID=14960][TID=12444] StartGame: CreateProcess game success, pid=42664 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 13:22:48.266][PID=14960][TID=12444] StartGame: get_shm(create=true) success
-[2026-03-22 13:22:48.275][PID=14960][TID=12444] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-22 13:22:48.304][PID=14960][TID=12444] StartGame: ResumeThread success
-[2026-03-22 13:27:25.927][PID=54280][TID=36968] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-22 13:27:25.928][PID=54280][TID=36968] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774157246.txt, remoteVer=1001
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-22 13:27:26.072][PID=54280][TID=52164] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-22 13:27:26.073][PID=54280][TID=52164] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-22 13:27:26.073][PID=54280][TID=52164] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-22 13:27:26.074][PID=54280][TID=52164] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-22 13:27:26.074][PID=54280][TID=52164] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-22 13:27:26.074][PID=54280][TID=52164] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-22 13:27:26.074][PID=54280][TID=52164] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-22 13:27:26.075][PID=54280][TID=52164] LoadServerList: done, serverCount=3
-[2026-03-22 13:27:28.635][PID=54280][TID=36968] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-22 13:27:28.636][PID=54280][TID=36968] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-22 13:27:28.636][PID=54280][TID=36968] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 13:27:28.637][PID=54280][TID=36968] StartGame: OS version=10.0.26200
-[2026-03-22 13:27:28.637][PID=54280][TID=36968] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-22 13:27:28.645][PID=54280][TID=36968] StartGame: CreateProcess game success, pid=52896 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 13:27:28.646][PID=54280][TID=36968] StartGame: get_shm(create=true) success
-[2026-03-22 13:27:28.654][PID=54280][TID=36968] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-22 13:27:28.678][PID=54280][TID=36968] StartGame: ResumeThread success
-[2026-03-22 13:35:38.453][PID=55288][TID=58076] OnPrepare: configed=1, useupdate=0, list=https://raw.githubusercontent.com/eric761231/lineage3.81Launcher/main/login/list.txt
-[2026-03-22 13:35:38.453][PID=55288][TID=58076] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-22 13:35:38.892][PID=55288][TID=57224] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774157738.txt, remoteVer=1001
-[2026-03-22 13:35:38.892][PID=55288][TID=57224] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-22 13:35:38.892][PID=55288][TID=57224] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=–=ñ˚É≤Ÿ¥pN+¸«·òåRÙ[ÇŒøùDˇkÂ name=??l?.??????s?u?/?E??_???????a
-[2026-03-22 13:35:38.892][PID=55288][TID=57224] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-22 13:35:38.892][PID=55288][TID=57224] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-22 13:35:38.892][PID=55288][TID=57224] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=1098205981 ip=P®p˝÷§‡ ¡gû¶o·òåRÙ[ÇŒøùDˇkÂ name=??9???6?4????u?/?E??_???????
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-635186714 ip=!∞RÌ´È
-q∑°îπU›·òåRÙ[ÇŒøùDˇkÂ name=?e<????????s?u?/?E??_???????a
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-22 13:35:38.894][PID=55288][TID=57224] LoadServerList: done, serverCount=3
-[2026-03-22 13:35:41.066][PID=55288][TID=58076] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-22 13:35:41.066][PID=55288][TID=58076] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-22 13:35:41.067][PID=55288][TID=58076] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 13:35:41.067][PID=55288][TID=58076] StartGame: OS version=10.0.26200
-[2026-03-22 13:35:41.067][PID=55288][TID=58076] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-22 13:35:41.075][PID=55288][TID=58076] StartGame: CreateProcess game success, pid=40888 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-22 13:35:41.076][PID=55288][TID=58076] StartGame: get_shm(create=true) success
-[2026-03-22 13:35:41.082][PID=55288][TID=58076] StartGame: local LoadLibrary success, path=C:\3.81Lineage\LauncherDll.dll
-[2026-03-22 13:35:41.110][PID=55288][TID=58076] StartGame: ResumeThread success
-[2026-03-23 15:12:27.121][PID=17792][TID=27284] CLinLauncherDlg::Init()
-[2026-03-23 15:12:44.779][PID=19700][TID=52096] CLinLauncherDlg::Init()
-[2026-03-23 15:15:25.600][PID=51528][TID=19956] CLinLauncherDlg::Init()
-[2026-03-23 15:16:28.934][PID=24908][TID=10804] OnCreate: failed to load skin.xml, path=C:\3.81Lineage\skin.xml
-[2026-03-23 16:03:17.864][PID=23448][TID=35304] OnCreate: failed to load skin.xml, path=C:\3.81Lineage\skin.xml
-[2026-03-23 16:03:34.711][PID=32984][TID=56408] CLinLauncherDlg::Init()
-[2026-03-23 16:59:10.308][PID=6876][TID=5320] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 16:59:10.324][PID=6876][TID=5320] OnCreate: failed to load skin.xml, path=C:\3.81Lineage\skin\skin.xml
-[2026-03-23 16:59:30.011][PID=46132][TID=47388] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 16:59:30.025][PID=46132][TID=47388] OnCreate: failed to load skin.xml, path=C:\3.81Lineage\skin\skin.xml
-[2026-03-23 17:00:51.421][PID=35824][TID=51804] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 17:00:51.436][PID=35824][TID=51804] OnCreate: failed to load skin.xml, path=C:\3.81Lineage\skin\skin.xml
-[2026-03-23 18:12:25.462][PID=57880][TID=7560] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 18:12:25.477][PID=57880][TID=7560] OnCreate: failed to load skin xml, path=C:\3.81Lineage\skin\skin.xml
-[2026-03-23 18:17:44.035][PID=5172][TID=11000] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 18:17:44.056][PID=5172][TID=11000] OnCreate: failed to load skin xml, path=C:\3.81Lineage\skin\skin.xml
-[2026-03-23 18:24:53.203][PID=25640][TID=37796] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 18:24:53.214][PID=25640][TID=37796] OnCreate: failed to load skin xml, path=C:\3.81Lineage\skin\skin.xml
-[2026-03-23 18:32:57.005][PID=31244][TID=15936] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 18:32:57.018][PID=31244][TID=15936] OnCreate: failed to load skin xml, lastPath=C:\3.81Lineage\skin.xml
-[2026-03-23 18:55:03.337][PID=57912][TID=34548] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 18:55:03.351][PID=57912][TID=34548] Skin candidate[0]=skin.xml
-[2026-03-23 18:55:03.394][PID=57912][TID=34548] CLinLauncherDlg::Init()
-[2026-03-23 18:55:03.394][PID=57912][TID=34548] ShowServerList: g_nServerCount=0
-[2026-03-23 19:07:52.953][PID=25912][TID=44680] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 19:07:52.970][PID=25912][TID=44680] Skin candidate[0]=skin.xml
-[2026-03-23 19:07:53.023][PID=25912][TID=44680] CLinLauncherDlg::Init()
-[2026-03-23 19:07:53.023][PID=25912][TID=44680] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 20:20:53.190][PID=9700][TID=59460] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 20:20:53.208][PID=9700][TID=59460] Skin candidate[0]=skin.xml
-[2026-03-23 20:20:53.259][PID=9700][TID=59460] CLinLauncherDlg::Init()
-[2026-03-23 20:20:53.260][PID=9700][TID=59460] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 22:09:55.544][PID=47528][TID=53380] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 22:09:55.555][PID=47528][TID=53380] CLinLauncherDlg::Init()
-[2026-03-23 22:09:55.556][PID=47528][TID=53380] ShowServerList: try1 exists=0 path=C:\3.81Lineage\list.txt
-[2026-03-23 22:09:55.556][PID=47528][TID=53380] ShowServerList: after try1 count=0
-[2026-03-23 22:09:55.556][PID=47528][TID=53380] ShowServerList: try2 exists=0 path=C:\3.81Lineage\skin\list.txt
-[2026-03-23 22:09:55.557][PID=47528][TID=53380] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 22:09:55.557][PID=47528][TID=53380] Update check: update.txt not found
-[2026-03-23 23:22:27.047][PID=26868][TID=27652] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 23:22:27.060][PID=26868][TID=27652] CLinLauncherDlg::Init()
-[2026-03-23 23:22:27.060][PID=26868][TID=27652] ShowServerList: try1 exists=0 path=C:\3.81Lineage\list.txt
-[2026-03-23 23:22:27.060][PID=26868][TID=27652] ShowServerList: after try1 count=0
-[2026-03-23 23:22:27.061][PID=26868][TID=27652] ShowServerList: try2 exists=0 path=C:\3.81Lineage\skin\list.txt
-[2026-03-23 23:22:27.061][PID=26868][TID=27652] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 23:22:27.061][PID=26868][TID=27652] Update check: update.txt not found
-[2026-03-23 23:22:35.176][PID=26868][TID=27652] Notify click: sender=btn_start
-[2026-03-23 23:22:37.801][PID=26868][TID=27652] Notify click: sender=btn_start
-[2026-03-23 23:23:04.640][PID=26868][TID=27652] Notify click: sender=btn_min
-[2026-03-23 23:23:05.440][PID=26868][TID=27652] Notify click: sender=btn_min
-[2026-03-23 23:23:06.366][PID=26868][TID=27652] Notify click: sender=btn_close
-[2026-03-23 23:23:06.750][PID=26868][TID=27652] Notify click: sender=btn_close
-[2026-03-23 23:23:06.966][PID=26868][TID=27652] Notify click: sender=btn_close
-[2026-03-23 23:26:47.151][PID=26868][TID=27652] Notify click: sender=btn_close
-[2026-03-23 23:26:48.544][PID=26868][TID=27652] Notify click: sender=btn_min
-[2026-03-23 23:32:07.463][PID=36324][TID=33996] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 23:32:07.478][PID=36324][TID=33996] CLinLauncherDlg::Init()
-[2026-03-23 23:32:07.478][PID=36324][TID=33996] ShowServerList: try1 exists=0 path=C:\3.81Lineage\list.txt
-[2026-03-23 23:32:07.479][PID=36324][TID=33996] ShowServerList: after try1 count=0
-[2026-03-23 23:32:07.479][PID=36324][TID=33996] ShowServerList: try2 exists=0 path=C:\3.81Lineage\skin\list.txt
-[2026-03-23 23:32:07.479][PID=36324][TID=33996] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 23:32:07.479][PID=36324][TID=33996] Update check: update.txt not found
-[2026-03-23 23:33:05.776][PID=36324][TID=33996] Notify click: sender=btn_start
-[2026-03-23 23:33:07.996][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:33:08.435][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:33:12.103][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:33:12.484][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:33:12.647][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:33:12.882][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:34:52.672][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:48:06.439][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:48:06.802][PID=36324][TID=33996] Notify click: sender=btn_close
-[2026-03-23 23:56:28.894][PID=7104][TID=51364] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 23:56:28.909][PID=7104][TID=51364] CLinLauncherDlg::Init()
-[2026-03-23 23:56:28.910][PID=7104][TID=51364] 
-[2026-03-23 23:56:28.911][PID=7104][TID=51364] 
-[2026-03-23 23:56:28.917][PID=7104][TID=51364] ShowServerList: remote download failed size=0
-[2026-03-23 23:56:28.917][PID=7104][TID=51364] ShowServerList: try1 exists=0 path=C:\3.81Lineage\list.txt
-[2026-03-23 23:56:28.917][PID=7104][TID=51364] ShowServerList: after try1 count=0
-[2026-03-23 23:56:28.918][PID=7104][TID=51364] ShowServerList: try2 exists=0 path=C:\3.81Lineage\skin\list.txt
-[2026-03-23 23:56:28.918][PID=7104][TID=51364] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 23:56:28.918][PID=7104][TID=51364] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-23 23:56:28.919][PID=7104][TID=51364] Update check: update.txt not found
-[2026-03-23 23:56:48.503][PID=7104][TID=51364] Notify click: sender=btn_close
-[2026-03-23 23:56:49.338][PID=7104][TID=51364] Notify click: sender=btn_min
-[2026-03-23 23:56:51.192][PID=7104][TID=51364] Notify click: sender=btn_start
-[2026-03-23 23:56:52.979][PID=7104][TID=51364] Notify click: sender=btn_link4
-[2026-03-23 23:56:53.582][PID=7104][TID=51364] Notify click: sender=btn_link5
-[2026-03-23 23:56:54.037][PID=7104][TID=51364] Notify click: sender=btn_link2
-[2026-03-23 23:56:54.417][PID=7104][TID=51364] Notify click: sender=btn_link1
-[2026-03-23 23:56:58.738][PID=7104][TID=51364] Notify click: sender=btn_start
-[2026-03-23 23:57:40.986][PID=7104][TID=51364] Notify click: sender=btn_close
-[2026-03-23 23:57:49.230][PID=10476][TID=61752] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-23 23:57:49.249][PID=10476][TID=61752] CLinLauncherDlg::Init()
-[2026-03-23 23:57:49.249][PID=10476][TID=61752] 
-[2026-03-23 23:57:49.249][PID=10476][TID=61752] 
-[2026-03-23 23:57:49.257][PID=10476][TID=61752] ShowServerList: remote download failed size=0
-[2026-03-23 23:57:49.257][PID=10476][TID=61752] ShowServerList: try1 exists=0 path=C:\3.81Lineage\list.txt
-[2026-03-23 23:57:49.257][PID=10476][TID=61752] ShowServerList: after try1 count=0
-[2026-03-23 23:57:49.257][PID=10476][TID=61752] ShowServerList: try2 exists=0 path=C:\3.81Lineage\skin\list.txt
-[2026-03-23 23:57:49.258][PID=10476][TID=61752] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=0
-[2026-03-23 23:57:49.258][PID=10476][TID=61752] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-23 23:57:49.258][PID=10476][TID=61752] Update check: update.txt not found
-[2026-03-24 00:00:21.528][PID=10476][TID=61752] Notify click: sender=btn_close
-[2026-03-24 00:00:21.801][PID=10476][TID=61752] Notify click: sender=btn_close
-[2026-03-24 00:00:21.996][PID=10476][TID=61752] Notify click: sender=btn_close
-[2026-03-24 00:00:22.189][PID=10476][TID=61752] Notify click: sender=btn_close
-[2026-03-24 00:00:22.389][PID=10476][TID=61752] Notify click: sender=btn_close
-[2026-03-24 00:00:23.288][PID=10476][TID=61752] Notify click: sender=btn_min
-[2026-03-24 00:03:39.692][PID=28504][TID=61336] LauncherConfig: decrypted embedded config
-[2026-03-24 00:03:39.695][PID=28504][TID=61336] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-24 00:03:39.715][PID=28504][TID=61336] CLinLauncherDlg::Init()
-[2026-03-24 00:03:39.715][PID=28504][TID=61336] LauncherConfig: configed=1 encrypted=0
-[2026-03-24 00:03:39.716][PID=28504][TID=61336] LauncherConfig: list_len=84 update_len=32
-[2026-03-24 00:03:39.716][PID=28504][TID=61336] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-24 00:03:40.218][PID=28504][TID=61336] ShowServerList: remote loaded count=3
-[2026-03-24 00:03:40.218][PID=28504][TID=61336] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-24 00:03:40.219][PID=28504][TID=61336] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-24 00:03:40.219][PID=28504][TID=61336] Update check: update.txt not found
-[2026-03-24 00:03:42.779][PID=28504][TID=61336] Notify click: sender=btn_close
-[2026-03-24 00:03:43.871][PID=28504][TID=61336] Notify click: sender=btn_min
-[2026-03-24 00:03:44.553][PID=28504][TID=61336] Notify click: sender=btn_min
-[2026-03-24 00:03:49.428][PID=28504][TID=61336] Notify click: sender=btn_start
-[2026-03-24 00:03:57.979][PID=28504][TID=61336] Notify click: sender=btn_close
-[2026-03-24 00:03:58.529][PID=28504][TID=61336] Notify click: sender=btn_min
-[2026-03-24 00:06:45.628][PID=28504][TID=61336] Notify click: sender=btn_start
-[2026-03-24 00:06:48.208][PID=28504][TID=61336] Notify click: sender=btn_start
-[2026-03-24 00:27:18.480][PID=28504][TID=61336] Notify click: sender=btn_close
-[2026-03-24 00:32:04.537][PID=28504][TID=61336] Notify click: sender=btn_close
-[2026-03-24 00:32:05.977][PID=28504][TID=61336] Notify click: sender=btn_min
-[2026-03-24 00:32:06.753][PID=28504][TID=61336] Notify click: sender=btn_min
-[2026-03-25 10:55:35.590][PID=45012][TID=49420] LauncherConfig: decrypted embedded config
-[2026-03-25 10:55:35.594][PID=45012][TID=49420] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 10:55:35.616][PID=45012][TID=49420] CLinLauncherDlg::Init()
-[2026-03-25 10:55:35.617][PID=45012][TID=49420] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 10:55:35.617][PID=45012][TID=49420] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 10:55:35.617][PID=45012][TID=49420] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 10:55:36.156][PID=45012][TID=49420] ShowServerList: remote loaded count=3
-[2026-03-25 10:55:36.156][PID=45012][TID=49420] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 10:55:36.156][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:55:36.157][PID=45012][TID=49420] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 10:55:36.157][PID=45012][TID=49420] Update check: update.txt not found
-[2026-03-25 10:55:47.152][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:55:48.973][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:55:49.811][PID=45012][TID=49420] Notify itemselect: server_list curSel=2
-[2026-03-25 10:55:53.998][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:55:54.411][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:55:58.299][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:55:59.595][PID=45012][TID=49420] Notify click: sender=btn_start
-[2026-03-25 10:56:01.490][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:56:04.094][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:56:04.904][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:56:14.204][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:56:14.509][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:56:14.988][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:56:15.820][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:56:16.093][PID=45012][TID=49420] Notify itemselect: server_list curSel=1
-[2026-03-25 10:56:16.742][PID=45012][TID=49420] Notify itemselect: server_list curSel=0
-[2026-03-25 10:56:47.253][PID=45012][TID=49420] Notify click: sender=btn_start
-[2026-03-25 10:56:48.669][PID=45012][TID=49420] Notify click: sender=btn_start
-[2026-03-25 10:56:48.964][PID=45012][TID=49420] Notify click: sender=btn_start
-[2026-03-25 18:16:47.924][PID=31444][TID=24936] LauncherConfig: decrypted embedded config
-[2026-03-25 18:16:47.926][PID=31444][TID=24936] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 18:16:47.933][PID=31444][TID=24936] CLinLauncherDlg::Init()
-[2026-03-25 18:16:47.934][PID=31444][TID=24936] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 18:16:47.934][PID=31444][TID=24936] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 18:16:47.934][PID=31444][TID=24936] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 18:16:48.492][PID=31444][TID=24936] ShowServerList: remote loaded count=3
-[2026-03-25 18:16:48.492][PID=31444][TID=24936] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 18:16:48.494][PID=31444][TID=24936] Notify itemselect: server_list curSel=0
-[2026-03-25 18:16:48.494][PID=31444][TID=24936] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 18:16:48.494][PID=31444][TID=24936] Update check: update.txt not found
-[2026-03-25 18:16:50.691][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:16:51.656][PID=31444][TID=24936] Notify click: sender=btn_min
-[2026-03-25 18:16:54.196][PID=31444][TID=24936] Notify itemselect: server_list curSel=1
-[2026-03-25 18:16:56.752][PID=31444][TID=24936] Notify click: sender=btn_start
-[2026-03-25 18:17:10.288][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:05.022][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:05.698][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:05.920][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:06.126][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:06.342][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:06.537][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:20:06.737][PID=31444][TID=24936] Notify click: sender=btn_close
-[2026-03-25 18:46:15.126][PID=28488][TID=20380] LauncherConfig: decrypted embedded config
-[2026-03-25 18:46:15.127][PID=28488][TID=20380] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 18:46:15.135][PID=28488][TID=20380] CLinLauncherDlg::Init()
-[2026-03-25 18:46:15.136][PID=28488][TID=20380] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 18:46:15.136][PID=28488][TID=20380] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 18:46:15.136][PID=28488][TID=20380] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 18:46:15.589][PID=28488][TID=20380] ShowServerList: remote loaded count=3
-[2026-03-25 18:46:15.589][PID=28488][TID=20380] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 18:46:15.589][PID=28488][TID=20380] Notify itemselect: server_list curSel=0
-[2026-03-25 18:46:15.590][PID=28488][TID=20380] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 18:46:15.590][PID=28488][TID=20380] Update check: update.txt not found
-[2026-03-25 18:46:16.699][PID=28488][TID=20380] Notify click: sender=btn_close
-[2026-03-25 18:46:17.234][PID=28488][TID=20380] Notify click: sender=btn_close
-[2026-03-25 18:46:17.441][PID=28488][TID=20380] Notify click: sender=btn_close
-[2026-03-25 18:48:13.164][PID=28488][TID=20380] Notify click: sender=btn_close
-[2026-03-25 19:42:13.930][PID=3532][TID=36536] LauncherConfig: decrypted embedded config
-[2026-03-25 19:42:13.934][PID=3532][TID=36536] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 19:42:13.942][PID=3532][TID=36536] CLinLauncherDlg::Init()
-[2026-03-25 19:42:13.942][PID=3532][TID=36536] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 19:42:13.942][PID=3532][TID=36536] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 19:42:13.942][PID=3532][TID=36536] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 19:42:14.428][PID=3532][TID=36536] ShowServerList: remote loaded count=3
-[2026-03-25 19:42:14.428][PID=3532][TID=36536] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 19:42:14.428][PID=3532][TID=36536] Notify itemselect: server_list curSel=0
-[2026-03-25 19:42:14.428][PID=3532][TID=36536] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 19:42:14.429][PID=3532][TID=36536] Update check: update.txt not found
-[2026-03-25 19:42:26.721][PID=3532][TID=36536] Notify click: sender=btn_close
-[2026-03-25 19:42:29.061][PID=3532][TID=36536] Notify click: sender=btn_close
-[2026-03-25 19:42:31.006][PID=3532][TID=36536] OnSysCommand: uMsg=274 wParam=61536 lParam=0
-[2026-03-25 19:42:31.015][PID=3532][TID=36536] OnClose: uMsg=16 wParam=1 lParam=0
-[2026-03-25 19:42:31.018][PID=3532][TID=36536] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-25 19:47:23.026][PID=19620][TID=31240] LauncherConfig: decrypted embedded config
-[2026-03-25 19:47:23.030][PID=19620][TID=31240] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 19:47:23.040][PID=19620][TID=31240] CLinLauncherDlg::Init()
-[2026-03-25 19:47:23.040][PID=19620][TID=31240] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 19:47:23.040][PID=19620][TID=31240] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] ShowServerList: _DEBUG -> skip remote list download; use local C:\3.81Lineage\list.txt
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] ShowServerList: try1 exists=1 path=C:\3.81Lineage\list.txt
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] ShowServerList: after try1 count=3
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] Notify itemselect: server_list curSel=0
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 19:47:23.041][PID=19620][TID=31240] Update check: update.txt not found
-[2026-03-25 19:47:26.177][PID=19620][TID=31240] Notify itemselect: server_list curSel=1
-[2026-03-25 19:47:26.654][PID=19620][TID=31240] Notify itemselect: server_list curSel=2
-[2026-03-25 19:47:27.720][PID=19620][TID=31240] Notify itemselect: server_list curSel=0
-[2026-03-25 19:49:25.305][PID=19620][TID=31240] Notify click: sender=btn_close
-[2026-03-25 19:49:25.306][PID=19620][TID=31240] Notify: btn_close -> DestroyWindow
-[2026-03-25 19:49:25.306][PID=19620][TID=31240] Notify: btn_close IsWindow(before)=1
-[2026-03-25 19:49:25.315][PID=19620][TID=31240] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-25 19:49:25.317][PID=19620][TID=31240] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-25 19:49:48.269][PID=24668][TID=2068] LauncherConfig: decrypted embedded config
-[2026-03-25 19:49:48.272][PID=24668][TID=2068] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 19:49:48.280][PID=24668][TID=2068] CLinLauncherDlg::Init()
-[2026-03-25 19:49:48.280][PID=24668][TID=2068] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 19:49:48.280][PID=24668][TID=2068] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 19:49:48.280][PID=24668][TID=2068] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 19:49:48.721][PID=24668][TID=2068] ShowServerList: remote loaded count=3
-[2026-03-25 19:49:48.721][PID=24668][TID=2068] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 19:49:48.722][PID=24668][TID=2068] Notify itemselect: server_list curSel=0
-[2026-03-25 19:49:48.722][PID=24668][TID=2068] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 19:49:48.722][PID=24668][TID=2068] Update check: update.txt not found
-[2026-03-25 19:49:50.428][PID=24668][TID=2068] Notify itemselect: server_list curSel=1
-[2026-03-25 19:49:51.342][PID=24668][TID=2068] Notify itemselect: server_list curSel=2
-[2026-03-25 19:49:52.680][PID=24668][TID=2068] Notify itemselect: server_list curSel=0
-[2026-03-25 19:49:53.894][PID=24668][TID=2068] Notify click: sender=btn_start
-[2026-03-25 19:49:53.895][PID=24668][TID=2068] ????...
-[2026-03-25 19:49:53.895][PID=24668][TID=2068] StartGame: selected=3.81 index=0
-[2026-03-25 19:49:53.896][PID=24668][TID=2068] StartGame: target=151.242.53.189:2005
-[2026-03-25 19:49:53.907][PID=24668][TID=2068] StartGame: process created pid=19620 exe=C:\3.81Lineage\Lineage.exe
-[2026-03-25 19:49:53.929][PID=24668][TID=2068] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 19:50:06.764][PID=24668][TID=2068] Notify click: sender=btn_start
-[2026-03-25 19:50:06.765][PID=24668][TID=2068] ????...
-[2026-03-25 19:50:06.765][PID=24668][TID=2068] StartGame: selected=3.81 index=0
-[2026-03-25 19:50:06.765][PID=24668][TID=2068] StartGame: target=151.242.53.189:2005
-[2026-03-25 19:50:06.769][PID=24668][TID=2068] StartGame: process created pid=27912 exe=C:\3.81Lineage\Lineage.exe
-[2026-03-25 19:50:06.783][PID=24668][TID=2068] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 19:50:54.914][PID=24668][TID=2068] Notify click: sender=btn_close
-[2026-03-25 19:50:54.916][PID=24668][TID=2068] Notify: btn_close -> DestroyWindow
-[2026-03-25 19:50:54.916][PID=24668][TID=2068] Notify: btn_close IsWindow(before)=1
-[2026-03-25 19:50:54.939][PID=24668][TID=2068] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-25 19:50:54.940][PID=24668][TID=2068] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-25 19:58:23.524][PID=32304][TID=22764] LauncherConfig: decrypted embedded config
-[2026-03-25 19:58:23.527][PID=32304][TID=22764] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 19:58:23.538][PID=32304][TID=22764] CLinLauncherDlg::Init()
-[2026-03-25 19:58:23.538][PID=32304][TID=22764] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 19:58:23.538][PID=32304][TID=22764] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 19:58:23.538][PID=32304][TID=22764] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 19:58:24.437][PID=32304][TID=22764] ShowServerList: remote loaded count=3
-[2026-03-25 19:58:24.437][PID=32304][TID=22764] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 19:58:24.437][PID=32304][TID=22764] Notify itemselect: server_list curSel=0
-[2026-03-25 19:58:24.438][PID=32304][TID=22764] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 19:58:24.438][PID=32304][TID=22764] Update check: update.txt not found
-[2026-03-25 19:58:26.595][PID=32304][TID=22764] Notify itemselect: server_list curSel=1
-[2026-03-25 19:58:28.481][PID=32304][TID=22764] Notify click: sender=btn_start
-[2026-03-25 19:58:28.481][PID=32304][TID=22764] ????...
-[2026-03-25 19:58:28.481][PID=32304][TID=22764] StartGame: selected=3.81-E index=1
-[2026-03-25 19:58:28.482][PID=32304][TID=22764] StartGame: target=192.168.1.117:2005
-[2026-03-25 19:58:28.494][PID=32304][TID=22764] StartGame: process created pid=37636 exe=C:\3.81Lineage\Lineage.exe
-[2026-03-25 19:58:28.510][PID=32304][TID=22764] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 19:58:54.914][PID=32304][TID=22764] Notify click: sender=btn_close
-[2026-03-25 19:58:54.915][PID=32304][TID=22764] Notify: btn_close -> DestroyWindow
-[2026-03-25 19:58:54.915][PID=32304][TID=22764] Notify: btn_close IsWindow(before)=1
-[2026-03-25 19:58:54.928][PID=32304][TID=22764] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-25 19:58:54.932][PID=32304][TID=22764] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-25 19:58:58.829][PID=8668][TID=4040] LauncherConfig: decrypted embedded config
-[2026-03-25 19:58:58.833][PID=8668][TID=4040] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 19:58:58.845][PID=8668][TID=4040] CLinLauncherDlg::Init()
-[2026-03-25 19:58:58.846][PID=8668][TID=4040] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 19:58:58.846][PID=8668][TID=4040] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 19:58:58.846][PID=8668][TID=4040] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 19:58:59.032][PID=8668][TID=4040] ShowServerList: remote loaded count=3
-[2026-03-25 19:58:59.034][PID=8668][TID=4040] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 19:58:59.034][PID=8668][TID=4040] Notify itemselect: server_list curSel=0
-[2026-03-25 19:58:59.034][PID=8668][TID=4040] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 19:58:59.034][PID=8668][TID=4040] Update check: update.txt not found
-[2026-03-25 19:59:00.284][PID=8668][TID=4040] Notify itemselect: server_list curSel=1
-[2026-03-25 19:59:01.049][PID=8668][TID=4040] Notify click: sender=btn_start
-[2026-03-25 19:59:01.049][PID=8668][TID=4040] ????...
-[2026-03-25 19:59:01.050][PID=8668][TID=4040] StartGame: selected=3.81-E index=1
-[2026-03-25 19:59:01.050][PID=8668][TID=4040] StartGame: target=192.168.1.117:2005
-[2026-03-25 19:59:01.058][PID=8668][TID=4040] StartGame: process created pid=36908 exe=C:\3.81Lineage\Lineage.exe
-[2026-03-25 19:59:01.071][PID=8668][TID=4040] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 20:04:28.512][PID=8668][TID=4040] Notify click: sender=btn_close
-[2026-03-25 20:04:28.513][PID=8668][TID=4040] Notify: btn_close -> DestroyWindow
-[2026-03-25 20:04:28.514][PID=8668][TID=4040] Notify: btn_close IsWindow(before)=1
-[2026-03-25 20:04:28.526][PID=8668][TID=4040] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-25 20:04:28.536][PID=8668][TID=4040] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-25 21:36:34.996][PID=31448][TID=35104] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-25 21:36:34.998][PID=31448][TID=35104] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-25 21:36:35.292][PID=31448][TID=7192] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774445795.txt, remoteVer=1001
-[2026-03-25 21:36:35.292][PID=31448][TID=7192] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-25 21:36:35.292][PID=31448][TID=7192] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1083344325 ip=~Ïﬂ™"Q™√ﬂ∆aùH»}¢€ú¬h8kÄït name=?!?WN??Yw????]?,aGY
-[2026-03-25 21:36:35.292][PID=31448][TID=7192] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-25 21:36:35.292][PID=31448][TID=7192] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1083344325 ip=√Á[!(6±Y‡Æ}‡h»}¢€ú¬h8kÄït name=|?A?6????4?]?,aGY
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1235860025 ip=Õ!3O˝§¬ˆ)∆ÑKW»}¢€ú¬h8kÄït name=?|???K??????]?,aGY
-[2026-03-25 21:36:35.294][PID=31448][TID=7192] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-25 21:36:35.295][PID=31448][TID=7192] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-25 21:36:35.295][PID=31448][TID=7192] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-25 21:36:35.295][PID=31448][TID=7192] LoadServerList: done, serverCount=3
-[2026-03-25 21:37:00.976][PID=31448][TID=35104] StartGame enter: selectIndex=1 serverCount=3
-[2026-03-25 21:37:00.977][PID=31448][TID=35104] StartGame: launcherDir=C:\3.81Lineage
-[2026-03-25 21:37:00.977][PID=31448][TID=35104] StartGame: game candidate found=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 21:37:00.978][PID=31448][TID=35104] StartGame: OS version=10.0.26200
-[2026-03-25 21:37:00.978][PID=31448][TID=35104] StartGame: set __COMPAT_LAYER=WIN7RTM DISABLEDXMAXIMIZEDWINDOWEDMODE
-[2026-03-25 21:37:00.993][PID=31448][TID=35104] StartGame: CreateProcess game success, pid=14648 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 21:37:00.994][PID=31448][TID=35104] StartGame: get_shm(create=true) success
-[2026-03-25 21:37:00.994][PID=31448][TID=35104] StartGame: skip local LoadLibrary precheck to avoid launcher-side DllMain side effects
-[2026-03-25 21:37:01.048][PID=31448][TID=35104] StartGame: ResumeThread success
-[2026-03-25 21:37:01.048][PID=31448][TID=35104] StartGame: DLL handshake success, read=true
-[2026-03-25 21:37:01.049][PID=31448][TID=35104] StartGame: free_shm done, launcher exit
-[2026-03-25 22:17:48.271][PID=31628][TID=22580] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-25 22:17:48.272][PID=31628][TID=22580] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-25 22:17:48.503][PID=31628][TID=17748] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774448268.txt, remoteVer=1001
-[2026-03-25 22:17:48.503][PID=31628][TID=17748] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-25 22:17:48.503][PID=31628][TID=17748] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1083344325 ip=~Ïﬂ™"Q™√ﬂ∆aùH»}¢€ú¬h8kÄït name=?!?WN??Yw????]?,aGY
-[2026-03-25 22:17:48.503][PID=31628][TID=17748] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-25 22:17:48.504][PID=31628][TID=17748] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-25 22:17:48.504][PID=31628][TID=17748] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1083344325 ip=√Á[!(6±Y‡Æ}‡h»}¢€ú¬h8kÄït name=|?A?6????4?]?,aGY
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1235860025 ip=Õ!3O˝§¬ˆ)∆ÑKW»}¢€ú¬h8kÄït name=?|???K??????]?,aGY
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-25 22:17:48.505][PID=31628][TID=17748] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-25 22:17:48.506][PID=31628][TID=17748] LoadServerList: done, serverCount=3
-[2026-03-25 22:30:01.328][PID=22168][TID=33908] OnPrepare: configed=1, useupdate=0, list=http://192.168.1.66/aspnet_client/FTP/lineage381/login/list.txt
-[2026-03-25 22:30:01.328][PID=22168][TID=33908] OnPrepare: CreateThread(GetServerListThread) success
-[2026-03-25 22:30:01.351][PID=22168][TID=37608] LoadServerList: begin, file=C:\Users\eric7\AppData\Local\Temp\list_1774449001.txt, remoteVer=1001
-[2026-03-25 22:30:01.351][PID=22168][TID=37608] LoadServerList: index=0 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=151.242.53.189 name=3.81
-[2026-03-25 22:30:01.351][PID=22168][TID=37608] LoadServerList: index=0 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1083344325 ip=~Ïﬂ™"Q™√ﬂ∆aùH»}¢€ú¬h8kÄït name=?!?WN??Yw????]?,aGY
-[2026-03-25 22:30:01.351][PID=22168][TID=37608] LoadServerList: index=0 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=ﬂ7j˚Î9˝gÿüä»}s˙í±2°˘é—\âp√ name=;?????6??i????)?O???$}:??7?G
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=0 wire accepted, source=0(SERVER_LIST_KEY) name=3.81 port=2005
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=1 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2005 ip=192.168.1.117 name=3.81-E
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=1 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1083344325 ip=√Á[!(6±Y‡Æ}‡h»}¢€ú¬h8kÄït name=|?A?6????4?]?,aGY
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=1 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-441990536 ip=Y¿O∏¶®J√<$›¡˙í±2°˘é—\âp√ name=???"?.6???????)?O???$}:??7?G
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=1 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-E port=2005
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=2 wire cand key=0(SERVER_LIST_KEY) score=90 used=1 port=2006 ip=192.168.1.88 name=3.81-L
-[2026-03-25 22:30:01.352][PID=22168][TID=37608] LoadServerList: index=2 wire cand key=1(LauncherConfig.key) score=0 used=1 port=-1235860025 ip=Õ!3O˝§¬ˆ)∆ÑKW»}¢€ú¬h8kÄït name=?|???K??????]?,aGY
-[2026-03-25 22:30:01.353][PID=22168][TID=37608] LoadServerList: index=2 wire cand key=2(FILE_ENCRYPT_KEY) score=0 used=1 port=-1743406617 ip=ÑY˘«&Ü!˘ÇåÊäRBJﬂ˙í±2°˘é—\âp√ name=e?A?????i????)?O???$}:??7?
-[2026-03-25 22:30:01.353][PID=22168][TID=37608] LoadServerList: index=2 wire accepted, source=0(SERVER_LIST_KEY) name=3.81-L port=2006
-[2026-03-25 22:30:01.353][PID=22168][TID=37608] LoadServerList: key=ServerData3 missing, stop at index=3
-[2026-03-25 22:30:01.353][PID=22168][TID=37608] LoadServerList: done, serverCount=3
-[2026-03-25 23:01:45.745][PID=35148][TID=17632] LauncherConfig: decrypted embedded config
-[2026-03-25 23:01:45.749][PID=35148][TID=17632] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 23:01:45.764][PID=35148][TID=17632] CLinLauncherDlg::Init()
-[2026-03-25 23:01:45.764][PID=35148][TID=17632] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 23:01:45.764][PID=35148][TID=17632] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 23:01:45.764][PID=35148][TID=17632] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 23:01:46.262][PID=35148][TID=17632] ShowServerList: remote loaded count=3
-[2026-03-25 23:01:46.262][PID=35148][TID=17632] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 23:01:46.262][PID=35148][TID=17632] Notify itemselect: server_list curSel=0
-[2026-03-25 23:01:46.262][PID=35148][TID=17632] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 23:01:46.262][PID=35148][TID=17632] Update check: update.txt not found
-[2026-03-25 23:01:49.121][PID=35148][TID=17632] Notify itemselect: server_list curSel=1
-[2026-03-25 23:01:49.869][PID=35148][TID=17632] Notify itemselect: server_list curSel=2
-[2026-03-25 23:01:50.762][PID=35148][TID=17632] Notify itemselect: server_list curSel=1
-[2026-03-25 23:01:52.452][PID=35148][TID=17632] Notify click: sender=btn_start
-[2026-03-25 23:01:52.453][PID=35148][TID=17632] ????...
-[2026-03-25 23:01:52.453][PID=35148][TID=17632] StartGame: selected=3.81-E index=1
-[2026-03-25 23:01:52.453][PID=35148][TID=17632] StartGame: target=192.168.1.117:2005
-[2026-03-25 23:01:52.453][PID=35148][TID=17632] StartGame: resolved gameExe=C:\3.81Lineage\TW13081901.bin (candidate=TW13081901.bin)
-[2026-03-25 23:01:52.461][PID=35148][TID=17632] StartGame: process created pid=34788 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 23:01:52.487][PID=35148][TID=17632] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 23:02:00.497][PID=35148][TID=17632] StartGame: shm read=0 waitedMs=8015
-[2026-03-25 23:02:06.467][PID=35148][TID=17632] OnSysCommand: uMsg=274 wParam=61458 lParam=19661848
-[2026-03-25 23:02:12.881][PID=35148][TID=17632] Notify click: sender=btn_start
-[2026-03-25 23:02:12.881][PID=35148][TID=17632] ????...
-[2026-03-25 23:02:12.882][PID=35148][TID=17632] StartGame: selected=3.81-E index=1
-[2026-03-25 23:02:12.882][PID=35148][TID=17632] StartGame: target=192.168.1.117:2005
-[2026-03-25 23:02:12.882][PID=35148][TID=17632] StartGame: resolved gameExe=C:\3.81Lineage\TW13081901.bin (candidate=TW13081901.bin)
-[2026-03-25 23:02:12.888][PID=35148][TID=17632] StartGame: process created pid=24696 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 23:02:12.909][PID=35148][TID=17632] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 23:02:20.924][PID=35148][TID=17632] StartGame: shm read=0 waitedMs=8015
-[2026-03-25 23:02:27.571][PID=35148][TID=17632] OnSysCommand: uMsg=274 wParam=61458 lParam=31589331
-[2026-03-25 23:02:58.081][PID=35148][TID=17632] OnSysCommand: uMsg=274 wParam=61458 lParam=26215686
-[2026-03-25 23:07:11.538][PID=35148][TID=17632] Notify click: sender=btn_start
-[2026-03-25 23:07:11.538][PID=35148][TID=17632] ????...
-[2026-03-25 23:07:11.540][PID=35148][TID=17632] StartGame: selected=3.81-E index=1
-[2026-03-25 23:07:11.540][PID=35148][TID=17632] StartGame: target=192.168.1.117:2005
-[2026-03-25 23:07:11.540][PID=35148][TID=17632] StartGame: resolved gameExe=C:\3.81Lineage\TW13081901.bin (candidate=TW13081901.bin)
-[2026-03-25 23:07:11.549][PID=35148][TID=17632] StartGame: process created pid=32812 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 23:07:11.570][PID=35148][TID=17632] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 23:07:19.579][PID=35148][TID=17632] StartGame: shm read=0 waitedMs=8015
-[2026-03-25 23:10:32.246][PID=35148][TID=17632] Notify click: sender=btn_start
-[2026-03-25 23:10:32.247][PID=35148][TID=17632] ????...
-[2026-03-25 23:10:32.247][PID=35148][TID=17632] StartGame: selected=3.81-E index=1
-[2026-03-25 23:10:32.247][PID=35148][TID=17632] StartGame: target=192.168.1.117:2005
-[2026-03-25 23:10:32.247][PID=35148][TID=17632] StartGame: resolved gameExe=C:\3.81Lineage\TW13081901.bin (candidate=TW13081901.bin)
-[2026-03-25 23:10:32.254][PID=35148][TID=17632] StartGame: process created pid=35328 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 23:10:32.275][PID=35148][TID=17632] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 23:10:40.292][PID=35148][TID=17632] StartGame: shm read=0 waitedMs=8000
-[2026-03-25 23:12:15.994][PID=35148][TID=17632] Notify click: sender=btn_close
-[2026-03-25 23:12:15.996][PID=35148][TID=17632] Notify: btn_close -> DestroyWindow
-[2026-03-25 23:12:15.996][PID=35148][TID=17632] Notify: btn_close IsWindow(before)=1
-[2026-03-25 23:12:16.006][PID=35148][TID=17632] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-25 23:12:16.019][PID=35148][TID=17632] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-25 23:25:12.765][PID=36728][TID=18172] LauncherConfig: decrypted embedded config
-[2026-03-25 23:25:12.769][PID=36728][TID=18172] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-25 23:25:12.776][PID=36728][TID=18172] CLinLauncherDlg::Init()
-[2026-03-25 23:25:12.776][PID=36728][TID=18172] LauncherConfig: configed=1 encrypted=0
-[2026-03-25 23:25:12.776][PID=36728][TID=18172] LauncherConfig: list_len=84 update_len=32
-[2026-03-25 23:25:12.776][PID=36728][TID=18172] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-25 23:25:13.253][PID=36728][TID=18172] ShowServerList: remote loaded count=3
-[2026-03-25 23:25:13.253][PID=36728][TID=18172] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-25 23:25:13.253][PID=36728][TID=18172] Notify itemselect: server_list curSel=0
-[2026-03-25 23:25:13.254][PID=36728][TID=18172] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-25 23:25:13.254][PID=36728][TID=18172] Update check: update.txt not found
-[2026-03-25 23:25:16.340][PID=36728][TID=18172] Notify itemselect: server_list curSel=1
-[2026-03-25 23:25:17.574][PID=36728][TID=18172] Notify itemselect: server_list curSel=2
-[2026-03-25 23:25:20.167][PID=36728][TID=18172] Notify itemselect: server_list curSel=1
-[2026-03-25 23:25:23.494][PID=36728][TID=18172] Notify itemselect: server_list curSel=0
-[2026-03-25 23:25:25.255][PID=36728][TID=18172] Notify itemselect: server_list curSel=2
-[2026-03-25 23:25:27.621][PID=36728][TID=18172] Notify itemselect: server_list curSel=1
-[2026-03-25 23:25:29.988][PID=36728][TID=18172] Notify click: sender=btn_start
-[2026-03-25 23:25:29.988][PID=36728][TID=18172] ????...
-[2026-03-25 23:25:29.988][PID=36728][TID=18172] StartGame: selected=3.81-E index=1
-[2026-03-25 23:25:29.988][PID=36728][TID=18172] StartGame: target=192.168.1.117:2005
-[2026-03-25 23:25:29.988][PID=36728][TID=18172] StartGame: resolved gameExe=C:\3.81Lineage\TW13081901.bin (candidate=TW13081901.bin)
-[2026-03-25 23:25:30.001][PID=36728][TID=18172] StartGame: process created pid=22848 exe=C:\3.81Lineage\TW13081901.bin
-[2026-03-25 23:25:30.022][PID=36728][TID=18172] StartGame: inject dll=C:\3.81Lineage\LauncherDll.dll result=1
-[2026-03-25 23:25:38.026][PID=36728][TID=18172] StartGame: shm read=0 waitedMs=8016
-[2026-03-25 23:25:38.026][PID=36728][TID=18172] StartGame: success, PID=22848
-[2026-03-25 23:26:38.753][PID=36728][TID=18172] Notify click: sender=btn_min
-[2026-03-25 23:26:38.753][PID=36728][TID=18172] Notify: btn_min -> ShowWindow(SW_MINIMIZE)
-[2026-03-25 23:26:38.754][PID=36728][TID=18172] Notify: btn_min style=0x96000000 hasPlacement=1 before.showCmd=1 before.flags=0x00000000
-[2026-03-25 23:26:38.767][PID=36728][TID=18172] Notify: btn_min ShowWindow(ret)=1 iconicAfter=1 lastErr=0
-[2026-03-25 23:26:38.767][PID=36728][TID=18172] Notify: btn_min after.hasPlacement=1 after.showCmd=2 after.flags=0x00000000
-[2026-03-26 09:23:48.304][PID=36728][TID=18172] OnSysCommand: uMsg=274 wParam=61728 lParam=0
-[2026-03-26 09:23:52.083][PID=36728][TID=18172] Notify itemselect: server_list curSel=2
-[2026-03-26 09:23:53.081][PID=36728][TID=18172] Notify itemselect: server_list curSel=1
-[2026-03-26 09:23:53.672][PID=36728][TID=18172] Notify itemselect: server_list curSel=0
-[2026-03-26 09:23:55.721][PID=36728][TID=18172] Notify itemselect: server_list curSel=1
-[2026-03-26 09:23:57.536][PID=36728][TID=18172] Notify itemselect: server_list curSel=2
-[2026-03-26 09:24:01.501][PID=36728][TID=18172] Notify click: sender=btn_min
-[2026-03-26 09:24:01.501][PID=36728][TID=18172] Notify: btn_min -> ShowWindow(SW_MINIMIZE)
-[2026-03-26 09:24:01.501][PID=36728][TID=18172] Notify: btn_min style=0x96000000 hasPlacement=1 before.showCmd=1 before.flags=0x00000000
-[2026-03-26 09:24:01.516][PID=36728][TID=18172] Notify: btn_min ShowWindow(ret)=1 iconicAfter=1 lastErr=0
-[2026-03-26 09:24:01.516][PID=36728][TID=18172] Notify: btn_min after.hasPlacement=1 after.showCmd=2 after.flags=0x00000000
-[2026-03-26 09:53:24.205][PID=36728][TID=18172] OnSysCommand: uMsg=274 wParam=61728 lParam=0
-[2026-03-26 09:53:25.895][PID=36728][TID=18172] Notify click: sender=btn_close
-[2026-03-26 09:53:25.895][PID=36728][TID=18172] Notify: btn_close -> DestroyWindow
-[2026-03-26 09:53:25.896][PID=36728][TID=18172] Notify: btn_close IsWindow(before)=1
-[2026-03-26 09:53:25.924][PID=36728][TID=18172] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-26 09:53:25.947][PID=36728][TID=18172] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-26 11:42:18.233][PID=34760][TID=6120] LauncherConfig: decrypted embedded config
-[2026-03-26 11:42:18.239][PID=34760][TID=6120] DuiLib resource path = C:\3.81Lineage\skin\
-[2026-03-26 11:42:18.253][PID=34760][TID=6120] CLinLauncherDlg::Init()
-[2026-03-26 11:42:18.253][PID=34760][TID=6120] LauncherConfig: configed=1 encrypted=0
-[2026-03-26 11:42:18.253][PID=34760][TID=6120] LauncherConfig: list_len=84 update_len=32
-[2026-03-26 11:42:18.253][PID=34760][TID=6120] ShowServerList: remote enabled url_len=84 save=C:\3.81Lineage\list.txt
-[2026-03-26 11:42:18.921][PID=34760][TID=6120] ShowServerList: remote loaded count=3
-[2026-03-26 11:42:18.921][PID=34760][TID=6120] ShowServerList: listPath=C:\3.81Lineage\list.txt g_nServerCount=3
-[2026-03-26 11:42:18.922][PID=34760][TID=6120] Notify itemselect: server_list curSel=0
-[2026-03-26 11:42:18.922][PID=34760][TID=6120] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-26 11:42:18.922][PID=34760][TID=6120] Update check: update.txt not found
-[2026-03-26 11:42:37.623][PID=34760][TID=6120] OnSysCommand: uMsg=274 wParam=61458 lParam=19530444
-[2026-03-26 11:45:02.381][PID=34760][TID=6120] Notify click: sender=btn_close
-[2026-03-26 11:45:02.381][PID=34760][TID=6120] Notify: btn_close -> DestroyWindow
-[2026-03-26 11:45:02.382][PID=34760][TID=6120] Notify: btn_close IsWindow(before)=1
-[2026-03-26 11:45:02.390][PID=34760][TID=6120] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-26 11:45:02.398][PID=34760][TID=6120] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
-[2026-03-28 00:07:05.182][PID=30952][TID=28060] LauncherConfig: decrypted embedded config
-[2026-03-28 00:07:05.195][PID=30952][TID=28060] DuiLib resource path = C:\python_training\LauncherWPF381\Client\skin\
-[2026-03-28 00:07:05.206][PID=30952][TID=28060] CLinLauncherDlg::Init()
-[2026-03-28 00:07:05.216][PID=30952][TID=28060] LauncherConfig: configed=1 encrypted=0
-[2026-03-28 00:07:05.225][PID=30952][TID=28060] LauncherConfig: list_len=84 update_len=32
-[2026-03-28 00:07:05.235][PID=30952][TID=28060] ShowServerList: remote enabled url_len=84 save=C:\python_training\LauncherWPF381\Client\list.txt
-[2026-03-28 00:07:05.733][PID=30952][TID=28060] ShowServerList: remote loaded count=0
-[2026-03-28 00:07:05.742][PID=30952][TID=28060] ShowServerList: try1 exists=1 path=C:\python_training\LauncherWPF381\Client\list.txt
-[2026-03-28 00:07:05.751][PID=30952][TID=28060] ShowServerList: after try1 count=0
-[2026-03-28 00:07:05.759][PID=30952][TID=28060] ShowServerList: try3 exists=1 path=C:\python_training\LauncherWPF381\Client\list.txt
-[2026-03-28 00:07:05.769][PID=30952][TID=28060] ShowServerList: after try3 count=0
-[2026-03-28 00:07:05.779][PID=30952][TID=28060] ShowServerList: try2 exists=0 path=C:\python_training\LauncherWPF381\Client\skin\list.txt
-[2026-03-28 00:07:05.786][PID=30952][TID=28060] ShowServerList: listPath=C:\python_training\LauncherWPF381\Client\list.txt g_nServerCount=0
-[2026-03-28 00:07:05.795][PID=30952][TID=28060] Update check: exists1=0 exists2=0 exists3=0 exists4=0
-[2026-03-28 00:07:05.802][PID=30952][TID=28060] Update check: update.txt not found
-[2026-03-28 00:07:10.452][PID=30952][TID=28060] Notify click: sender=btn_close
-[2026-03-28 00:07:10.460][PID=30952][TID=28060] Notify: btn_close -> DestroyWindow
-[2026-03-28 00:07:10.466][PID=30952][TID=28060] Notify: btn_close IsWindow(before)=1
-[2026-03-28 00:07:10.486][PID=30952][TID=28060] OnDestroy: uMsg=2 wParam=0 lParam=0
-[2026-03-28 00:07:10.503][PID=30952][TID=28060] Notify: btn_close DestroyWindow(ret)=1 IsWindow(after)=0
