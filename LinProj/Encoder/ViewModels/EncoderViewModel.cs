@@ -242,7 +242,7 @@ namespace LinLauncher.ViewModels
         private void DoMake()
         {
             SaveSettings();
-            var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Executable (*.exe)|*.exe", FileName = "LinLauncher.exe" };
+            var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Executable (*.exe)|*.exe", FileName = "LinLauncher.exe", InitialDirectory = AppDomain.CurrentDomain.BaseDirectory };
             if (dlg.ShowDialog() == true)
             {
                 var config = new LauncherConfig
