@@ -5,33 +5,26 @@ namespace LinLauncher.Services
 {
     public class ResourceReaderService
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr FindResource(IntPtr hModule, string lpName, string lpType);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr LoadResource(IntPtr hModule, IntPtr hResInfo);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern uint SizeofResource(IntPtr hModule, IntPtr hResInfo);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr LockResource(IntPtr hResData);
         public byte[]? ReadConfig()
         {
             try
             {
-                string path = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-                byte[] buffer = System.IO.File.ReadAllBytes(path);
-                ulong signature = LinLauncher.Models.LauncherConfig.LAUNCHER_CONFIG_SIGN;
-                int structSize = Marshal.SizeOf(typeof(LinLauncher.Models.LauncherConfig));
-
-                for (int i = 0; i <= buffer.Length - structSize; i++)
+                string path = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "config.dat");
+                if (System.IO.File.Exists(path))
                 {
-                    if (BitConverter.ToUInt64(buffer, i) == signature)
+                    byte[] buffer = System.IO.File.ReadAllBytes(path);
+                    ulong signature = LinLauncher.Models.LauncherConfig.LAUNCHER_CONFIG_SIGN;
+                    int structSize = Marshal.SizeOf(typeof(LinLauncher.Models.LauncherConfig));
+
+                    if (buffer.Length >= structSize)
                     {
-                        byte[] configData = new byte[structSize];
-                        Array.Copy(buffer, i, configData, 0, structSize);
-                        return configData;
+                        if (BitConverter.ToUInt64(buffer, 0) == signature)
+                        {
+                            byte[] configData = new byte[structSize];
+                            Array.Copy(buffer, 0, configData, 0, structSize);
+                            return configData;
+                        }
                     }
                 }
             }

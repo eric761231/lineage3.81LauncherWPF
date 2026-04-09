@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
     <ProjectGuid>{5A64C57F-2AD5-4D2F-B2E2-0FA7CF661104}</ProjectGuid>
     <RootNamespace>LauncherDll</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -38,7 +39,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <_ProjectFileVersion>14.0.25431.1</_ProjectFileVersion>
+    <_ProjectFileVersion>17.0.36804.4</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -53,17 +54,15 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../openssl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LAUNCHERDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>../../openssl/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>LauncherDll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -81,7 +80,6 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>../../openssl/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -94,10 +92,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\LinGate\encdec.cpp" />
-    <ClCompile Include="..\LinLauncher\aes.cpp" />
-    <ClCompile Include="..\LinLauncher\configenc.cpp" />
-    <ClCompile Include="..\LinLauncher\ShareMemory.cpp" />
+    <ClCompile Include="encdec.cpp" />
+    <ClCompile Include="aes.cpp" />
+    <ClCompile Include="configenc.cpp" />
+    <ClCompile Include="ShareMemory.cpp" />
     <ClCompile Include="dllmain.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
@@ -112,20 +110,32 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="timeController.cpp" />
+    <ClCompile Include="windowController.cpp" />
+    <ClCompile Include="NakedBloodHook.cpp" />
+    <ClCompile Include="NakedFlinchHook.cpp" />
+    <ClCompile Include="NakedLocomotionHook.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LauncherDll.def" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\LinGate\encdec.h" />
-    <ClInclude Include="..\LinLauncher\aes.h" />
-    <ClInclude Include="..\LinLauncher\configenc.h" />
-    <ClInclude Include="..\LinLauncher\ShareMemory.h" />
+    <ClInclude Include="encdec.h" />
+    <ClInclude Include="aes.h" />
+    <ClInclude Include="configenc.h" />
+    <ClInclude Include="ShareMemory.h" />
     <ClInclude Include="HelperDlg.h" />
     <ClInclude Include="LauncherDll.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="timeController.h" />
+    <ClInclude Include="windowController.h" />
+    <ClInclude Include="NakedBloodHook.h" />
+    <ClInclude Include="NakedFlinchHook.h" />
+    <ClInclude Include="NakedLocomotionHook.h" />
+    <ClInclude Include="L1Offsets.h" />
+    <ClInclude Include="VMProtectSDK.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LauncherDll.rc" />

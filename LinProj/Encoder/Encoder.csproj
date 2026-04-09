@@ -12,6 +12,7 @@
     <SelfContained>true</SelfContained>
     <PublishReadyToRun>true</PublishReadyToRun>
     <!-- 指定 Encoder 可執行檔的圖示（請放置實際檔案在 Encoder\Assets\Encoder.ico） -->
+    <AssemblyName>LinEncoder</AssemblyName>
     <ApplicationIcon>Assets\Encoder.ico</ApplicationIcon>
   </PropertyGroup>
 

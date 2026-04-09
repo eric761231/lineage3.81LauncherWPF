@@ -80,19 +80,15 @@ namespace LinLauncher.ViewModels
                 {
                     System.Runtime.InteropServices.Marshal.Copy(data, 0, ptr, data.Length);
                     LauncherConfig? loaded = System.Runtime.InteropServices.Marshal.PtrToStructure(ptr, typeof(LauncherConfig)) as LauncherConfig;
-                    if (loaded != null && loaded.Sign == LauncherConfig.LAUNCHER_CONFIG_SIGN)
+                    if (loaded != null && loaded.Configed)
                     {
-                        if (loaded.Configed)
-                        {
-                            _config.Title = loaded.Title;
+                        _config.Title = loaded.Title;
                             _config.Web = loaded.Web;
                             _config.List = loaded.List;
                             _config.UseUpdate = loaded.UseUpdate;
                             _config.Update = loaded.Update;
-                            _config.Helper = loaded.Helper;
                             _config.Width = loaded.Width;
                             _config.Height = loaded.Height;
-                        }
                     }
                 }
                 catch (Exception ex)
@@ -110,8 +106,49 @@ namespace LinLauncher.ViewModels
         private async Task InitializeAsync()
         {
             IsBusy = true;
-            StatusText = "Loading server list...";
             
+            // 1. 自動更新檢查 (Automated Update Check)
+            if (Config.UseUpdate && !string.IsNullOrWhiteSpace(Config.Update))
+            {
+                StatusText = "Checking for updates...";
+                try
+                {
+                    string tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.tmp");
+                    using (var hc = new System.Net.Http.HttpClient())
+                    {
+                        var resp = await hc.GetAsync(Config.Update);
+                        if (resp.IsSuccessStatusCode)
+                        {
+                            var bytes = await resp.Content.ReadAsByteArrayAsync();
+                            await File.WriteAllBytesAsync(tempFile, bytes);
+                            
+                            var (allFiles, baseUrl) = await _updateService.LoadUpdateListAsync(tempFile);
+                            if (allFiles.Count > 0)
+                            {
+                                var needUpdate = await _updateService.CheckFilesAsync(allFiles, AppDomain.CurrentDomain.BaseDirectory);
+                                if (needUpdate.Count > 0)
+                                {
+                                    StatusText = $"Downloading {needUpdate.Count} updates...";
+                                    bool success = await _updateService.DownloadUpdatesAsync(needUpdate, baseUrl, AppDomain.CurrentDomain.BaseDirectory);
+                                    if (success)
+                                    {
+                                        MessageBox.Show("更新下載完成。請重新啟動登入器以套用變更。", "更新提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                                        // Application.Current.Shutdown(); // 選擇性：自動關閉
+                                    }
+                                }
+                            }
+                            File.Delete(tempFile);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Update Error: {ex.Message}");
+                }
+            }
+
+            // 2. 載入伺服器列表 (Load Server List)
+            StatusText = "Loading server list...";
             if (string.IsNullOrWhiteSpace(Config.List))
             {
                 StatusText = "Error: Server list URL is empty.";

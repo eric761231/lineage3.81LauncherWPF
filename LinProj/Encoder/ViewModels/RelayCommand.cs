@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Input;
 
-namespace LinLauncher.ViewModels
+namespace LinEncoder.ViewModels
 {
     public class RelayCommand : ICommand
     {

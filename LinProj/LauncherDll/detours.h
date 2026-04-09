@@ -11,6 +11,8 @@
 #ifndef _DETOURS_H_
 #define _DETOURS_H_
 
+#include <windows.h>
+
 #define DETOURS_VERSION     30000   // 3.00.00
 
 //////////////////////////////////////////////////////////////////////////////

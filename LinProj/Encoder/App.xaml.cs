@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace LinLauncher
+namespace LinEncoder
 {
     public partial class App : Application
     {

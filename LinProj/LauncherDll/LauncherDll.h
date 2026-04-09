@@ -1,22 +1,26 @@
-// LauncherDll.h: LauncherDll 的標頭檔，宣告全域變數與匯出函式。
-#pragma once
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#endif
 
 #include <stdio.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 #include "resource.h"
-#include "../LinLauncher/VMProtectSDK.h"
-#include "../LinLauncher/ShareMemory.h"
-#include "../LinLauncher/aes.h"
-#include "../LinGate/packet.h"
-#include "../LinGate/encdec.h"
-#include "../LinLauncher/zlib.h"
-#include "../LinLauncher/configenc.h"
+#include "ShareMemory.h"
+#include "aes.h"
+#include "packet.h"
+#include "encdec.h"
+#include "zlib.h"
+#include "configenc.h"
 #include "HelperDlg.h"
 #include "detours.h"
-#include <openssl/bn.h>
+
+#include "VMProtectSDK.h"
+// Removed redundant VMProtect dummy macros as they are now in VMProtectSDK.h
 
 #pragma comment(lib, "detours.lib")
-#pragma comment(lib, "../LinLauncher/zlib.lib")
-#pragma comment(lib, "libeay32.lib")
+#pragma comment(lib, "zlib.lib")
 
 extern HINSTANCE hins;
 

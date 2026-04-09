@@ -1,51 +1,26 @@
-using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
 
-namespace LinLauncher.Services
+namespace LinEncoder.Services
 {
     public class IniService
     {
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        private static extern long WritePrivateProfileString(string section, string key, string value, string filePath);
+        private string _path;
+        [DllImport("kernel32", CharSet = CharSet.Unicode)]
+        private static extern long WritePrivateProfileString(string section, string key, string val, string filePath);
+        [DllImport("kernel32", CharSet = CharSet.Unicode)]
+        private static extern int GetPrivateProfileString(string section, string key, string def, StringBuilder retVal, int size, string filePath);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        private static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder retVal, int size, string filePath);
-
-        private readonly string _path;
-
-        public IniService(string path)
+        public IniService(string path) { _path = path; }
+        public void Write(string section, string key, string value) => WritePrivateProfileString(section, key, value, _path);
+        public void WriteBool(string section, string key, bool value) => Write(section, key, value.ToString());
+        public string Read(string section, string key, string def = "", string? alternatePath = null)
         {
-            _path = System.IO.Path.GetFullPath(path);
+            var res = new StringBuilder(255);
+            GetPrivateProfileString(section, key, def, res, 255, alternatePath ?? _path);
+            return res.ToString();
         }
-
-        public void Write(string section, string key, string value, string filePath = null)
-        {
-            WritePrivateProfileString(section, key, value, filePath ?? _path);
-        }
-
-        public string Read(string section, string key, string defaultValue = "", string filePath = null)
-        {
-            StringBuilder temp = new StringBuilder(1024);
-            GetPrivateProfileString(section, key, defaultValue, temp, 1024, filePath ?? _path);
-            return temp.ToString();
-        }
-
-        public int ReadInt(string section, string key, int defaultValue = 0)
-        {
-            string val = Read(section, key, defaultValue.ToString());
-            return int.TryParse(val, out int result) ? result : defaultValue;
-        }
-
-        public bool ReadBool(string section, string key, bool defaultValue = false)
-        {
-            string val = Read(section, key, defaultValue ? "1" : "0");
-            return val == "1";
-        }
-
-        public void WriteBool(string section, string key, bool value)
-        {
-            Write(section, key, value ? "1" : "0");
-        }
+        public bool ReadBool(string section, string key, bool def = false) => bool.TryParse(Read(section, key, def.ToString()), out bool r) ? r : def;
+        public int ReadInt(string section, string key, int def = 0) => int.TryParse(Read(section, key, def.ToString()), out int r) ? r : def;
     }
 }

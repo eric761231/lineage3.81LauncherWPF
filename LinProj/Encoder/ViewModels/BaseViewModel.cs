@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace LinLauncher.ViewModels
+namespace LinEncoder.ViewModels
 {
     public class BaseViewModel : INotifyPropertyChanged
     {

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using LinLauncher.Models;
+using System.IO.Compression;
 
 namespace LinLauncher.Services
 {
@@ -16,13 +17,13 @@ namespace LinLauncher.Services
         public event EventHandler<UpdateProgressEventArgs>? ProgressChanged;
 
         /// <summary>
-        /// 從本地檔案讀取更新列表 (通常是下載後的臨時檔案)。
-        /// (Loads update list from a local file, usually a downloaded temp file.)
+        /// 從本地檔案讀取更新列表，並提取下載網址與檔案資訊。
         /// </summary>
-        public async Task<List<UpdateInfo>> LoadUpdateListAsync(string localPath)
+        public async Task<(List<UpdateInfo> files, string baseUrl)> LoadUpdateListAsync(string localPath)
         {
             var updateFiles = new List<UpdateInfo>();
-            if (!File.Exists(localPath)) return updateFiles;
+            string baseUrl = "";
+            if (!File.Exists(localPath)) return (updateFiles, baseUrl);
 
             try
             {
@@ -48,9 +49,10 @@ namespace LinLauncher.Services
                     string key = trimmed.Substring(0, eqIdx).Trim().ToLower();
                     string val = trimmed.Substring(eqIdx + 1).Trim();
 
-                    if (currentSection == "main" && key == "count")
+                    if (currentSection == "main")
                     {
-                        int.TryParse(val, out count);
+                        if (key == "count") int.TryParse(val, out count);
+                        else if (key == "url") baseUrl = val;
                     }
                     else if (currentSection == "update")
                     {
@@ -70,7 +72,7 @@ namespace LinLauncher.Services
             {
                 Console.WriteLine($"Error loading update list: {ex.Message}");
             }
-            return updateFiles;
+            return (updateFiles, baseUrl);
         }
 
         /// <summary>
@@ -108,41 +110,31 @@ namespace LinLauncher.Services
             foreach (var info in needUpdate)
             {
                 string relativeUrl = info.Filename.Replace("\\", "/");
-                string downloadUrl = baseUrl.TrimEnd('/') + "/" + relativeUrl;
+                string downloadUrl = baseUrl.TrimEnd('/') + "/" + relativeUrl + ".bin";
                 string localPath = Path.IsPathRooted(info.Filename) ? info.Filename : Path.Combine(baseDir, info.Filename);
+                string pendingPath = localPath + ".pending";
 
                 string? dir = Path.GetDirectoryName(localPath);
                 if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
                 try
                 {
-                    using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                    var data = await _httpClient.GetByteArrayAsync(downloadUrl);
+                    if (data.Length < 20) continue; // Invalid .bin
+
+                    // 1. Decrypt 16 bytes starting at offset 4
+                    byte[] key = Encoding.ASCII.GetBytes(Constants.FileEncryptKey);
+                    for (int i = 0; i < 16; i++)
                     {
-                        response.EnsureSuccessStatusCode();
-                        long? totalBytes = response.Content.Headers.ContentLength;
-                        using (var contentStream = await response.Content.ReadAsStreamAsync())
-                        using (var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                        {
-                            var buffer = new byte[8192];
-                            long totalRead = 0;
-                            int read;
-                            while ((read = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                            {
-                                await fileStream.WriteAsync(buffer, 0, read);
-                                totalRead += read;
-                                if (totalBytes.HasValue)
-                                {
-                                    int filePercent = (int)((totalRead * 100) / totalBytes.Value);
-                                    int overallPercent = (int)(((completedFiles * 100) + filePercent) / needUpdate.Count);
-                                    ProgressChanged?.Invoke(this, new UpdateProgressEventArgs 
-                                    { 
-                                        OverallPercent = overallPercent, 
-                                        CurrentFile = info.Filename,
-                                        FilePercent = filePercent 
-                                    });
-                                }
-                            }
-                        }
+                        data[i + 4] ^= key[i % key.Length];
+                    }
+
+                    // 2. Decompress using ZLib (starting at offset 4)
+                    using (var ms = new MemoryStream(data, 4, data.Length - 4))
+                    using (var zs = new ZLibStream(ms, CompressionMode.Decompress))
+                    using (var fs = new FileStream(pendingPath, FileMode.Create, FileAccess.Write))
+                    {
+                        await zs.CopyToAsync(fs);
                     }
                 }
                 catch { return false; }

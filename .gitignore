@@ -1,13 +1,30 @@
-[Bb]in/
-[Oo]bj/
-.vs/
+﻿# Build folders
+bin/
+obj/
+publish/
+Debug/
+Release/
+x64/
+x86/
+
+# Webview2 cache
+EBWebView/
+*.WebView2/
+
+# User-specific files
 *.user
 *.suo
 *.userosscache
-*.sln.doccache
+*.sln.docstates
+
+# Executables and Large files
 *.exe
-*.dll
-*.dat
-*.pak
-# Keep templates if needed, but usually we don't upload large binaries
-# Or ignore all binaries but keep the source
+*.pdb
+*.rar
+*.zip
+*.7z
+*.bak
+
+# Others
+.vs/
+.vscode/

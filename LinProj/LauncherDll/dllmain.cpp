@@ -1,5 +1,6 @@
 // dllmain.cpp: DLL 的進入點 (DllMain) 以及 Detours 鉤子的初始化與移除。
 // dllmain.cpp : Defines the entry point for the DLL application.
+#include "stdafx.h"
 #include <windows.h>
 
 extern void init();

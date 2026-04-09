@@ -1,14 +1,22 @@
-// App.xaml.cs: LinLauncher 應用程式邏輯。
-using System.Configuration;
-using System.Data;
+﻿using System;
 using System.Windows;
 
-namespace LinLauncher;
-
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
-public partial class App : Application
+namespace LinLauncher
 {
-}
+    public partial class App : Application
+    {
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            AppDomain.CurrentDomain.UnhandledException += (s, ex) => {
+                MessageBox.Show("Fatal Error: " + ex.ExceptionObject.ToString(), "Launcher Crash");
+            };
+            base.OnStartup(e);
+        }
 
+        private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show("UI Error: " + e.Exception.ToString(), "Launcher UI Crash");
+            e.Handled = true;
+        }
+    }
+}
