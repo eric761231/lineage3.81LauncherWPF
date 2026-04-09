@@ -22,6 +22,8 @@ namespace LinLauncher.ViewModels
         private string _statusText = "Ready";
         private int _overallProgress = 0;
         private bool _isBusy = false;
+        private string _account = "";
+        private string _password = "";
 
         public ObservableCollection<ServerInfo> Servers { get => _servers; set { _servers = value; OnPropertyChanged(); } }
         public ServerInfo? SelectedServer 
@@ -33,6 +35,9 @@ namespace LinLauncher.ViewModels
         public string StatusText { get => _statusText; set { _statusText = value; OnPropertyChanged(); } }
         public int OverallProgress { get => _overallProgress; set { _overallProgress = value; OnPropertyChanged(); } }
         public bool IsBusy { get => _isBusy; set { _isBusy = value; OnPropertyChanged(); } }
+        public string Account { get => _account; set { _account = value; OnPropertyChanged(); } }
+        public string Password { get => _password; set { _password = value; OnPropertyChanged(); } }
+        // 為了簡單起見，這裡直接繫結 Password (實務上 PasswordBox 需特別處理，但目前採用 TextBox 樣式)
 
         public ICommand StartCommand { get; }
         private readonly LauncherConfig _config = new LauncherConfig();
@@ -211,7 +216,7 @@ namespace LinLauncher.ViewModels
                 System.Windows.MessageBox.Show($"LauncherDll.dll not found at: {dllPath}\nPlease check the build output or path logic.");
                 IsBusy = false; StatusText = "Ready"; return;
             }
-            bool launched = await _launchService.LaunchGameAsync(SelectedServer, gameExe, dllPath);
+            bool launched = await _launchService.LaunchGameAsync(SelectedServer, gameExe, dllPath, Account, Password);
             if (launched) StatusText = "Game Running...";
             else { StatusText = "Launch failed!"; IsBusy = false; }
         }

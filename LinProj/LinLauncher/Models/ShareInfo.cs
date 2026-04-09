@@ -37,6 +37,12 @@ namespace LinLauncher.Models
         public uint RsaD;
         public uint Magic;
 
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public byte[] Account = new byte[32];
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public byte[] Password = new byte[32];
+
         public void SetIp(string ip)
         {
             byte[] b = System.Text.Encoding.ASCII.GetBytes(ip);

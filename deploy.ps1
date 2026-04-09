@@ -1,5 +1,4 @@
-# deploy.ps1 (Final Stable Version)
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 Write-Host ">>> [1/5] Initializing paths..." -ForegroundColor Cyan
 $Root = $PSScriptRoot
@@ -14,6 +13,7 @@ $IconPath = "$Root\LinProj\LinLauncher\Assets\LinLauncher.ico"
 Write-Host ">>> [2/5] Stopping running processes..." -ForegroundColor Cyan
 try {
     taskkill /F /IM encoder.exe /T /FI "STATUS eq RUNNING" 2>$null
+    taskkill /F /IM LinEncoder.exe /T /FI "STATUS eq RUNNING" 2>$null
     taskkill /F /IM LinLauncher.exe /T /FI "STATUS eq RUNNING" 2>$null
 } catch { }
 Start-Sleep -Seconds 1
@@ -23,8 +23,11 @@ Write-Host "    - Restoring packages..."
 dotnet restore "$Root\LinProj\LauncherWPF381.sln"
 
 Write-Host "    - Publishing Encoder..."
+if (Test-Path "$Root\LinProj\Encoder\publish") { Remove-Item -Recurse -Force "$Root\LinProj\Encoder\publish" }
 dotnet publish "$EncoderProj" -c Release -r win-x86 --no-restore --self-contained true -p:PublishSingleFile=true -o "$Root\LinProj\Encoder\publish"
+
 Write-Host "    - Publishing Launcher..."
+if (Test-Path "$Root\LinProj\LinLauncher\publish") { Remove-Item -Recurse -Force "$Root\LinProj\LinLauncher\publish" }
 dotnet publish "$LauncherProj" -c Release -r win-x86 --no-restore --self-contained true -o "$Root\LinProj\LinLauncher\publish"
 
 Write-Host ">>> [4/5] Processing Proxy Template (CSC)..." -ForegroundColor Cyan
@@ -80,6 +83,11 @@ if (!(Test-Path $EnvDir)) {
 }
 Copy-Item "$Root\LinProj\Encoder\publish\*" "$PartnerDir" -Recurse -Force
 Copy-Item "$Root\LinProj\LinLauncher\publish\*" "$EnvDir" -Recurse -Force
+
+# Cleanup old encoder names to avoid confusion
+if (Test-Path "$PartnerDir\encoder.exe") { Remove-Item "$PartnerDir\encoder.exe" -Force }
+if (Test-Path "$PartnerDir\encoder.pdb") { Remove-Item "$PartnerDir\encoder.pdb" -Force }
+
 if (Test-Path $IconPath) {
     Copy-Item "$IconPath" "$PartnerDir\LinLauncher.ico" -Force
 }

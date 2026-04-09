@@ -106,7 +106,7 @@
     <ClInclude Include="L1Offsets.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="VMProtectSDK.h">
+    <ClInclude Include="packet.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

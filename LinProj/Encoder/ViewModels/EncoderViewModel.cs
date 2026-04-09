@@ -16,7 +16,7 @@ namespace LinEncoder.ViewModels
     public class EncoderViewModel : BaseViewModel
     {
         private readonly EncoderService _encoderService = new EncoderService();
-        private readonly IniService _ini = new IniService("./Encoder.ini");
+        private readonly IniService _ini = new IniService(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LinEncoder.ini"));
 
         #region Launcher Maker Properties
         private string _title = "天堂登入器";
@@ -103,20 +103,37 @@ namespace LinEncoder.ViewModels
 
         public EncoderViewModel()
         {
-            for (int i = 0; i < 5; i++) Links.Add(new LinkItem { DisplayIndex = i + 1 });
-            for (int i = 0; i < 8; i++) Servers.Add(new ServerInfo { Name = "Server " + (i + 1), Ip = "127.0.0.1", Port = 2000 });
-            SelectedServer = Servers[0];
+            try
+            {
+                LogService.Info("EncoderViewModel: 建構函式開始");
+                
+                LogService.Info("EncoderViewModel: 初始化 Links 與 Servers 列表");
+                for (int i = 0; i < 5; i++) Links.Add(new LinkItem { DisplayIndex = i + 1 });
+                for (int i = 0; i < 8; i++) Servers.Add(new ServerInfo { Name = "Server " + (i + 1), Ip = "127.0.0.1", Port = 2000, BdFile = "" });
+                
+                SelectedServer = Servers[0];
 
-            SearchLauncherTemplates();
-            SearchBDFiles();
-            SearchBdPaks();
+                LogService.Info("EncoderViewModel: 執行檔案掃描 (Templates, BD Files, Paks)");
+                SearchLauncherTemplates();
+                SearchBDFiles();
+                SearchBdPaks();
 
-            MakeCommand = new RelayCommand(_ => DoMake());
-            GenerateListCommand = new RelayCommand(_ => DoGenerateList());
-            GeneratePatchCommand = new RelayCommand(async _ => await DoGeneratePatchAsync());
-            PackagePakCommand = new RelayCommand(_ => DoPackagePak());
+                LogService.Info("EncoderViewModel: 綁定 RelayCommands");
+                MakeCommand = new RelayCommand(_ => DoMake());
+                GenerateListCommand = new RelayCommand(_ => DoGenerateList());
+                GeneratePatchCommand = new RelayCommand(async _ => await DoGeneratePatchAsync());
+                PackagePakCommand = new RelayCommand(_ => DoPackagePak());
 
-            LoadSettings();
+                LogService.Info("EncoderViewModel: 執行 LoadSettings()");
+                LoadSettings();
+                
+                LogService.Info("EncoderViewModel: 建構函式完成");
+            }
+            catch (Exception ex)
+            {
+                LogService.Error("EncoderViewModel 建構函式發生致命錯誤", ex);
+                throw; // 重新拋出以觸發 App 的全域報錯
+            }
         }
 
         private void LoadSettings()
@@ -190,9 +207,10 @@ namespace LinEncoder.ViewModels
         private void SearchBDFiles()
         {
             BdSourceFiles.Clear();
-            if (Directory.Exists("."))
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            if (Directory.Exists(baseDir))
             {
-                foreach (var file in Directory.GetFiles(".", "*.txt"))
+                foreach (var file in Directory.GetFiles(baseDir, "*.txt"))
                 {
                     string name = Path.GetFileNameWithoutExtension(file);
                     if (name.Equals("list", StringComparison.OrdinalIgnoreCase) ||
@@ -205,9 +223,10 @@ namespace LinEncoder.ViewModels
         private void SearchBdPaks()
         {
             BdFiles.Clear();
-            if (Directory.Exists("."))
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            if (Directory.Exists(baseDir))
             {
-                foreach (var file in Directory.GetFiles(".", "*.pak"))
+                foreach (var file in Directory.GetFiles(baseDir, "*.pak"))
                 {
                     BdFiles.Add(Path.GetFileName(file));
                 }
@@ -217,9 +236,10 @@ namespace LinEncoder.ViewModels
         private void SearchLauncherTemplates()
         {
             LauncherTemplates.Clear();
-            if (Directory.Exists("."))
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            if (Directory.Exists(baseDir))
             {
-                foreach (var file in Directory.GetFiles(".", "*.dat"))
+                foreach (var file in Directory.GetFiles(baseDir, "*.dat"))
                 {
                     LauncherTemplates.Add(Path.GetFileName(file));
                 }

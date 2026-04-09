@@ -20,7 +20,7 @@ namespace LinLauncher.Services
         /// 啟動遊戲核心流程：1. 檢查檔案 2. 掛起建立進程 3. 設定共享記憶體 4. 注入 DLL 5. 恢復執行。
         /// (Core game launch flow: 1. Check files 2. Create suspended process 3. Setup SHM 4. Inject DLL 5. Resume.)
         /// </summary>
-        public async Task<bool> LaunchGameAsync(ServerInfo server, string gameExePath, string dllPath)
+        public async Task<bool> LaunchGameAsync(ServerInfo server, string gameExePath, string dllPath, string account, string password)
         {
             if (!File.Exists(gameExePath) || !File.Exists(dllPath)) return false;
 
@@ -40,7 +40,7 @@ namespace LinLauncher.Services
 
             try
             {
-                SetupSharedMemory(pi.dwProcessId, server);
+                SetupSharedMemory(pi.dwProcessId, server, account, password);
                 if (!InjectDll(pi.dwProcessId, dllPath))
                 {
                     System.Windows.MessageBox.Show("DLL Injection failed!");
@@ -62,7 +62,7 @@ namespace LinLauncher.Services
         /// 建立具名共享記憶體，將選中的伺服器資訊傳遞給 DLL。
         /// (Creates named shared memory to pass selected server info to the DLL.)
         /// </summary>
-        private void SetupSharedMemory(uint pid, ServerInfo server)
+        private void SetupSharedMemory(uint pid, ServerInfo server, string account, string password)
         {
             string name = $"Local\\{ShmGuid}";
             _hShm = NativeMethods.CreateFileMapping(new IntPtr(-1), IntPtr.Zero, NativeMethods.PAGE_READWRITE, 0, 8192, name);
@@ -84,6 +84,13 @@ namespace LinLauncher.Services
             };
             share.SetIp(server.Ip);
             Array.Copy(server.Key, share.Key, 16);
+
+            // 填入帳號密碼 (Fill Account and Password)
+            byte[] accBytes = Encoding.ASCII.GetBytes(account ?? "");
+            byte[] pwdBytes = Encoding.ASCII.GetBytes(password ?? "");
+            Array.Copy(accBytes, 0, share.Account, 0, Math.Min(accBytes.Length, 32));
+            Array.Copy(pwdBytes, 0, share.Password, 0, Math.Min(pwdBytes.Length, 32));
+
             Marshal.StructureToPtr(share, _pShm, false);
         }
 

@@ -1,0 +1,43 @@
+﻿[2026-04-09 23:31:18] [INFO] === Application Startup ===
+[2026-04-09 23:31:18] [ERROR] 全域未處理異常捕獲
+[Exception] XamlParseException: 符合所指定繫結條件約束之型別 'LinEncoder.ViewModels.EncoderViewModel' 上建構函式的引動過程擲回例外狀況。
+[StackTrace]    at System.Windows.Markup.XamlReader.RewrapException(Exception e, IXamlLineInfo lineInfo, Uri baseUri)
+   at System.Windows.Markup.WpfXamlLoader.Load(XamlReader xamlReader, IXamlObjectWriterFactory writerFactory, Boolean skipJournaledProperties, Object rootObject, XamlObjectWriterSettings settings, Uri baseUri)
+   at System.Windows.Markup.WpfXamlLoader.LoadBaml(XamlReader xamlReader, Boolean skipJournaledProperties, Object rootObject, XamlAccessLevel accessLevel, Uri baseUri)
+   at System.Windows.Markup.XamlReader.LoadBaml(Stream stream, ParserContext parserContext, Object parent, Boolean closeStream)
+   at System.Windows.Application.LoadBamlStreamWithSyncInfo(Stream stream, ParserContext pc)
+   at System.Windows.Application.LoadComponent(Uri resourceLocator, Boolean bSkipJournaledProperties)
+   at System.Windows.Application.DoStartup()
+   at System.Windows.Application.<.ctor>b__1_0(Object unused)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+--- Inner Exception ---
+TypeLoadException: 
+   at LinEncoder.ViewModels.EncoderViewModel..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+
+[2026-04-09 23:35:58] [INFO] === Application Startup ===
+[2026-04-09 23:35:58] [ERROR] 全域未處理異常捕獲
+[Exception] XamlParseException: 符合所指定繫結條件約束之型別 'LinEncoder.ViewModels.EncoderViewModel' 上建構函式的引動過程擲回例外狀況。
+[StackTrace]    at System.Windows.Markup.XamlReader.RewrapException(Exception e, IXamlLineInfo lineInfo, Uri baseUri)
+   at System.Windows.Markup.WpfXamlLoader.Load(XamlReader xamlReader, IXamlObjectWriterFactory writerFactory, Boolean skipJournaledProperties, Object rootObject, XamlObjectWriterSettings settings, Uri baseUri)
+   at System.Windows.Markup.WpfXamlLoader.LoadBaml(XamlReader xamlReader, Boolean skipJournaledProperties, Object rootObject, XamlAccessLevel accessLevel, Uri baseUri)
+   at System.Windows.Markup.XamlReader.LoadBaml(Stream stream, ParserContext parserContext, Object parent, Boolean closeStream)
+   at System.Windows.Application.LoadBamlStreamWithSyncInfo(Stream stream, ParserContext pc)
+   at System.Windows.Application.LoadComponent(Uri resourceLocator, Boolean bSkipJournaledProperties)
+   at System.Windows.Application.DoStartup()
+   at System.Windows.Application.<.ctor>b__1_0(Object unused)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+--- Inner Exception ---
+TypeLoadException: 
+   at LinEncoder.ViewModels.EncoderViewModel..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+
+[2026-04-09 23:36:58] [INFO] === Application Startup ===
+[2026-04-09 23:36:58] [INFO] EncoderViewModel: 建構函式開始
+[2026-04-09 23:36:58] [INFO] EncoderViewModel: 初始化 Links 與 Servers 列表
+[2026-04-09 23:36:58] [INFO] EncoderViewModel: 執行檔案掃描 (Templates, BD Files, Paks)
+[2026-04-09 23:36:58] [INFO] EncoderViewModel: 綁定 RelayCommands
+[2026-04-09 23:36:58] [INFO] EncoderViewModel: 執行 LoadSettings()
+[2026-04-09 23:36:58] [INFO] EncoderViewModel: 建構函式完成

@@ -122,6 +122,30 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- 輸入框樣式 -->
+        <Style x:Key="AccountInputStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#333"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#7232f2" TargetName="border"/>
+                                <Setter Property="Background" Value="#2a2a2a" TargetName="border"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- DataContext will be set in code-behind to avoid XAML designer resolution issues -->
@@ -179,7 +203,13 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <StackPanel Grid.Row="2" Margin="0,25,0,5">
+                    <StackPanel Grid.Row="2" Margin="0,20,0,5">
+                        <TextBlock Text="帳號 (Account)" Foreground="#888" FontSize="11" Margin="5,0,0,5"/>
+                        <TextBox Text="{Binding Account, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AccountInputStyle}" Height="35" Margin="0,0,0,10"/>
+                        
+                        <TextBlock Text="密碼 (Password)" Foreground="#888" FontSize="11" Margin="5,0,0,5"/>
+                        <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AccountInputStyle}" Height="35" Margin="0,0,0,20"/>
+
                         <Button Command="{Binding StartCommand}" Style="{StaticResource StartButtonStyle}" Height="60" Content="遊 戲 開 始" FontSize="22" FontWeight="Bold"/>
                     </StackPanel>
                 </Grid>

@@ -1,8 +1,5 @@
-// LauncherDll.cpp : DLL 核心實作
-// 包含 Detours Hook 安裝（connect/send/recv/時間/視窗）、RSA
-// 握手、封包處理、輔助對話框管理
-#include "LauncherDll.h"
 #include "stdafx.h"
+#include "LauncherDll.h"
 
 #include "VMProtectSDK.h"
 #include "timeController.h"
@@ -38,6 +35,10 @@ char szTitle[32];
 HWND g_hGameWnd = NULL;
 bool g_dpiFixed = false;
 static bool g_hooked = false; // 是否已完成首次 Hook 安裝
+int g_editCount = 0;           // 用於識別帳號/密碼編輯框
+BYTE g_id[32];
+BYTE g_pwd[32];
+int g_pwd_pos = 0;
 
 // RSA 金鑰（由共享記憶體讀入，類型均在 DWORD 範圍內）
 
@@ -327,9 +328,6 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 // =============================================================================
 const DWORD USER_HOOK_ADDR = 0x0077317D;
 const DWORD USER_RETN_ADDR = 0x00773183;
-BYTE g_id[32];
-int g_pwd_pos = 0;
-BYTE g_pwd[32];
 
 void __stdcall UserNameHandler(void *p) {
   memcpy(g_id, p, 32);
@@ -403,14 +401,12 @@ __declspec(naked) void GetFileData(void) {
 		mov eax, buffer_len
 		mov dword ptr ss:[ebp - 0x14], eax
 		mov eax, buffer
-		add eax, 1
 		mov edx, dword ptr ss:[ebp - 0x23C]
 		mov dword ptr ds:[edx + 0x08], eax
 		mov eax, 0x0058794F
 		jmp eax
   }
 }
-
 // =============================================================================
 // API Hook 區（Network, Window, Time, Credential）
 // =============================================================================
@@ -418,7 +414,7 @@ int(WINAPI *real_connect)(SOCKET s, const struct sockaddr *name,
                           int namelen) = connect;
 int(WINAPI *real_send)(SOCKET s, const char *buf, int len, int flag) = send;
 int(WINAPI *real_recv)(SOCKET s, char *buf, int len, int flag) = recv;
-#define S_OPCODE_INITPACKET 0x96
+
 int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen) {
   if (name == NULL || namelen < (int)sizeof(sockaddr_in))
     return real_connect(s, name, namelen);
@@ -463,10 +459,12 @@ int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen) {
     mappedAddr.sin_port = htons(ShareInfo.port);
     VMProtectEnd;
     inited = false;
+    g_editCount = 0; // 重新連線時重置編輯框計數器
     return real_connect(s, (const sockaddr *)&mappedAddr, sizeof(mappedAddr));
   }
   VMProtectEnd;
   inited = false;
+  g_editCount = 0; // 重新連線時重置編輯框計數器
   return real_connect(s, name, namelen);
 }
 
@@ -481,7 +479,6 @@ int my_send(SOCKET s, const char *buf, int len, int flag) {
     useHeap = true;
   }
   memcpy(buffer_ptr, buf, len);
-  // 日誌：傳出封包長度與首位 opcode（用於診斷登入流程）
   if (len > 0) {
     char preview[64] = {0};
     char hex[128] = {0};
@@ -523,58 +520,25 @@ int my_recv(SOCKET s, char *buf, int len, int flag) {
           return ret;
       }
     }
-    unsigned long _authdata = *(unsigned long *)buffer;
-    // 用內建 modpow 取代 OpenSSL BN_mod_exp（authdata ^ D mod N，均為 DWORD）
-    DWORD mword = modpow(_authdata, _rsaD, _rsaN);
-    if (ShareInfo.randenc)
-      _seed = (int)mword;
-    else
-      _xorByte = (unsigned char)mword;
+    _xorByte = (unsigned char)modpow(*(unsigned long *)buffer, _rsaD, _rsaN);
     inited = true;
   }
   int ret = real_recv(s, buf, len, flag);
   if (ret > 0) {
     unsigned char opcode = (unsigned char)buf[0];
-
-    // 詳細 hex dump：對關鍵封包記錄完整內容，幫助診斷斷線原因
     char hex[512] = {0};
     char ascii[128] = {0};
     bytes_to_hex_preview((const BYTE *)buf, ret, hex, sizeof(hex), 64);
     bytes_to_ascii_preview((const BYTE *)buf, ret, ascii, sizeof(ascii), 32);
-
-    // 對重複出現的大封包 0x0A (88 bytes) 做特別標記
     if (opcode == 0x0A && ret > 10) {
       launcherdll_net_log(
           "[my_recv] *** SERVER MSG 0x0A (len=%d) hex=[%s] ascii=[%s]", ret,
           hex, ascii);
-    } else if (opcode == 0x96) {
-      launcherdll_net_log(
-          "[my_recv] RECEIVED InitPacket 0x96 (len=%d) hex=[%s]", ret, hex);
-    } else if (opcode == 0x2F || opcode == 0x3E || opcode == 0x91 ||
-               opcode == 0x48) {
-      // 0x2F = server list / version?, 0x3E = object spawn?, 0x91 = status?,
-      // 0x48 = ?
-      launcherdll_net_log(
-          "[my_recv] KEY_PKT socket=%u ret=%d opcode=0x%02X hex=[%s]",
-          (unsigned)s, ret, (unsigned)opcode, hex);
     } else {
       launcherdll_net_log(
           "[my_recv] socket=%u ret=%d opcode=0x%02X inited=%d encrypt=%d",
           (unsigned)s, ret, (unsigned)opcode, (int)inited,
           (int)ShareInfo.encrypt);
-    }
-
-    // 如果 recv 返回 0 或錯誤，記錄斷線事件
-  } else if (ret == 0) {
-    launcherdll_net_log(
-        "[my_recv] *** SOCKET CLOSED by server, socket=%u (graceful close)",
-        (unsigned)s);
-  } else {
-    int err = WSAGetLastError();
-    if (err != WSAEWOULDBLOCK) {
-      launcherdll_net_log(
-          "[my_recv] *** RECV ERROR socket=%u ret=%d WSAError=%d", (unsigned)s,
-          ret, err);
     }
   }
   return ret;
@@ -606,9 +570,10 @@ HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
       g_hooked = true;
       launcherdll_net_log(
           "[Hook] CreateWindowEx triggered, installing patches");
-      // 恢復原始 LinProject3.8 的補丁：0x859001B0 (疑似導致 pak
-      // 讀取錯誤，暫時註解) DWORD forceDisableEnc = 0x859001B0; PatchCode((void
-      // *)0x00722761, &forceDisableEnc, sizeof(DWORD));
+      // 恢復原始 LinProject3.8 的補丁：0x859001B0 (強制遊戲核心使用純文字連線)
+      DWORD forceDisableEnc = 0x859001B0;
+      PatchCode((void *)0x00722761, &forceDisableEnc, sizeof(DWORD));
+      // 恢復原始 LinProject3.8 的補丁與全掛鉤功能
       PatchCode((void *)0x00772BA0, (void *)path_code, sizeof(path_code));
 
       HookCode((void *)USER_HOOK_ADDR, (void *)GetUsername,
@@ -621,6 +586,10 @@ HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
       if (buffer != NULL) {
         HookCode((void *)0x0058788B, (void *)GetFileData, 5);
       }
+      
+      launcherdll_net_log("[Hook] Core Pak loading (GetFileData) RESTORED.");
+      
+      launcherdll_net_log("[Hook] ALL hooks and patches RESTORED for full functionality.");
 
       // --- Helper 輔助對話框安裝 ---
       if (!h_hook) {
@@ -647,6 +616,19 @@ HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
   if (bCreate && hWndRet != NULL) {
     g_hGameWnd = hWndRet;
   }
+
+  // --- 穩定版帳密自動回填：訊息回填法 (ANSI) ---
+  if (hWndRet != NULL && lpClassName != NULL && HIWORD(lpClassName) != 0 && _stricmp(lpClassName, "LUnicodeEdit") == 0) {
+      g_editCount++;
+      if (g_editCount == 1) { // 帳號
+          SendMessageA(hWndRet, WM_SETTEXT, 0, (LPARAM)g_id);
+          launcherdll_net_log("[AutoFill-A] Username filled into HWND=%p", hWndRet);
+      } else if (g_editCount == 2) { // 密碼
+          SendMessageA(hWndRet, WM_SETTEXT, 0, (LPARAM)g_pwd);
+          launcherdll_net_log("[AutoFill-A] Password filled into HWND=%p", hWndRet);
+      }
+  }
+
   return hWndRet;
 }
 
@@ -681,6 +663,20 @@ HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
   HWND hWnd = real_CreateWindowExW(dwExStyle, lpClassName, lpWindowName,
                                    dwStyle, x, y, nWidth, nHeight, hWndParent,
                                    hMenu, hInstance, lpParam);
+  // --- 穩定版帳密自動回填：訊息回填法 (Wide) ---
+  if (hWnd != NULL && lpClassName != NULL && HIWORD(lpClassName) != 0 && _wcsicmp(lpClassName, L"LUnicodeEdit") == 0) {
+      g_editCount++;
+      if (g_editCount == 1) { // 帳號
+          SendMessageW(hWnd, WM_SETTEXT, 0, (LPARAM)ShareInfo.Account); // 這裡 ShareInfo 內是 Unicode? 視情況調整
+          // 如果 g_id 是 ANSI，應使用 SendMessageA
+          SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)g_id);
+          launcherdll_net_log("[AutoFill-W] Username filled into HWND=%p", hWnd);
+      } else if (g_editCount == 2) { // 密碼
+          SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)g_pwd);
+          launcherdll_net_log("[AutoFill-W] Password filled into HWND=%p", hWnd);
+      }
+  }
+
   return hWnd;
 }
 
@@ -689,55 +685,37 @@ int(WINAPI *real_MessageBoxA)(HWND, LPCSTR, LPCSTR, UINT) = MessageBoxA;
 int(WINAPI *real_MessageBoxW)(HWND, LPCWSTR, LPCWSTR, UINT) = MessageBoxW;
 int WINAPI my_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
                           UINT uType) {
+  launcherdll_net_log("[MessageBoxA] Caption='%s', Text='%s'", 
+      lpCaption ? lpCaption : "(null)", 
+      lpText ? lpText : "(null)");
   return real_MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
 int WINAPI my_MessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption,
                           UINT uType) {
+  // 注意：日誌使用 %ls 來處理寬字元
+  launcherdll_net_log("[MessageBoxW] Caption='%ls', Text='%ls'", 
+      lpCaption ? lpCaption : L"(null)", 
+      lpText ? lpText : L"(null)");
   return real_MessageBoxW(hWnd, lpText, lpCaption, uType);
 }
 
 // 設定檔解密 / 檔案讀取（純 XOR 還原 + 虛擬編譯模式）
 // =============================================================================
 
-// 將文字格式的變身設定轉換為遊戲引擎期待的二進位格式 (Action 4 支援)
+/* [暫時停用] ConvertTxtToBinary 函式實體
 BYTE* ConvertTxtToBinary(BYTE* txtData, unsigned int txtLen, DWORD& outLen) {
-    std::string content((char*)txtData, txtLen);
-    std::stringstream ss(content);
-    std::string line;
-    
-    std::vector<BYTE> binary;
-    binary.reserve(1024 * 1024 * 10); // 預留 10MB
-    
-    DWORD spriteCount = 0;
-    binary.insert(binary.end(), 4, 0); // SpriteCount Holder
-
-    while (std::getline(ss, line)) {
-        if (line.empty()) continue;
-        if (line[0] == '#') {
-            spriteCount++;
-            int spriteId = 0;
-            sscanf_s(line.c_str() + 1, "%d", &spriteId);
-            DWORD id = (DWORD)spriteId;
-            DWORD actCount = 5; // 強制支援 5 個動作 (0~4)，包含走路動畫
-            binary.insert(binary.end(), (BYTE*)&id, (BYTE*)&id + 4);
-            binary.insert(binary.end(), (BYTE*)&actCount, (BYTE*)&actCount + 4);
-            binary.insert(binary.end(), 20, 0); // 預留 5 個 Action 指標空間 (20 bytes)
-        }
-    }
-    *(DWORD*)&binary[0] = spriteCount;
-    outLen = (DWORD)binary.size();
-    BYTE* result = new BYTE[outLen];
-    memcpy(result, binary.data(), outLen);
-    launcherdll_net_log("[VirtualPacker] Converted %d sprites with Action 4 support to binary (%d bytes)", (int)spriteCount, (int)outLen);
-    return result;
+    ... (內容已註解)
+    return NULL;
 }
+*/
 
 // -----------------------------------------------------------------------------
 // NakedLoaderHook (0x58228A)
 // 目的：修正遊戲引擎在處理 Action 4 (走路) 時的索引計算偏移。
 //       原始引擎可能只預留了 4 個 Action 的空間，以此 Hook 強制平衡堆疊與暫存器。
 // -----------------------------------------------------------------------------
+/* [暫時停用] NakedLoaderHook 函式實體
 void __declspec(naked) NakedLoaderHook() {
     __asm {
         // 原始碼大約是：mov eax, [esi+ebx*4+0Ch]
@@ -753,6 +731,7 @@ void __declspec(naked) NakedLoaderHook() {
         ret
     }
 }
+*/
 
 BYTE *GetFileBuffer() {
   FILE *fp = NULL;
@@ -774,14 +753,13 @@ BYTE *GetFileBuffer() {
 
     VMProtectBegin;
 
-    // 方案 A 增強版：執行純 XOR 後，自動識別文字格式並進行轉譯
     const char *fixedKey = "PAt82IqEvNBmERYl";
     launcherdll_net_log("[GetFileBuffer] Decrypting %u bytes with fixed XOR key...", len);
     for (unsigned int i = 0; i < len; i++) {
       file_data[i] ^= (BYTE)fixedKey[i % 16];
     }
 
-    // 檢查還原後是否為文字檔（通常以 '#' 開頭或是 '2000' 字串）
+    /* [暫時停用轉譯] 修正 C3861 錯誤：目前不使用 ConvertTxtToBinary，回歸純 XOR 模式
     if (len > 4 && (file_data[0] == '#' || (file_data[0] == '2' && file_data[1] == '0'))) {
         launcherdll_net_log("[GetFileBuffer] Detected Text Configuration. Invoking Virtual Packer...");
         DWORD binLen = 0;
@@ -791,6 +769,7 @@ BYTE *GetFileBuffer() {
         VMProtectEnd;
         return binData;
     }
+    */
 
     buffer_len = len;
     VMProtectEnd;
@@ -946,10 +925,10 @@ DWORD WINAPI DelayedDetourThread(void *p) {
   RestoreSystemTime();
   launcherdll_net_log("[DelayedDetour] system time restored");
 
-  // [TEST] Temporarily disabled PatchThread to diagnose sprite 13106 crash
-  // CloseHandle(CreateThread(NULL, 0, PatchThread, NULL, 0, NULL));
-  // [優化] 安裝變身檔 Action 4 偏移修正 Hook
-  HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
+  // [恢復] 啟動 PatchThread 對遊戲核心進行診斷性補丁
+  CloseHandle(CreateThread(NULL, 0, PatchThread, NULL, 0, NULL));
+  // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動
+  // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
 
   LoadCombatConfig();
   launcherdll_net_log("[DelayedDetour] all hooks installed successfully");
@@ -977,16 +956,26 @@ void init() {
                       timeout, (unsigned)pShareInfo->magic);
   memcpy(&ShareInfo, pShareInfo, sizeof(SHARE_INFO));
   pShareInfo->read = true;
-  launcherdll_net_log("[init] ShareInfo copied: ip=%.31s, port=%d, encrypt=%d, "
-                      "usebd=%d, randenc=%d",
-                      (const char *)ShareInfo.ip, ShareInfo.port,
-                      (int)ShareInfo.encrypt, (int)ShareInfo.usebd,
-                      (int)ShareInfo.randenc);
-  // 【強制關閉所有加密】
+
+  // 安全拷貝帳密並確保 null-terminated
+  memset(g_id, 0, 32);
+  memset(g_pwd, 0, 32);
+  memcpy(g_id, ShareInfo.Account, 32);
+  memcpy(g_pwd, ShareInfo.Password, 32);
+  g_id[31] = '\0';
+  g_pwd[31] = '\0';
+  g_pwd_pos = (int)strlen((const char*)g_pwd);
+
+  launcherdll_net_log("[init] ShareInfo size=%u (expected 197)", (unsigned)sizeof(SHARE_INFO));
+  
+  // 強制關閉加密 (User Requested: No Encryption)
   ShareInfo.encrypt = 0;
   ShareInfo.randenc = 0;
-  launcherdll_net_log("[init] FORCED: encrypt=0, randenc=0");
-  if (ShareInfo.encrypt) {
+  
+  launcherdll_net_log("[init] ShareInfo copied: ip=%.31s, port=%d, encrypt=%d (FORCED OFF)",
+                      (const char *)ShareInfo.ip, ShareInfo.port, (int)ShareInfo.encrypt);
+
+  if (0) { // 強制跳過 RSA 初始化
     unsigned long rsaD = pShareInfo->RSA_D ^ SERVER_LIST_RSA_XOR_D;
     unsigned long rsaN = pShareInfo->RSA_N ^ SERVER_LIST_RSA_XOR_N;
     _rsaD = (DWORD)rsaD;

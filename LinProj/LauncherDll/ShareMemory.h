@@ -16,6 +16,8 @@ struct SHARE_INFO {
 	unsigned int RSA_N;
 	unsigned int RSA_D;
 	unsigned int magic;
+	char Account[32];
+	char Password[32];
 };
 #pragma pack(pop)
 
