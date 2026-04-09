@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -276,7 +276,28 @@ namespace LinEncoder.ViewModels
 
         private void DoPackagePak()
         {
-            MessageBox.Show("加密完成！");
+            if (string.IsNullOrEmpty(SelectedBdSourceFile))
+            {
+                MessageBox.Show("請先選擇要加密的來源文字檔 (.txt)！");
+                return;
+            }
+
+            string input = SelectedBdSourceFile + ".txt";
+            string output = SelectedServer?.BdFile;
+            if (string.IsNullOrEmpty(output))
+            {
+                output = SelectedBdSourceFile + ".pak";
+            }
+
+            if (_encoderService.PackagePak(input, output))
+            {
+                MessageBox.Show($"加密完成！\n輸出檔案：{output}", "完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                SearchBdPaks();
+            }
+            else
+            {
+                MessageBox.Show("加密失敗！請檢查來源檔案是否存在。", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 
