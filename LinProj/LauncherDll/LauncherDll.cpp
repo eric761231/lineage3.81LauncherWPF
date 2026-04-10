@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "LauncherDll.h"
+#include "L1Offsets.h"
 
 #include "VMProtectSDK.h"
 #include "timeController.h"
@@ -20,8 +21,8 @@
 // =============================================================================
 // 全域變數宣告
 // =============================================================================
-#define SERVER_LIST_RSA_XOR_N 22345678
-#define SERVER_LIST_RSA_XOR_D 32345678
+constexpr int SERVER_LIST_RSA_XOR_N = 22345678;
+constexpr int SERVER_LIST_RSA_XOR_D = 32345678;
 
 // SHARE_INFO struct is now in ShareMemory.h
 HHOOK hhk = NULL;
@@ -86,11 +87,12 @@ bool __stdcall __fn1(DWORD tid);
 // =============================================================================
 // 亂數與封包加密
 // =============================================================================
-int nextRand() {
+static int nextRand() {
   _seed = (214013 * _seed + 2531011) & 0x7FFFFFFF;
   return (int)(_seed >> 16) & 0xFF;
 }
 
+// __dbg_print: 跨檔案使用的除錯輸出函式 (不可設為 static)
 void __dbg_print(const char *fmt, ...) {
   char buffer[8192] = {0};
   va_list args;
@@ -130,7 +132,7 @@ static void launcherdll_net_log(const char *fmt, ...) {
   fclose(fp);
 }
 
-void LoadCombatConfig() {
+static void LoadCombatConfig() {
   char exePath[MAX_PATH] = {0};
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) <= 0)
     return;
@@ -170,7 +172,7 @@ void LoadCombatConfig() {
       if (pBlood)
         sscanf_s(pBlood + 13, "%d", &bloodEffectID);
       if (spriteId != -1) {
-        SpriteConfig cfg;
+          SpriteConfig cfg{};
         cfg.suppressFlinch = (_stricmp(flinchStr, "true") == 0);
         cfg.bloodEffect = bloodEffectID;
         g_SpriteConfigs[spriteId] = cfg;
@@ -274,7 +276,7 @@ extern "C" int __stdcall GetBloodEffect(int spriteId) {
 // =============================================================================
 // 記憶體補丁與 Hook 安裝輔助函式（Patch / Hook）
 // =============================================================================
-bool IsCodeDecrypt() {
+static bool IsCodeDecrypt() {
   __try {
     DWORD val = *(volatile DWORD *)0x0058788B;
     return val == 0x85C0B60F || val == 0x4D8D016A;
@@ -283,7 +285,7 @@ bool IsCodeDecrypt() {
   return false;
 }
 
-void PatchCode(void *addr, void *code, int len) {
+static void PatchCode(void *addr, void *code, int len) {
   DWORD dwOldProtect;
   VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, PAGE_READWRITE,
                    &dwOldProtect);
@@ -292,7 +294,7 @@ void PatchCode(void *addr, void *code, int len) {
                    &dwOldProtect);
 }
 
-void HookCode(void *addr, void *func, int len) {
+static void HookCode(void *addr, void *func, int len) {
   if (len < 5)
     return;
   DWORD dwOldProtect;
@@ -311,7 +313,7 @@ void HookCode(void *addr, void *func, int len) {
 // =============================================================================
 // Helper 輔助對話框鍵盤攔截
 // =============================================================================
-LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode >= 0) {
     MSG *pMsg = (MSG *)lParam;
     if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_HOME) {
@@ -329,7 +331,7 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 const DWORD USER_HOOK_ADDR = 0x0077317D;
 const DWORD USER_RETN_ADDR = 0x00773183;
 
-void __stdcall UserNameHandler(void *p) {
+static void __stdcall UserNameHandler(void *p) {
   memcpy(g_id, p, 32);
   g_id[31] = 0; // ensure C-string termination
 }
@@ -350,7 +352,7 @@ const DWORD PASS_HOOK_ADDR = 0x004AA38E;
 const DWORD PASS_RETN_ADDR = 0x004AA395;
 const DWORD PASS_CALL_ADDR = 0x00402800;
 
-void __stdcall PasswordHandler(BYTE PassByte) {
+static void __stdcall PasswordHandler(BYTE PassByte) {
   if (g_pwd_pos == 0)
     memset(g_pwd, 0, 32);
   if (g_pwd_pos < 31) {
@@ -415,7 +417,7 @@ int(WINAPI *real_connect)(SOCKET s, const struct sockaddr *name,
 int(WINAPI *real_send)(SOCKET s, const char *buf, int len, int flag) = send;
 int(WINAPI *real_recv)(SOCKET s, char *buf, int len, int flag) = recv;
 
-int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen) {
+static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen) {
   if (name == NULL || namelen < (int)sizeof(sockaddr_in))
     return real_connect(s, name, namelen);
   VMProtectBegin;
@@ -468,7 +470,7 @@ int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen) {
   return real_connect(s, name, namelen);
 }
 
-int my_send(SOCKET s, const char *buf, int len, int flag) {
+static int my_send(SOCKET s, const char *buf, int len, int flag) {
   if (buf == NULL || len <= 0)
     return real_send(s, buf, len, flag);
   BYTE stackBuffer[4096];
@@ -504,7 +506,7 @@ int my_send(SOCKET s, const char *buf, int len, int flag) {
   return ret;
 }
 
-int my_recv(SOCKET s, char *buf, int len, int flag) {
+static int my_recv(SOCKET s, char *buf, int len, int flag) {
   if (ShareInfo.encrypt && !inited) {
     char buffer[32];
     memset(buffer, 0, sizeof(buffer));
@@ -553,7 +555,7 @@ HWND(WINAPI *real_CreateWindowEx)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int,
 HWND(WINAPI *real_CreateWindowExW)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int,
                                    int, int, HWND, HMENU, HINSTANCE,
                                    LPVOID) = CreateWindowExW;
-HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
+static HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
                               LPCSTR lpWindowName, DWORD dwStyle, int x, int y,
                               int nWidth, int nHeight, HWND hWndParent,
                               HMENU hMenu, HINSTANCE hInstance,
@@ -598,7 +600,7 @@ HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
       }
     }
     srand(GetTickCount());
-    char randomStr[16];
+    char randomStr[16]{};
     for (int i = 0; i < 8; i++) {
       if (i < 4)
         randomStr[i] = 'A' + (rand() % 26);
@@ -632,7 +634,7 @@ HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
   return hWndRet;
 }
 
-HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
+static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
                                LPCWSTR lpWindowName, DWORD dwStyle, int x,
                                int y, int nWidth, int nHeight, HWND hWndParent,
                                HMENU hMenu, HINSTANCE hInstance,
@@ -683,7 +685,7 @@ HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
 // MessageBox
 int(WINAPI *real_MessageBoxA)(HWND, LPCSTR, LPCSTR, UINT) = MessageBoxA;
 int(WINAPI *real_MessageBoxW)(HWND, LPCWSTR, LPCWSTR, UINT) = MessageBoxW;
-int WINAPI my_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
+static int WINAPI my_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
                           UINT uType) {
   launcherdll_net_log("[MessageBoxA] Caption='%s', Text='%s'", 
       lpCaption ? lpCaption : "(null)", 
@@ -691,7 +693,7 @@ int WINAPI my_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
   return real_MessageBoxA(hWnd, lpText, lpCaption, uType);
 }
 
-int WINAPI my_MessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption,
+static int WINAPI my_MessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption,
                           UINT uType) {
   // 注意：日誌使用 %ls 來處理寬字元
   launcherdll_net_log("[MessageBoxW] Caption='%ls', Text='%ls'", 
@@ -733,7 +735,7 @@ void __declspec(naked) NakedLoaderHook() {
 }
 */
 
-BYTE *GetFileBuffer() {
+static BYTE *GetFileBuffer() {
   FILE *fp = NULL;
   unsigned int len = 0;
   buffer_len = 0;
@@ -791,23 +793,42 @@ BYTE *GetFileBuffer() {
 //   修改後 (記憶體中的位元組): 90 E9 97 00 → NOP + JMP
 //   rel32（無條件跳轉：永遠跳） 效果：原本有條件才執行的分支，變成永遠執行
 // =============================================================================
-DWORD WINAPI PatchThread(void *p) {
+static DWORD WINAPI PatchThread(void *p) {
   __try {
     while (true) {
-      // 輪詢等待：確認 0x004E204E 的程式碼已被 Themida 解密還原為原始指令
-      // 解密前該位址的值是加密後的垃圾資料，解密後才會變成 0x0097850F (JNZ)
       if (*(DWORD *)0x004E204E == 0x0097850F) {
-        // 將 JNZ (條件跳轉) 改寫為 NOP + JMP (無條件跳轉)
-        // 0x0097850F → 0F 85 97 00 (JNZ +0x97)
-        // 0x0097E990 → 90 E9 97 00 (NOP; JMP +0x97)
-        DWORD code = 0x0097E990;
-        PatchCode((void *)0x004E204E, &code, sizeof(DWORD));
+        launcherdll_net_log("[Patch] 核心解密完成，開始執行記憶體補丁程序... ");
+        launcherdll_net_log("[Patch] 目前基準位址: 0x%p ", (void*)L1Offsets::BASE_ADDRESS);
+
+        DWORD kernelPatch = 0x0097E990;
+        PatchCode((void *)0x004E204E, &kernelPatch, sizeof(DWORD));
+        launcherdll_net_log("[Patch] 1. 核心診斷補丁已套用 @0x004E204E ");
+
+        BYTE expandPattern[] = { 0x83, 0xF8, 0x12 };
+        
+        uintptr_t addrA = L1Offsets::BASE_ADDRESS + L1Offsets::PatchTargets::UI_SLOT_LIMIT_CHECK_1;
+        PatchCode((void *)addrA, expandPattern, sizeof(expandPattern));
+        launcherdll_net_log("[Patch] 2A. UI 渲染邊界補丁 1 套用成功 @0x%p ", (void*)addrA);
+
+        uintptr_t addrB = L1Offsets::BASE_ADDRESS + L1Offsets::PatchTargets::UI_SLOT_LIMIT_CHECK_2;
+        PatchCode((void *)addrB, expandPattern, sizeof(expandPattern));
+        launcherdll_net_log("[Patch] 2B. UI 渲染邊界補丁 2 套用成功 @0x%p ", (void*)addrB);
+
+        uintptr_t addrC = L1Offsets::BASE_ADDRESS + L1Offsets::PatchTargets::SLOT_SPECIAL_HANDLING_1;
+        PatchCode((void *)addrC, expandPattern, sizeof(expandPattern));
+        launcherdll_net_log("[Patch] 2C. 特殊 Slot 邏輯補丁 1 套用成功 @0x%p ", (void*)addrC);
+
+        uintptr_t addrD = L1Offsets::BASE_ADDRESS + L1Offsets::PatchTargets::SLOT_SPECIAL_HANDLING_2;
+        PatchCode((void *)addrD, expandPattern, sizeof(expandPattern));
+        launcherdll_net_log("[Patch] 2D. 特殊 Slot 邏輯補丁 2 套用成功 @0x%p ", (void*)addrD);
+
+        launcherdll_net_log("[Patch] 裝備欄位擴充完成 (目前支援至 18 欄位)。 ");
         break;
       }
-      Sleep(1); // 每 1ms 檢查一次，避免佔用 CPU
+      Sleep(1);
     }
   } __except (1) {
-    // SEH 例外保護：若該記憶體頁尚未映射或不可讀，靜默忽略
+    launcherdll_net_log("[Patch] *** CRITICAL *** 補丁執行例外。 ");
   }
   return 0;
 }
@@ -846,7 +867,7 @@ static void RestoreSystemTime() {
 }
 
 // 延遲安裝 Detours 的執行緒：等保護殼解密完成後才安裝所有 hook
-DWORD WINAPI DelayedDetourThread(void *p) {
+static DWORD WINAPI DelayedDetourThread(void *p) {
   launcherdll_net_log("[DelayedDetour] waiting for code decryption...");
   int waitCount = 0;
   DWORD lastVal = 0xFFFFFFFF;
@@ -935,6 +956,7 @@ DWORD WINAPI DelayedDetourThread(void *p) {
   return 0;
 }
 
+// init: DLL 初始化進入點，供外部 Launcher 呼叫 (不可設為 static)
 void init() {
   VMProtectBegin;
   launcherdll_net_log("[init] DLL init started, PID=%u",
@@ -1014,6 +1036,7 @@ void init() {
   VMProtectEnd;
 }
 
+// __fn1: 外部 Hook 安裝進入點 (不可設為 static)
 bool __stdcall __fn1(DWORD tid) {
   VMProtectBegin;
   h_hook = SetWindowsHookEx(WH_GETMESSAGE, HookProc, hins, tid);
@@ -1021,5 +1044,8 @@ bool __stdcall __fn1(DWORD tid) {
   return h_hook != NULL;
 }
 
+// DLLGetVersion: 提供 Launcher 辨識版本 (不可設為 static)
 int __stdcall DLLGetVersion() { return 0x1002; }
+
+// DLLGetInformation: 提供 Launcher 辨識 DLL 資訊 (不可設為 static)
 const char *__stdcall DLLGetInformation() { return "LauncherDll"; }

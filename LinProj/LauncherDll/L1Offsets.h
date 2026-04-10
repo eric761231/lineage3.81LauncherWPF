@@ -61,4 +61,69 @@ namespace L1Offsets {
 
     const int EFFECT_RED_BLOOD    = 10770; // 標準紅色噴血
     const int EFFECT_DRAGON_BLOOD = 1248;  // 龍類大型噴血 (建議 XML 用於指定怪物)
+
+    // --- 裝備欄位編號 (Equipment Slot IDs) ---
+    namespace SlotIDs {
+        const int HELM      = 0;  // 頭盔 (Helm_Icon)
+        const int ARMOR     = 1;  // 盔甲 (Armor_Icon)
+        const int TSHIRT    = 2;  // 內衣 (Shirt_Icon)
+        const int CLOAK     = 3;  // 斗篷 (Cloak_Icon)
+        const int GLOVES    = 4;  // 手套 (Glove_Icon)
+        const int BOOTS     = 5;  // 靴子 (Boots_Icon)
+        const int SHIELD    = 6;  // 盾牌 (Shield_Icon)
+        const int WEAPON    = 7;  // 武器 (Weapon_Icon)
+        const int NECKLACE  = 8;  // 項鍊 (Necklace_Icon)
+        const int RING1     = 9;  // 戒指1 (Ring1_Icon)
+        const int RING2     = 10; // 戒指2 (Ring2_Icon)
+        const int BELT      = 11; // 腰帶 (Waist_Icon)
+        const int EARRING   = 12; // 耳環 (Earring_Icon)
+        const int RING3     = 13; // 戒指3 (RingLv80_Icon)
+        const int RING4     = 14; // 戒指4 (RingLv85_Icon)
+        const int RUNE      = 15; // 符石 (Rune_Icon)
+        const int RUNE_L    = 16; // 符石左 (RuneL_Icon)
+        const int RUNE_R    = 17; // 符石右 (RuneR_Icon)
+        const int ARROW     = 18; // 箭矢 (Arrow_Icon)
+    }
+
+    // --- UI 元件實體位址 (UI Component Instances) ---
+    // 註：這些是 CItemIcon 物件在記憶體中的固定/分析位址 (DMP 參考)
+    namespace UI_Components {
+        const uintptr_t ARMOR_ICON    = 0x1068aac;
+        const uintptr_t GLOVE_ICON    = 0x1718c07;
+        const uintptr_t SHIELD_ICON   = 0x1d47d08;
+        const uintptr_t BOOTS_ICON    = 0x1ec8b1a;
+        const uintptr_t RING2_ICON    = 0xff911c;
+        const uintptr_t RING80_ICON   = 0x10686cc;
+        const uintptr_t ARROW_ICON    = 0x134993;
+        const uintptr_t RUNE_R_ICON   = 0x19e7d1;
+        const uintptr_t RUNE_ICON     = 0x19e705; // 符石核心位址
+        const uintptr_t RUNE_L_ICON   = 0x19e745;
+    }
+
+    // --- 關鍵補丁位址 (Patch Targets) ---
+    // 這些位址包含裝備欄位限制 (Slot Logic Limits)
+    namespace PatchTargets {
+        // [1] UI 渲染/更新邊界檢查 (原為 0x0E / 14)
+        const uintptr_t UI_SLOT_LIMIT_CHECK_1 = 0x39f1;   
+        const uintptr_t UI_SLOT_LIMIT_CHECK_2 = 0x5e4d;
+        
+        // [2] 特殊 Slot ID 處理點 (15 與 18 的跳轉邏輯)
+        const uintptr_t SLOT_SPECIAL_HANDLING_1 = 0x165b9; 
+        const uintptr_t SLOT_SPECIAL_HANDLING_2 = 0x169d9;
+    }
 }
+
+/**
+ * 實作指南：
+ * 
+ * 1. 擴充裝備欄位至符石：
+ *    搜尋關鍵字 83 F8 0E (CMP EAX, 14)，將其修改為 83 F8 12 (CMP EAX, 18)。
+ *    重點位址見 L1Offsets::PatchTargets。
+ * 
+ * 2. 左右腳步進：
+ *    在 Hook UpdateAnimation 時，讀取 [ESI+OFFSET_ACTION_ID]。
+ *    若是 0，可依據內部邏輯翻轉為 4。
+ * 
+ * 3. XML 不後仰過濾：
+ *    在 HOOK_FLINCH_ACTIVATION_381 (0x1C0116A) 處攔截。
+ */
