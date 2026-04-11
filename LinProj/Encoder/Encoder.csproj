@@ -20,13 +20,23 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2420.47" />
   </ItemGroup>
 
+  <!-- 無法使用 ProjectReference（Encoder 為自含式 WinExe 會觸發 NETSDK1150）；建置前先編譯 LinLauncher.Proxy，產物為 LinLauncher.dat -->
+  <Target Name="BuildLinLauncherProxyTemplate" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\LinLauncher.Proxy\LinLauncher.Proxy.csproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+  </Target>
+
+  <Target Name="CopyLinLauncherDatToOutput" AfterTargets="Build">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)LinLauncher.dat" DestinationFolder="$(OutputPath)" Condition="Exists('$(MSBuildThisFileDirectory)LinLauncher.dat')" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyLinLauncherDatToPublish" AfterTargets="Publish">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)LinLauncher.dat" DestinationFolder="$(PublishDir)" Condition="Exists('$(MSBuildThisFileDirectory)LinLauncher.dat')" SkipUnchangedFiles="true" />
+  </Target>
+
   <ItemGroup>
     <Folder Include="ViewModels\" />
     <Folder Include="Models\" />
     <Folder Include="Services\" />
-    <None Update="LinLauncher.dat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="Assets\Encoder.ico" />
   </ItemGroup>
 

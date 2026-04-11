@@ -17,15 +17,9 @@ namespace LinLauncher.Services
                     ulong signature = LinLauncher.Models.LauncherConfig.LAUNCHER_CONFIG_SIGN;
                     int structSize = Marshal.SizeOf(typeof(LinLauncher.Models.LauncherConfig));
 
-                    if (buffer.Length >= structSize)
-                    {
-                        if (BitConverter.ToUInt64(buffer, 0) == signature)
-                        {
-                            byte[] configData = new byte[structSize];
-                            Array.Copy(buffer, 0, configData, 0, structSize);
-                            return configData;
-                        }
-                    }
+                    // 必須與 Marshal.SizeOf(LauncherConfig) 完全一致；過長常見於 LinLauncher.dat 覆寫（尾端切出之變長位元組），硬截前段會導致解密錯亂。
+                    if (buffer.Length == structSize && BitConverter.ToUInt64(buffer, 0) == signature)
+                        return buffer;
                 }
             }
             catch { }

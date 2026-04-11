@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    ConfigDatGen：命令列工具。從 LinEncoder.ini 的 [LauncherMaker] 產生加密 config.dat。
+    執行時不帶 GUI；供 deploy.ps1、夥伴建置流程使用。參考 Program.cs 檔頭說明。
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x86</Platforms>
+    <PlatformTarget>x86</PlatformTarget>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LinLauncher\LinLauncher.csproj" />
+  </ItemGroup>
+
+</Project>

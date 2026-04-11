@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- 外層啟動器（LinLauncher.dat / lineage381.exe 模板）原始碼：LinProj\LinLauncher.Proxy -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -14,6 +15,8 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     
     <ApplicationIcon>Assets\LinLauncher.ico</ApplicationIcon>
+    <!-- 必須連結，否則 requireAdministrator 不會生效，CreateProcess 啟動需提權的遊戲時會失敗 740。 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,8 +28,10 @@
   </Target>
 
   <ItemGroup>
-    
     <None Include="Assets\LinLauncher.ico" />
+    <None Include="diag_host_trace.cmd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

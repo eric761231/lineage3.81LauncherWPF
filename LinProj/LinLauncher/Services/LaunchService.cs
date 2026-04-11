@@ -1,5 +1,6 @@
 // LaunchService.cs: 負責遊戲啟動、DLL 注入及共享記憶體設定。
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -11,6 +12,9 @@ namespace LinLauncher.Services
 {
     public class LaunchService
     {
+        /// <summary>Win32 ERROR_ELEVATION_REQUIRED：目標程式需要系統管理員權限，但呼叫端未以提升權限執行。</summary>
+        private const int ErrorElevationRequired = 740;
+
         private const string ShmGuid = "{385FC524-96E3-4839-9909-1F2135D4F928}";
         private IntPtr _hShm = IntPtr.Zero;
         private IntPtr _pShm = IntPtr.Zero;
@@ -32,9 +36,29 @@ namespace LinLauncher.Services
             bool success = NativeMethods.CreateProcess(gameExePath, null, IntPtr.Zero, IntPtr.Zero, false,
                 NativeMethods.ProcessCreationFlags.Suspended, IntPtr.Zero, dir!, ref si, out pi);
 
-            if (!success) 
+            if (!success)
             {
-                System.Windows.MessageBox.Show($"CreateProcess failed with error code: {Marshal.GetLastWin32Error()}");
+                int err = Marshal.GetLastWin32Error();
+                if (err == ErrorElevationRequired)
+                {
+                    System.Windows.MessageBox.Show(
+                        "無法建立遊戲進程（錯誤 740：需要系統管理員權限）。\n\n"
+                        + "請確認：\n"
+                        + "• 已使用「以系統管理員身分執行」啟動登入器；或\n"
+                        + "• 專案已連結 app.manifest（requireAdministrator），並重新建置／發行後再試。\n\n"
+                        + "若遊戲主程式本身要求提高權限，登入器也必須具備足夠權限才能掛起並注入 DLL。",
+                        "啟動遊戲",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show(
+                        $"無法建立遊戲進程：Win32 {err}（{new Win32Exception(err).Message}）",
+                        "啟動遊戲",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
                 return false;
             }
 
@@ -70,13 +94,14 @@ namespace LinLauncher.Services
             _pShm = NativeMethods.MapViewOfFile(_hShm, NativeMethods.FILE_MAP_ALL_ACCESS, 0, 0, 0);
             if (_pShm == IntPtr.Zero) return;
 
+            string bdPath = GamePathHelper.TruncateForBdFileBuffer(GamePathHelper.ResolveBdFilePath(server.BdFile));
             var share = new ShareInfo
             {
                 Port = server.Port,
                 Encrypt = server.Encrypt,
                 UseHelper = server.UseHelper,
                 UseBd = server.UseBd,
-                BdFile = server.BdFile,
+                BdFile = bdPath,
                 RandEnc = server.RandKey,
                 RsaN = server.N,
                 RsaD = server.D,

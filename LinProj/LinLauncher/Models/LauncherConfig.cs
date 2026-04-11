@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace LinLauncher.Models
 {
+    // 序列化位元組大小變更時請同步 LinLauncher.Proxy\Program.cs 之 LauncherConfigSerializedSize
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     public class LauncherConfig
     {
@@ -25,7 +26,7 @@ namespace LinLauncher.Models
         public string Web = "http://www.google.com/";
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-        public string List = "http://www.google.com/";
+        public string List = "";
 
         [MarshalAs(UnmanagedType.I1)] public bool UseUpdate = false;
 

@@ -285,7 +285,80 @@ namespace LinEncoder.ViewModels
         private void DoGenerateList()
         {
             SaveSettings();
-            MessageBox.Show("已儲存 list.txt！");
+            byte[] key = Encoding.ASCII.GetBytes(Constants.ServerListKey);
+            if (key.Length != 16)
+            {
+                MessageBox.Show("Constants.ServerListKey 必須為 16 個 ASCII 字元（須與 LinLauncher.Models.Constants.ServerListKey 一致）。", "LinEncoder");
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("[list]");
+            int idx = 0;
+            for (int i = 0; i < Servers.Count; i++)
+            {
+                ServerInfo srv = Servers[i];
+                if (!srv.IsUsed) continue;
+                try
+                {
+                    ServerListEntryNative native = BuildListEntryNative(srv);
+                    byte[] raw = ListEntryMarshal.StructureToBytes(native);
+                    int paddedLen = (raw.Length + 15) / 16 * 16;
+                    byte[] buf = new byte[paddedLen];
+                    Array.Copy(raw, buf, raw.Length);
+                    CryptoService.ConfigEncrypt(key, buf);
+                    sb.AppendLine($"ServerData{idx}={Convert.ToBase64String(buf)}");
+                    idx++;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"伺服器 {i + 1} 打包失敗：{ex.Message}", "LinEncoder");
+                    return;
+                }
+            }
+
+            if (idx == 0)
+            {
+                MessageBox.Show("請至少啟用一筆伺服器（伺服器列表勾選「啟用」）。", "LinEncoder");
+                return;
+            }
+
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "list.txt");
+            File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
+            MessageBox.Show($"已產生 list.txt（加密與 LinLauncher 登入器相容）：\n{path}", "LinEncoder");
+        }
+
+        /// <summary>對應 LinLauncher.Models.ServerListEntryNative 欄位。</summary>
+        private static ServerListEntryNative BuildListEntryNative(ServerInfo srv)
+        {
+            string nameSrc = srv.Name ?? "";
+            if (nameSrc.Length > 32) nameSrc = nameSrc.Substring(0, 32);
+            string name = nameSrc.PadRight(32, '\0');
+
+            string bdSrc = srv.BdFile ?? "";
+            if (bdSrc.Length > 32) bdSrc = bdSrc.Substring(0, 32);
+            string bd = bdSrc.PadRight(32, '\0');
+
+            var n = new ServerListEntryNative
+            {
+                Name = name,
+                IpBytes = new byte[32],
+                Port = srv.Port,
+                Used = srv.IsUsed,
+                Key = new byte[16],
+                Encrypt = false,
+                UseHelper = false,
+                UseBd = srv.UseBd,
+                BdFile = bd,
+                RandKey = false,
+                E = 0,
+                D = srv.D,
+                N = srv.N,
+                Fix = new byte[16]
+            };
+            byte[] ip = Encoding.ASCII.GetBytes(srv.Ip ?? "127.0.0.1");
+            Array.Copy(ip, n.IpBytes, Math.Min(32, ip.Length));
+            return n;
         }
 
         private async Task DoGeneratePatchAsync()

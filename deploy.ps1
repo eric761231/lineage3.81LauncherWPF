@@ -20,7 +20,7 @@ Start-Sleep -Seconds 1
 
 Write-Host ">>> [3/5] Compiling projects (dotnet publish)..." -ForegroundColor Cyan
 Write-Host "    - Restoring packages..."
-dotnet restore "$Root\LinProj\LauncherWPF381.sln"
+dotnet restore "$Root\LinProj\LinProj381.sln"
 
 Write-Host "    - Publishing Encoder..."
 if (Test-Path "$Root\LinProj\Encoder\publish") { Remove-Item -Recurse -Force "$Root\LinProj\Encoder\publish" }
@@ -30,59 +30,25 @@ Write-Host "    - Publishing Launcher..."
 if (Test-Path "$Root\LinProj\LinLauncher\publish") { Remove-Item -Recurse -Force "$Root\LinProj\LinLauncher\publish" }
 dotnet publish "$LauncherProj" -c Release -r win-x86 --no-restore --self-contained true -o "$Root\LinProj\LinLauncher\publish"
 
-Write-Host ">>> [4/5] Processing Proxy Template (CSC)..." -ForegroundColor Cyan
-$ProxyCode = @"
-using System; using System.Diagnostics; using System.IO; using System.Windows.Forms;
-class Program { [STAThread] static void Main() {
-    string d = AppDomain.CurrentDomain.BaseDirectory;
-    string e = Path.Combine(d, "LinLauncher_Environment");
-    string t = Path.Combine(e, "LinLauncher.exe");
-    if (!File.Exists(t)) { MessageBox.Show("Error: Core not found!"); return; }
-    try {
-        byte[] s = File.ReadAllBytes(Process.GetCurrentProcess().MainModule.FileName);
-        int idx = -1; ulong sign = 0x12345678FEDCBAFF;
-        for (int i = s.Length - 8; i >= 0; i--) { if (BitConverter.ToUInt64(s, i) == sign) { idx = i; break; } }
-        if (idx != -1) {
-            int len = s.Length - idx; byte[] conf = new byte[len];
-            Array.Copy(s, idx, conf, 0, len);
-            File.WriteAllBytes(Path.Combine(e, "config.dat"), conf);
-        }
-    } catch { }
-    try { Process.Start(new ProcessStartInfo(t) { WorkingDirectory = e }); } catch { }
-} }
-"@
-$ProxySource = "$Root\Proxy_Temp.cs"
-Set-Content -Path $ProxySource -Value $ProxyCode -Encoding UTF8
-
-$csc = $null
-$cscPaths = @(
-    "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe",
-    "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-)
-foreach ($p in $cscPaths) {
-    if (Test-Path $p) {
-        $csc = $p
-        break
-    }
-}
-
-if ($csc) {
-    & $csc /target:winexe /out:"$PartnerDir\LinLauncher.dat" /win32icon:"$IconPath" "$ProxySource"
-    Write-Host "    - Proxy Template generated successfully." -ForegroundColor Green
-} else {
-    Write-Host "    [!] Error: CSC.exe not found." -ForegroundColor Red
-}
-
-if (Test-Path $ProxySource) {
-    Remove-Item $ProxySource -Force
-}
-
-Write-Host ">>> [5/5] Syncing files to distribution folder..." -ForegroundColor Cyan
+Write-Host ">>> [4/5] Syncing files to distribution folder..." -ForegroundColor Cyan
 if (!(Test-Path $EnvDir)) {
     New-Item -ItemType Directory -Path $EnvDir -Force
 }
+# Encoder publish 含 LinLauncher.dat（製作端模板，與 LinEncoder 同層）；不複製進 LinLauncher_Environment，玩家端不需該檔
 Copy-Item "$Root\LinProj\Encoder\publish\*" "$PartnerDir" -Recurse -Force
 Copy-Item "$Root\LinProj\LinLauncher\publish\*" "$EnvDir" -Recurse -Force
+
+# LinLauncher.dat 由 LinLauncher.Proxy 建置，經 Encoder publish 置於上列 Encoder 目錄
+Write-Host ">>> [5/5] config.dat (ConfigDatGen)..." -ForegroundColor Cyan
+# 以與 LinLauncher 相同的 LauncherConfig + 加密封裝，從 LinEncoder.ini 覆寫 config.dat，避免沿用舊檔造成金鑰／內容不符
+Write-Host "    - Generating config.dat via ConfigDatGen (LinEncoder.ini -> LinLauncher_Environment)..." -ForegroundColor Cyan
+$IniForConfig = "$PartnerDir\LinEncoder.ini"
+if (Test-Path $IniForConfig) {
+    dotnet run --project "$Root\LinProj\ConfigDatGen\ConfigDatGen.csproj" -c Release -r win-x86 -- --ini $IniForConfig --out "$EnvDir\config.dat"
+    if ($LASTEXITCODE -ne 0) { throw "ConfigDatGen failed with exit code $LASTEXITCODE" }
+} else {
+    Write-Host "    [!] Skipped config.dat: not found $IniForConfig" -ForegroundColor Yellow
+}
 
 # Cleanup old encoder names to avoid confusion
 if (Test-Path "$PartnerDir\encoder.exe") { Remove-Item "$PartnerDir\encoder.exe" -Force }

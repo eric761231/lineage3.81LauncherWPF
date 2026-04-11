@@ -36,7 +36,6 @@ char szTitle[32];
 HWND g_hGameWnd = NULL;
 bool g_dpiFixed = false;
 static bool g_hooked = false; // 是否已完成首次 Hook 安裝
-int g_editCount = 0;           // 用於識別帳號/密碼編輯框
 BYTE g_id[32];
 BYTE g_pwd[32];
 int g_pwd_pos = 0;
@@ -353,6 +352,14 @@ const DWORD PASS_RETN_ADDR = 0x004AA395;
 const DWORD PASS_CALL_ADDR = 0x00402800;
 
 static void __stdcall PasswordHandler(BYTE PassByte) {
+  // 退格／刪除：否則只會一直 append，畫面上刪除也無法同步到 g_pwd，登入仍用舊密碼
+  if (PassByte == '\b' || PassByte == 0x7F) {
+    if (g_pwd_pos > 0) {
+      g_pwd_pos--;
+      g_pwd[g_pwd_pos] = 0;
+    }
+    return;
+  }
   if (g_pwd_pos == 0)
     memset(g_pwd, 0, 32);
   if (g_pwd_pos < 31) {
@@ -461,12 +468,10 @@ static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen)
     mappedAddr.sin_port = htons(ShareInfo.port);
     VMProtectEnd;
     inited = false;
-    g_editCount = 0; // 重新連線時重置編輯框計數器
     return real_connect(s, (const sockaddr *)&mappedAddr, sizeof(mappedAddr));
   }
   VMProtectEnd;
   inited = false;
-  g_editCount = 0; // 重新連線時重置編輯框計數器
   return real_connect(s, name, namelen);
 }
 
@@ -619,18 +624,6 @@ static HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
     g_hGameWnd = hWndRet;
   }
 
-  // --- 穩定版帳密自動回填：訊息回填法 (ANSI) ---
-  if (hWndRet != NULL && lpClassName != NULL && HIWORD(lpClassName) != 0 && _stricmp(lpClassName, "LUnicodeEdit") == 0) {
-      g_editCount++;
-      if (g_editCount == 1) { // 帳號
-          SendMessageA(hWndRet, WM_SETTEXT, 0, (LPARAM)g_id);
-          launcherdll_net_log("[AutoFill-A] Username filled into HWND=%p", hWndRet);
-      } else if (g_editCount == 2) { // 密碼
-          SendMessageA(hWndRet, WM_SETTEXT, 0, (LPARAM)g_pwd);
-          launcherdll_net_log("[AutoFill-A] Password filled into HWND=%p", hWndRet);
-      }
-  }
-
   return hWndRet;
 }
 
@@ -665,19 +658,6 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
   HWND hWnd = real_CreateWindowExW(dwExStyle, lpClassName, lpWindowName,
                                    dwStyle, x, y, nWidth, nHeight, hWndParent,
                                    hMenu, hInstance, lpParam);
-  // --- 穩定版帳密自動回填：訊息回填法 (Wide) ---
-  if (hWnd != NULL && lpClassName != NULL && HIWORD(lpClassName) != 0 && _wcsicmp(lpClassName, L"LUnicodeEdit") == 0) {
-      g_editCount++;
-      if (g_editCount == 1) { // 帳號
-          SendMessageW(hWnd, WM_SETTEXT, 0, (LPARAM)ShareInfo.Account); // 這裡 ShareInfo 內是 Unicode? 視情況調整
-          // 如果 g_id 是 ANSI，應使用 SendMessageA
-          SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)g_id);
-          launcherdll_net_log("[AutoFill-W] Username filled into HWND=%p", hWnd);
-      } else if (g_editCount == 2) { // 密碼
-          SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)g_pwd);
-          launcherdll_net_log("[AutoFill-W] Password filled into HWND=%p", hWnd);
-      }
-  }
 
   return hWnd;
 }
