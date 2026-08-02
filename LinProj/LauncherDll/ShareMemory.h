@@ -10,7 +10,8 @@ struct SHARE_INFO {
 	bool usehelper;
 	BYTE key[16];
 	bool usebd;
-	wchar_t bdfile[32];
+	/** 與 LinLauncher ShareInfo.BdFile、GamePathHelper.MaxBdFileCharCount 一致（約 MAX_PATH）。 */
+	wchar_t bdfile[260];
 	bool read;
 	bool randenc;
 	unsigned int RSA_N;
