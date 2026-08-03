@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- 外層啟動器（LinLauncher.dat / lineage381.exe 模板）原始碼：LinProj\LinLauncher.Proxy -->
+  <!-- 外層啟動器模板 LinLauncher.dat 僅由 LinLauncher.Proxy 建置寫入 Encoder\（勿在此 PostBuild 覆寫）。 -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -22,10 +22,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2210.55" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="$(TargetPath)" DestinationFiles="..\Encoder\LinLauncher.dat" />
-  </Target>
 
   <ItemGroup>
     <None Include="Assets\LinLauncher.ico" />

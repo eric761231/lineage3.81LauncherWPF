@@ -33,6 +33,21 @@ namespace LinLauncher.Services
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 linked.CancelAfter(timeoutMs);
                 await tcp.ConnectAsync(h, port, linked.Token).ConfigureAwait(false);
+                bool connected = tcp.Connected;
+                if (connected)
+                {
+                    try
+                    {
+                        /// 純粹探測連通性，不需要真的交握。Dispose() 前明確做優雅關閉，
+                        /// 避免作業系統以 RST 收尾，讓伺服器端 EncryptExecutor.outStart()
+                        /// 誤判成「連線已被您主機上的軟體中止」。
+                        tcp.Client.Shutdown(SocketShutdown.Both);
+                    }
+                    catch (SocketException)
+                    {
+                        // 伺服器端可能已關閉連線，或不支援 Shutdown()，忽略。
+                    }
+                }
                 return new TcpProbeResult { Ok = tcp.Connected };
             }
             catch (OperationCanceledException)

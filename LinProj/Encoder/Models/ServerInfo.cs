@@ -16,10 +16,14 @@ namespace LinEncoder.Models
         private int _port = 2000;
         public int Port { get => _port; set { _port = value; OnPropertyChanged(); } }
 
-        private uint _d;
+        // 預設值對齊目前 pack.properties 的正確金鑰，避免還沒按過「產生金鑰」的既有設定檔變成 0
+        private uint _e = 65537;
+        public uint E { get => _e; set { _e = value; OnPropertyChanged(); } }
+
+        private uint _d = 2789970495;
         public uint D { get => _d; set { _d = value; OnPropertyChanged(); } }
 
-        private uint _n;
+        private uint _n = 2591889826;
         public uint N { get => _n; set { _n = value; OnPropertyChanged(); } }
 
         private bool _isUsed;
@@ -30,5 +34,11 @@ namespace LinEncoder.Models
 
         private string? _bdFile = "";
         public string? BdFile { get => _bdFile; set { _bdFile = value; OnPropertyChanged(); } }
+
+        private bool _encrypt;
+        public bool Encrypt { get => _encrypt; set { _encrypt = value; OnPropertyChanged(); } }
+
+        private bool _randKey;
+        public bool RandKey { get => _randKey; set { _randKey = value; OnPropertyChanged(); } }
     }
 }

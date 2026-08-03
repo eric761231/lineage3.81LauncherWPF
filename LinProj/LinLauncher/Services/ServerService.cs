@@ -7,12 +7,20 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using LinLauncher.Models;
+using LinLauncher;
 
 namespace LinLauncher.Services
 {
     public class ServerService
     {
-        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
+
+        public ServerService()
+        {
+            _httpClient = new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromMinutes(2);
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LinLauncher/1.0");
+        }
 
         public async Task<List<ServerInfo>> LoadServerListAsync(string urlOrPath)
         {
@@ -59,11 +67,10 @@ namespace LinLauncher.Services
                                          System.Diagnostics.Debug.WriteLine("ServerListKey 必須為 16 位元組（ASCII）。");
                                          continue;
                                      }
-                                     if (encryptedData.Length % 16 != 0)
-                                     {
-                                         System.Diagnostics.Debug.WriteLine($"ServerData 長度非 16 的倍數: {encryptedData.Length}");
-                                         continue;
-                                     }
+                                     // 註：ServerData 密文長度不必是 16 的倍數 —
+                                     // ConfigEncrypt/Decrypt 只對整數個 16-byte 區塊做 AES，
+                                     // 尾端不足一區塊的部分只做 XOR（對齊 Server_Info 213 bytes
+                                     // 的原始格式，213 % 16 = 5，本來就不會對齊）。
 
                                      CryptoService.ConfigDecrypt(listKey, encryptedData);
 
@@ -94,9 +101,9 @@ namespace LinLauncher.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading server list from {urlOrPath}: {ex.Message}");
-                if (ex.InnerException != null) System.Diagnostics.Debug.WriteLine($"Inner: {ex.InnerException.Message}");
+                StartupLog.Append($"ServerService.LoadServerListAsync 失敗（{urlOrPath}）", ex);
             }
+
             return servers;
         }
 

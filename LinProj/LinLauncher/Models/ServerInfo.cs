@@ -40,7 +40,7 @@ namespace LinLauncher.Models
         private bool _useBd;
         public bool UseBd { get => _useBd; set { _useBd = value; OnPropertyChanged(); } }
 
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
         private string _bdFile = "";
         public string BdFile { get => _bdFile; set { _bdFile = value; OnPropertyChanged(); } }
 

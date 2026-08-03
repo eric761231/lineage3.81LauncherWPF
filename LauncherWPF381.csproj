@@ -10,6 +10,8 @@
   <ItemGroup>
     <Compile Remove="LinProj\**\*.cs" />
     <EmbeddedResource Remove="LinProj\**\*" />
+    <Page Remove="LinProj\**\*.xaml" />
+    <ApplicationDefinition Remove="LinProj\**\*.xaml" />
     <None Remove="LinProj\**\*" />
   </ItemGroup>
 

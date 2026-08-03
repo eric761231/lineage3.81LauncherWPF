@@ -1,4 +1,5 @@
 using System.Windows;
+using LinEncoder.ViewModels;
 
 namespace LinEncoder
 {
@@ -38,6 +39,12 @@ namespace LinEncoder
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void PatchSourceDir_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is EncoderViewModel vm)
+                vm.RefreshPatchSourcePreview();
         }
     }
 }

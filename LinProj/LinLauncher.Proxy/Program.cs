@@ -5,18 +5,18 @@
 //   • LinEncoder 會以本專案建置產出為「模板位元組」，再嵌入夥伴設定的組態，
 //     最後產生給玩家下載的單一執行檔（舊稱／流程上常與 LinLauncher.dat 相關）。
 //   • 玩家實際執行的是這個外殼；它負責環境準備後，再啟動同目錄下
-//     LinLauncher_Environment\LinLauncher.exe（真正的 WPF 登入器本體）。
+//     Core\LinLauncher.exe（真正的 WPF 登入器本體）。
 //
 // 主要功能（依 Main 執行順序）：
-//   1) 定位核心：必須存在「當前目錄\LinLauncher_Environment\LinLauncher.exe」。
-//   2) 原子替換：在 LinLauncher_Environment 與外殼目錄掃描 *.pending，
+//   1) 定位核心：必須存在「當前目錄\Core\LinLauncher.exe」。
+//   2) 原子替換：在 Core 與外殼目錄掃描 *.pending，
 //      將「xxx.bin.pending」更名為「xxx.bin」（先刪目標再 Move），用於更新時避免半套檔案。
 //   3) eat.exe（選用）：若外殼目錄有 eat.exe，先以無視窗方式執行並最多等待 30 秒
 //      （常見用途：清理／掛載／前置工具，失敗不阻擋後續）。
 //   4) 從自身 PE 尾端抽出內嵌組態：在執行檔位元組中搜尋魔術數 0x12345678FEDCBAFF，
 //      其後若緊接長度為 LauncherConfigSerializedSize 的區塊，則寫入
-//      LinLauncher_Environment\config.dat，供內層 LinLauncher 讀取（與 Encoder 嵌入流程對齊）。
-//   5) 啟動內層登入器：Process.Start，WorkingDirectory 設為 LinLauncher_Environment。
+//      Core\config.dat，供內層 LinLauncher 讀取（與 Encoder 嵌入流程對齊）。
+//   5) 啟動內層登入器：Process.Start，WorkingDirectory 設為 Core。
 //
 // 維護注意：
 //   • LauncherConfigSerializedSize 必須與 LinLauncher.Models.LauncherConfig 序列化大小一致，
@@ -42,10 +42,10 @@ internal static class Program
     private static void Main()
     {
         string d = AppDomain.CurrentDomain.BaseDirectory;
-        string e = Path.Combine(d, "LinLauncher_Environment");
+        string e = Path.Combine(d, "Core");
         string t = Path.Combine(e, "LinLauncher.exe");
 
-        // --- 核心本體必須與外殼同層之 LinLauncher_Environment 內 ---
+        // --- 核心本體必須與外殼同層之 Core 內 ---
         if (!File.Exists(t))
         {
             MessageBox.Show("Proxy Error: Cannot find core at " + t);

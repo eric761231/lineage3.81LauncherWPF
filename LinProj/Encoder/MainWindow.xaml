@@ -411,6 +411,29 @@
                                             <Button Content="產生清單" Command="{Binding GenerateListCommand}"
                                                     Style="{StaticResource ModernButton}" Background="{StaticResource AccentGreen}" Width="144" Height="32"/>
                                         </StackPanel>
+
+                                        <!-- 封包加密／隨機加密：per-server 開關，供 A/B 測試 -->
+                                        <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="14,10,0,0" HorizontalAlignment="Left" Width="323">
+                                            <CheckBox Content="封包加密" IsChecked="{Binding SelectedServer.Encrypt}" Style="{StaticResource ToggleSwitchStyle}" Width="153"/>
+                                            <CheckBox Content="隨機加密" IsChecked="{Binding SelectedServer.RandKey}" Style="{StaticResource ToggleSwitchStyle}" Width="153"/>
+                                        </StackPanel>
+
+                                        <!-- 變身檔（pak）輸出目錄：可瀏覽選擇，沒記錄過會自動跳瀏覽視窗 -->
+                                        <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="18,10,0,0" HorizontalAlignment="Left" Width="336">
+                                            <TextBlock Text="pak 輸出目錄：" VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding BdOutputDir}" Width="145" Margin="5,0,0,0" IsReadOnly="True"/>
+                                            <Button Content="瀏覽…" Command="{Binding BrowseBdOutputDirCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Margin="5,0,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- RSA 金鑰：唯讀顯示目前套用值，按「產生金鑰」整組覆蓋 -->
+                                        <StackPanel Orientation="Horizontal" Grid.Row="5" Margin="14,10,0,0" HorizontalAlignment="Left" Width="323">
+                                            <TextBlock VerticalAlignment="Center" FontSize="11">
+                                                <Run Text="E="/><Run Text="{Binding SelectedServer.E, Mode=OneWay}"/>
+                                                <Run Text=" D="/><Run Text="{Binding SelectedServer.D, Mode=OneWay}"/>
+                                                <Run Text=" N="/><Run Text="{Binding SelectedServer.N, Mode=OneWay}"/>
+                                            </TextBlock>
+                                            <Button Content="產生金鑰" Command="{Binding GenerateRsaKeyCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" Margin="5,0,0,0"/>
+                                        </StackPanel>
                                     </Grid>
                                 </Grid>
                             </GroupBox>
@@ -537,14 +560,18 @@
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Text="來源目錄："/>
-                                    <TextBox Text="{Binding PatchSourceDir}" Grid.Column="1" Margin="10,5"/>
-                                    <Button Grid.Column="2" Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}" Margin="10,0,0,0">
+                                    <TextBox Text="{Binding PatchSourceDir}" Grid.Column="1" Margin="10,5"
+                                             LostFocus="PatchSourceDir_LostFocus"
+                                             ToolTip="選擇目錄後會自動列出檔案；手動輸入路徑後請按 Tab 離開欄位以重新整理。"/>
+                                    <Button Grid.Column="2" Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}" Margin="10,0,0,0"
+                                            Command="{Binding BrowsePatchSourceDirCommand}" ToolTip="選擇來源目錄">
                                         <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8B7;" FontSize="14" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                     </Button>
 
                                     <TextBlock Text="輸出目錄：" Grid.Row="1"/>
                                     <TextBox Text="{Binding PatchOutputDir}" Grid.Row="1" Grid.Column="1" Margin="10,5"/>
-                                    <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}" Margin="10,0,0,0">
+                                    <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}" Margin="10,0,0,0"
+                                            Command="{Binding BrowsePatchOutputDirCommand}" ToolTip="選擇輸出目錄">
                                         <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8B7;" FontSize="14" Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                     </Button>
 
@@ -564,23 +591,58 @@
 
                                     <!-- 補丁檔案資訊與進度 (已移至壓縮選項行) -->
 
-                                    <Border Grid.Row="5" Grid.ColumnSpan="3" Background="{StaticResource InputBg}" CornerRadius="10" Padding="1" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Margin="0,6">
-                                        <DataGrid Background="Transparent" Foreground="White" BorderThickness="0" 
-                                                  AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" RowHeight="34" CanUserAddRows="False">
+                                    <Border Grid.Row="5" Grid.ColumnSpan="3" Background="Black" CornerRadius="10" Padding="1" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Margin="0,6">
+                                        <DataGrid ItemsSource="{Binding PatchFileRows}" Background="Black" Foreground="White" BorderThickness="0"
+                                                  AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="None" RowHeight="34" CanUserAddRows="False"
+                                                  IsReadOnly="True" RowBackground="Black" AlternatingRowBackground="Black">
                                             <DataGrid.Resources>
                                                 <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="Background" Value="{StaticResource SurfaceColor}"/>
-                                                    <Setter Property="Foreground" Value="{StaticResource AccentPurple}"/>
+                                                    <Setter Property="Background" Value="Black"/>
+                                                    <Setter Property="Foreground" Value="White"/>
                                                     <Setter Property="Padding" Value="15,10"/>
                                                     <Setter Property="FontWeight" Value="Bold"/>
                                                     <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                                                    <Setter Property="BorderBrush" Value="#333333"/>
+                                                </Style>
+                                                <Style x:Key="PatchGridCellText" TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="Background" Value="Black"/>
                                                 </Style>
                                             </DataGrid.Resources>
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <Setter Property="Background" Value="Black"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#252525"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+                                            <DataGrid.CellStyle>
+                                                <Style TargetType="DataGridCell">
+                                                    <Setter Property="Background" Value="Black"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="BorderBrush" Value="#333333"/>
+                                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                    <Setter Property="Padding" Value="8,4"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.CellStyle>
                                             <DataGrid.Columns>
-                                                <DataGridTextColumn Header="檔案索引" Width="120"/>
-                                                <DataGridTextColumn Header="相對路徑" Width="*"/>
-                                                <DataGridTextColumn Header="大小 (KB)" Width="120"/>
+                                                <DataGridTextColumn Header="檔案索引" Binding="{Binding Index}" Width="120" ElementStyle="{StaticResource PatchGridCellText}"/>
+                                                <DataGridTextColumn Header="相對路徑" Binding="{Binding RelativePath}" Width="*" ElementStyle="{StaticResource PatchGridCellText}"/>
+                                                <DataGridTextColumn Header="大小 (KB)" Binding="{Binding SizeKbDisplay}" Width="120" ElementStyle="{StaticResource PatchGridCellText}"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </Border>
@@ -589,9 +651,9 @@
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Width="914">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0">
-                                    <ProgressBar Width="361" Height="14" Minimum="0" Maximum="100" Value="{Binding PatchProgressPercent}" VerticalAlignment="Center"/>
+                                    <ProgressBar Width="361" Height="18" Minimum="0" Maximum="100" Value="{Binding PatchProgressPercent}" VerticalAlignment="Center"/>
                                     <TextBlock Text="打包進度：" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                    <TextBlock Text="{Binding PatchProgressPercent, StringFormat={}{0}%}" Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                    <TextBlock Text="{Binding PatchProgressPercent, StringFormat={}{0:F0}%}" Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     <TextBlock Text=" | " Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0"/>
                                     <TextBlock Text="{Binding CurrentPatchFile}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Width="220" TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text=" (" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>

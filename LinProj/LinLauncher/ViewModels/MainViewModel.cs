@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -73,10 +75,14 @@ namespace LinLauncher.ViewModels
         public MainViewModel()
         {
             // 初始化指令與事件訂閱。 (Initialize commands and event subscriptions.)
+            // 注意：不要把 _serverReachable 放進這裡當作硬性條件——背景連線探測
+            // （ServerReachabilityService）本身有時間點上的race condition，偶爾會誤判
+            // 為不可連線（尤其是伺服器剛啟動、連線瞬間被視為斷線時），若拿它鎖死開始按鈕，
+            // 使用者會完全無法測試真正的遊戲連線。探測結果只用來顯示提示文字，不擋按鈕。
             StartCommand = new RelayCommand(
                 async _ => await StartGameAsync(),
-                _ => SelectedServer != null && !IsBusy && !_serverProbePending && _serverReachable);
-            _updateService.ProgressChanged += (s, e) => { OverallProgress = e.OverallPercent; StatusText = $"Updating {e.CurrentFile} ({e.FilePercent}%)"; };
+                _ => SelectedServer != null && !IsBusy && !_serverProbePending);
+            _updateService.ProgressChanged += OnUpdateProgressChanged;
             _launchService.GameExited += (s, e) => { IsBusy = false; StatusText = "Ready"; };
             
             try
@@ -96,7 +102,7 @@ namespace LinLauncher.ViewModels
             _ = InitializeAsync();
         }
 
-        /// <summary>常見配置：清單放在 LinLauncher_Environment 或上一層遊戲根目錄（如 C:\3.81Lineage\）。</summary>
+        /// <summary>常見配置：清單放在 Core 或上一層遊戲根目錄（如 C:\3.81Lineage\）。</summary>
         private static IEnumerable<string> EnumerateCandidatePaths(string fileName)
         {
             var list = new List<string>();
@@ -110,6 +116,60 @@ namespace LinLauncher.ViewModels
             }
             catch { }
             return list;
+        }
+
+        private void OnUpdateProgressChanged(object? sender, UpdateProgressEventArgs e)
+        {
+            void Apply()
+            {
+                OverallProgress = e.OverallPercent;
+                if (string.IsNullOrEmpty(e.CurrentFile))
+                    StatusText = $"下載更新… {e.OverallPercent}%";
+                else
+                    StatusText = $"下載更新：{e.CurrentFile}（總進度 {e.OverallPercent}% · 目前檔 {e.FilePercent}%）";
+            }
+
+            if (Application.Current?.Dispatcher.CheckAccess() == true)
+                Apply();
+            else
+                Application.Current?.Dispatcher.Invoke(Apply);
+        }
+
+        /// <summary>
+        /// 下載完成後執行 eat.exe。預期位置為 Core 的上一層（遊戲根目錄），
+        /// 與 <see cref="GamePathHelper.GetGameRootDirectory"/> 相同；不在 Core 資料夾內尋找。
+        /// </summary>
+        private static void TryRunEatExe()
+        {
+            string gameRoot = GamePathHelper.GetGameRootDirectory().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string eatPath = Path.Combine(gameRoot, "eat.exe");
+
+            if (!File.Exists(eatPath))
+            {
+                StartupLog.Append(
+                    $"TryRunEatExe: 未找到 eat.exe。預期路徑（Core 上一層）：{eatPath}");
+                return;
+            }
+
+            try
+            {
+                StartupLog.Append($"TryRunEatExe: 啟動 {eatPath}");
+                var psi = new ProcessStartInfo(eatPath)
+                {
+                    WorkingDirectory = gameRoot,
+                    UseShellExecute = true
+                };
+                using Process? p = Process.Start(psi);
+                if (p != null)
+                {
+                    p.WaitForExit(600000);
+                    StartupLog.Append($"TryRunEatExe: 結束代碼={p.ExitCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append($"TryRunEatExe: 執行失敗 {eatPath}", ex);
+            }
         }
 
         private static string? FindFirstExistingLocalListPath()
@@ -184,7 +244,7 @@ namespace LinLauncher.ViewModels
                     StartupLog.Append(
                         "LoadConfig: 已略過此檔（長度不符無法安全解密）。常見原因：曾執行外層 LinLauncher.dat（Proxy），會用包裝 exe 尾端覆寫 config.dat，長度常變成非 "
                         + structSize
-                        + "。請在專案執行 ConfigDatGen 依 LinEncoder.ini 重寫，或從 EncoderForPartners\\LinLauncher_Environment 複製正確 config.dat。目前使用程式內建預設網址。");
+                        + "。請在專案執行 ConfigDatGen 依 LinEncoder.ini 重寫，或從 EncoderForPartners\\Core 複製正確 config.dat。目前使用程式內建預設網址。");
                     return;
                 }
 
@@ -225,128 +285,42 @@ namespace LinLauncher.ViewModels
         }
 
         /// <summary>
-        /// 異步初始化：載入伺服器列表 -> 檢查更新。
-        /// (Async init: Load server list -> Check updates.)
+        /// 非同步初始化：[清單] list.txt 與 [更新] update.txt 分開處理；
+        /// 兩者皆為合法 http(s) 時以 Task.WhenAll 並行取得，再套用清單、再解析更新。
         /// </summary>
         private async Task InitializeAsync()
         {
             try
             {
-                StartupLog.Append("InitializeAsync: 開始（更新檢查與伺服器清單）");
+                StartupLog.Append("InitializeAsync: 開始 — [清單]list 與 [更新]update 分開處理（兩者皆 HTTP 時並行取得）");
                 IsBusy = true;
 
-                // 1. 自動更新檢查（僅在 URL 為合法 http(s) 時執行，避免亂碼導致 HttpClient 例外）
-                if (Config.UseUpdate && IsValidHttpUrl(Config.Update))
-                {
-                    StatusText = "Checking for updates...";
-                    StartupLog.Append($"InitializeAsync: 檢查更新 URL（前 80 字）={SafePreview(Config.Update, 80)}");
-                    try
-                    {
-                        string tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.tmp");
-                        using (var hc = new System.Net.Http.HttpClient())
-                        {
-                            var resp = await hc.GetAsync(Config.Update);
-                            StartupLog.Append($"InitializeAsync: 更新 HTTP 狀態={(int)resp.StatusCode} {resp.ReasonPhrase}");
-                            if (resp.IsSuccessStatusCode)
-                            {
-                                var bytes = await resp.Content.ReadAsByteArrayAsync();
-                                await File.WriteAllBytesAsync(tempFile, bytes);
-
-                                var (allFiles, baseUrl) = await _updateService.LoadUpdateListAsync(tempFile);
-                                if (allFiles.Count > 0)
-                                {
-                                    var needUpdate = await _updateService.CheckFilesAsync(allFiles, AppDomain.CurrentDomain.BaseDirectory);
-                                    if (needUpdate.Count > 0)
-                                    {
-                                        StatusText = $"Downloading {needUpdate.Count} updates...";
-                                        bool success = await _updateService.DownloadUpdatesAsync(needUpdate, baseUrl, AppDomain.CurrentDomain.BaseDirectory);
-                                        if (success)
-                                        {
-                                            MessageBox.Show("更新下載完成。請重新啟動登入器以套用變更。", "更新提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        }
-                                    }
-                                }
-                                File.Delete(tempFile);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        StartupLog.Append("InitializeAsync: 更新檢查失敗（已略過）", ex);
-                    }
-                }
-                else
-                {
-                    if (Config.UseUpdate && !IsValidHttpUrl(Config.Update))
-                        StartupLog.Append("InitializeAsync: 略過更新檢查（Update 非合法 http(s) URL，可能為 config 解密錯誤）");
-                    else
-                        StartupLog.Append("InitializeAsync: 略過更新檢查（UseUpdate 關閉或 URL 空白）");
-                }
-
-                // 2. 載入伺服器列表：以 config.dat 內合法 http(s) List 為主；失敗或 0 筆時才用本機 list.txt
+                OverallProgress = 0;
                 StatusText = "Loading server list...";
-                List<ServerInfo> servers = new List<ServerInfo>();
 
-                if (IsValidHttpUrl(Config.List))
+                bool listRemote = IsValidHttpUrl(Config.List);
+                bool wantUpdate = Config.UseUpdate && IsValidHttpUrl(Config.Update);
+
+                List<ServerInfo> servers;
+                byte[]? updateManifestPrefetch = null;
+                bool updateManifestFetchDone = false;
+
+                if (listRemote && wantUpdate)
                 {
-                    string remote = Config.List!.Trim();
-                    StartupLog.Append($"InitializeAsync: 優先載入遠端清單（前 80 字）={SafePreview(remote, 80)}");
-                    try
-                    {
-                        servers = await _serverService.LoadServerListAsync(remote);
-                        if (servers.Count > 0)
-                            StartupLog.Append($"InitializeAsync: 遠端清單成功，筆數={servers.Count}");
-                        else
-                            StartupLog.Append("InitializeAsync: 遠端清單解析後筆數為 0，將嘗試本機 list.txt 後援");
-                    }
-                    catch (Exception ex)
-                    {
-                        StartupLog.Append("InitializeAsync: 遠端清單載入失敗，將嘗試本機 list.txt 後援", ex);
-                    }
-
-                    if (servers.Count == 0)
-                    {
-                        string? localPath = FindFirstExistingLocalListPath();
-                        if (localPath != null)
-                        {
-                            try
-                            {
-                                servers = await _serverService.LoadServerListAsync(localPath);
-                                StartupLog.Append($"InitializeAsync: 已改用本機清單（後援）：{localPath}，筆數={servers.Count}");
-                            }
-                            catch (Exception ex)
-                            {
-                                StartupLog.Append($"InitializeAsync: 本機 list.txt 後援失敗（{localPath}）", ex);
-                            }
-                        }
-                        else
-                            StartupLog.Append("InitializeAsync: 遠端未載入成功且無本機 list.txt 可後援");
-                    }
+                    var pair = await ParallelFetchListAndUpdateManifestAsync();
+                    servers = pair.Servers;
+                    updateManifestPrefetch = pair.ManifestBytes;
+                    updateManifestFetchDone = pair.ManifestFetchAttempted;
                 }
                 else
                 {
-                    string? localPath = FindFirstExistingLocalListPath();
-                    if (localPath != null)
-                    {
-                        try
-                        {
-                            StartupLog.Append($"InitializeAsync: 無有效遠端清單網址，僅使用本機 list.txt（{localPath}）");
-                            servers = await _serverService.LoadServerListAsync(localPath);
-                            StartupLog.Append($"InitializeAsync: 本機清單筆數={servers.Count}");
-                        }
-                        catch (Exception ex)
-                        {
-                            StartupLog.Append("InitializeAsync: 本機 list.txt 載入失敗", ex);
-                        }
-                    }
-                    else
-                        StartupLog.Append("InitializeAsync: 無有效遠端網址（Config.List）且找不到本機 list.txt");
+                    servers = await LoadServerListSequentialAsync();
                 }
 
                 if (servers.Count == 0)
                 {
                     StatusText = "請設定遠端清單網址或本機 list.txt";
-                    StartupLog.Append("InitializeAsync: 最終清單筆數為 0：請在 config.dat 提供合法 http(s) List，或放置本機 list.txt");
+                    StartupLog.Append("[清單] 最終筆數為 0：請在 config.dat 提供合法 http(s) List，或放置本機 list.txt");
                     IsBusy = false;
                     Application.Current?.Dispatcher.BeginInvoke(
                         DispatcherPriority.ApplicationIdle,
@@ -374,14 +348,18 @@ namespace LinLauncher.ViewModels
                     foreach (var s in servers) Servers.Add(s);
                     if (Servers.Count > 0) SelectedServer = Servers[0];
                     StatusText = "Ready";
-                    StartupLog.Append($"InitializeAsync: 伺服器清單已套用，筆數={servers.Count}");
+                    StartupLog.Append($"[清單] 已套用至介面，筆數={servers.Count}");
                 }
                 catch (Exception ex)
                 {
                     StatusText = "Error loading servers.";
-                    StartupLog.Append("InitializeAsync: 填入伺服器清單至介面失敗", ex);
+                    StartupLog.Append("[清單] 填入介面失敗", ex);
                 }
 
+                await RunUpdatePhaseAsync(updateManifestPrefetch, updateManifestFetchDone);
+
+                OverallProgress = 0;
+                StatusText = "Ready";
                 IsBusy = false;
                 StartupLog.Append("InitializeAsync: 結束");
             }
@@ -392,6 +370,225 @@ namespace LinLauncher.ViewModels
                 {
                     IsBusy = false;
                     StatusText = "初始化失敗";
+                }
+                catch { }
+            }
+        }
+
+        /// <summary>[清單] 與 [更新] 各發一個 HTTP，並行完成後再分別處理。</summary>
+        private async Task<(List<ServerInfo> Servers, byte[]? ManifestBytes, bool ManifestFetchAttempted)> ParallelFetchListAndUpdateManifestAsync()
+        {
+            string listUrl = Config.List!.Trim();
+            string updateUrl = Config.Update!.Trim();
+
+            StartupLog.Append("[清單] 與 [更新] 並行 HTTP（Task.WhenAll）");
+            StartupLog.Append($"[清單] list.txt URL（前 80 字）={SafePreview(listUrl, 80)}");
+            StartupLog.Append($"[更新] update.txt URL（前 80 字）={SafePreview(updateUrl, 80)}");
+
+            var tList = _serverService.LoadServerListAsync(listUrl);
+            var tManifest = FetchUpdateManifestAsync(updateUrl);
+            await Task.WhenAll(tList, tManifest);
+
+            var servers = await tList;
+            var manifestResult = await tManifest;
+
+            StartupLog.Append($"[清單] 遠端完成，筆數={servers.Count}");
+            StartupLog.Append($"[更新] HTTP {manifestResult.StatusCode} {manifestResult.ReasonPhrase}");
+
+            if (servers.Count == 0)
+                servers = await TryLoadLocalListFallbackAsync();
+
+            byte[]? bytes = manifestResult.Ok && manifestResult.Bytes != null ? manifestResult.Bytes : null;
+            if (!manifestResult.Ok)
+                StartupLog.Append("[更新] 並行取得失敗（略過重試；請看上一行 HTTP 或例外）");
+
+            return (Servers: servers, ManifestBytes: bytes, ManifestFetchAttempted: true);
+        }
+
+        /// <summary>僅 [清單]：遠端或本機，與更新階段無並行。</summary>
+        private async Task<List<ServerInfo>> LoadServerListSequentialAsync()
+        {
+            List<ServerInfo> servers = new List<ServerInfo>();
+
+            if (IsValidHttpUrl(Config.List))
+            {
+                string remote = Config.List!.Trim();
+                StartupLog.Append($"[清單] 遠端 list.txt URL（前 80 字）={SafePreview(remote, 80)}");
+                try
+                {
+                    servers = await _serverService.LoadServerListAsync(remote);
+                    if (servers.Count > 0)
+                        StartupLog.Append($"[清單] 遠端成功，筆數={servers.Count}");
+                    else
+                        StartupLog.Append("[清單] 遠端解析後 0 筆，將嘗試本機後援");
+                }
+                catch (Exception ex)
+                {
+                    StartupLog.Append("[清單] 遠端載入失敗，將嘗試本機後援", ex);
+                }
+
+                if (servers.Count == 0)
+                    servers = await TryLoadLocalListFallbackAsync();
+            }
+            else
+            {
+                string? localPath = FindFirstExistingLocalListPath();
+                if (localPath != null)
+                {
+                    try
+                    {
+                        StartupLog.Append($"[清單] 無有效遠端網址，僅本機 list.txt（{localPath}）");
+                        servers = await _serverService.LoadServerListAsync(localPath);
+                        StartupLog.Append($"[清單] 本機筆數={servers.Count}");
+                    }
+                    catch (Exception ex)
+                    {
+                        StartupLog.Append("[清單] 本機 list.txt 載入失敗", ex);
+                    }
+                }
+                else
+                    StartupLog.Append("[清單] 無有效 Config.List 且找不到本機 list.txt");
+            }
+
+            return servers;
+        }
+
+        private async Task<List<ServerInfo>> TryLoadLocalListFallbackAsync()
+        {
+            string? localPath = FindFirstExistingLocalListPath();
+            if (localPath == null)
+            {
+                StartupLog.Append("[清單] 無本機 list.txt 可後援");
+                return new List<ServerInfo>();
+            }
+
+            try
+            {
+                var list = await _serverService.LoadServerListAsync(localPath);
+                StartupLog.Append($"[清單] 本機後援：{localPath}，筆數={list.Count}");
+                return list;
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append($"[清單] 本機後援失敗（{localPath}）", ex);
+                return new List<ServerInfo>();
+            }
+        }
+
+        private async Task<(bool Ok, byte[]? Bytes, int StatusCode, string ReasonPhrase)> FetchUpdateManifestAsync(string url)
+        {
+            try
+            {
+                using var hc = new HttpClient();
+                hc.Timeout = TimeSpan.FromMinutes(5);
+                hc.DefaultRequestHeaders.UserAgent.ParseAdd("LinLauncher/1.0");
+                var resp = await hc.GetAsync(url);
+                byte[]? bytes = null;
+                if (resp.IsSuccessStatusCode)
+                    bytes = await resp.Content.ReadAsByteArrayAsync();
+                return (resp.IsSuccessStatusCode, bytes, (int)resp.StatusCode, resp.ReasonPhrase ?? "");
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append($"[更新] 取得 update.txt 例外", ex);
+                return (false, null, 0, ex.Message);
+            }
+        }
+
+        private async Task RunUpdatePhaseAsync(byte[]? prefetchedManifest, bool manifestFetchAlreadyDone)
+        {
+            if (!Config.UseUpdate || !IsValidHttpUrl(Config.Update))
+            {
+                if (Config.UseUpdate && !IsValidHttpUrl(Config.Update))
+                    StartupLog.Append("[更新] 略過（Update 非合法 http(s) URL）");
+                else if (!Config.UseUpdate)
+                    StartupLog.Append("[更新] 略過（UseUpdate 關閉）");
+                else
+                    StartupLog.Append("[更新] 略過（URL 空白）");
+                return;
+            }
+
+            StatusText = "檢查更新中…";
+            OverallProgress = 0;
+
+            if (prefetchedManifest != null)
+            {
+                StartupLog.Append("[更新] 使用並行階段已取得的 update.txt 內容");
+                await ProcessUpdateManifestFromBytesAsync(prefetchedManifest);
+                return;
+            }
+
+            if (manifestFetchAlreadyDone)
+            {
+                StartupLog.Append("[更新] 並行請求已嘗試過且無可用內容，不重複 GET");
+                return;
+            }
+
+            StartupLog.Append($"[更新] 單獨 GET URL（前 80 字）={SafePreview(Config.Update, 80)}");
+            var r = await FetchUpdateManifestAsync(Config.Update!.Trim());
+            StartupLog.Append($"[更新] HTTP {r.StatusCode} {r.ReasonPhrase}");
+            if (r.Ok && r.Bytes != null)
+                await ProcessUpdateManifestFromBytesAsync(r.Bytes);
+            else
+                StartupLog.Append("[更新] 無法取得更新清單");
+        }
+
+        private async Task ProcessUpdateManifestFromBytesAsync(byte[] bytes)
+        {
+            string tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.tmp");
+            try
+            {
+                await File.WriteAllBytesAsync(tempFile, bytes);
+
+                var (allFiles, baseUrl) = await _updateService.LoadUpdateListAsync(tempFile);
+                StartupLog.Append($"[更新] 清單解析 count={allFiles.Count}, baseUrl={(string.IsNullOrEmpty(baseUrl) ? "(empty)" : SafePreview(baseUrl, 80))}");
+                if (allFiles.Count == 0)
+                {
+                    StartupLog.Append("[更新] 清單為 0 筆（請檢查 update.txt 與 [main] count）");
+                    return;
+                }
+
+                var needUpdate = await _updateService.CheckFilesAsync(allFiles, AppDomain.CurrentDomain.BaseDirectory);
+                StartupLog.Append($"[更新] 需更新檔案數={needUpdate.Count}");
+                if (needUpdate.Count == 0)
+                {
+                    StartupLog.Append("[更新] 本機檔案已是最新，無需下載");
+                    return;
+                }
+
+                OverallProgress = 0;
+                StatusText = $"下載更新（{needUpdate.Count} 個檔案）…";
+                var (ok, err) = await _updateService.DownloadUpdatesAsync(
+                    needUpdate,
+                    baseUrl,
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    msg => StartupLog.Append($"UpdateDownload: {msg}"));
+
+                if (ok)
+                {
+                    TryRunEatExe();
+                    MessageBox.Show(
+                        "更新下載完成，已執行 eat.exe（若存在）。請重新啟動登入器以套用變更。",
+                        "更新提示",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else if (!string.IsNullOrEmpty(err))
+                {
+                    StartupLog.Append($"[更新] 下載失敗 {err}");
+                    MessageBox.Show(err, "更新失敗", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("[更新] 解析或套用更新失敗（已略過）", ex);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(tempFile))
+                        File.Delete(tempFile);
                 }
                 catch { }
             }
@@ -483,7 +680,7 @@ namespace LinLauncher.ViewModels
         /// </summary>
         private async Task StartGameAsync()
         {
-            if (SelectedServer == null || !_serverReachable || _serverProbePending) return;
+            if (SelectedServer == null || _serverProbePending) return;
             IsBusy = true;
             StatusText = "Launching game...";
             string appDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -493,7 +690,7 @@ namespace LinLauncher.ViewModels
                 string a = Path.Combine(appDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), GamePathHelper.DefaultGameExeFileName);
                 string b = Path.Combine(GamePathHelper.GetGameRootDirectory(), GamePathHelper.DefaultGameExeFileName);
                 System.Windows.MessageBox.Show(
-                    $"找不到遊戲主程式 ({GamePathHelper.DefaultGameExeFileName})。已搜尋：\n{a}\n{b}\n（以及開發用 Client 目錄）\n\n請將主程式放在登入器目錄、或遊戲根目錄（例如 LinLauncher_Environment 的上一層）。");
+                    $"找不到遊戲主程式 ({GamePathHelper.DefaultGameExeFileName})。已搜尋：\n{a}\n{b}\n（以及開發用 Client 目錄）\n\n請將主程式放在登入器目錄、或遊戲根目錄（例如 Core 的上一層）。");
                 IsBusy = false;
                 StatusText = "Ready";
                 return;
@@ -504,7 +701,7 @@ namespace LinLauncher.ViewModels
                 string a = Path.Combine(appDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), GamePathHelper.LauncherDllFileName);
                 string b = Path.Combine(GamePathHelper.GetGameRootDirectory(), GamePathHelper.LauncherDllFileName);
                 System.Windows.MessageBox.Show(
-                    $"找不到 {GamePathHelper.LauncherDllFileName}。已搜尋：\n{a}\n{b}\n（以及開發用 LauncherDll\\Debug 與 Release）\n\n請將 DLL 放在登入器目錄、或遊戲根目錄（LinLauncher_Environment 的上一層），或確認建置輸出。");
+                    $"找不到 {GamePathHelper.LauncherDllFileName}。已搜尋：\n{a}\n{b}\n（以及開發用 LauncherDll\\Debug 與 Release）\n\n請將 DLL 放在登入器目錄、或遊戲根目錄（Core 的上一層），或確認建置輸出。");
                 IsBusy = false;
                 StatusText = "Ready";
                 return;

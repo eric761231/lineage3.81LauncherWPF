@@ -24,7 +24,7 @@ namespace LinLauncher.Models
         [MarshalAs(UnmanagedType.I1)]
         public bool UseBd;
 
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
         public string BdFile = "";
 
         [MarshalAs(UnmanagedType.I1)]

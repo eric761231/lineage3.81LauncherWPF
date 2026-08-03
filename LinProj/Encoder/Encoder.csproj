@@ -2,10 +2,11 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <Platforms>x86</Platforms>
     <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <PublishSingleFile>true</PublishSingleFile>
@@ -20,9 +21,16 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2420.47" />
   </ItemGroup>
 
-  <!-- 無法使用 ProjectReference（Encoder 為自含式 WinExe 會觸發 NETSDK1150）；建置前先編譯 LinLauncher.Proxy，產物為 LinLauncher.dat -->
+  <!-- 無法使用 ProjectReference（Encoder 為自含式 WinExe 會觸發 NETSDK1150）；建置前先「發佈」
+       LinLauncher.Proxy（必須是 Publish，不能只是 Build——PublishSingleFile 只在 publish 時生效，
+       純 Build 產出的 apphost 換位置/改名執行會找不到同層 .dll 而靜默崩潰），產物為 LinLauncher.dat。
+       Properties 必須明確覆寫 SelfContained/RuntimeIdentifier/PublishSingleFile：這個巢狀
+       MSBuild 呼叫預設會沿用外層（本專案，或 deploy.ps1 呼叫時帶的 -p:SelfContained=true 等）
+       全域屬性，如果不在這裡明確覆寫，LinLauncher.Proxy 檔案內設的 SelfContained=false 會被
+       蓋掉，實測會退化成 100MB+ 的自封裝版本，不是預期的 ~140KB 框架相依單一檔案。 -->
   <Target Name="BuildLinLauncherProxyTemplate" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)..\LinLauncher.Proxy\LinLauncher.Proxy.csproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\LinLauncher.Proxy\LinLauncher.Proxy.csproj" Targets="Publish"
+              Properties="Configuration=$(Configuration);SelfContained=false;RuntimeIdentifier=win-x86;PublishSingleFile=true" />
   </Target>
 
   <Target Name="CopyLinLauncherDatToOutput" AfterTargets="Build">

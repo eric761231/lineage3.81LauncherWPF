@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Threading.Tasks;
 using LinEncoder.Models;
 using LinEncoder.Services;
@@ -84,6 +86,11 @@ namespace LinEncoder.ViewModels
         public int CompressionLevel { get => _compressionLevel; set { _compressionLevel = value; OnPropertyChanged(); } }
         #endregion
 
+        #region BD Maker Properties
+        private string _bdOutputDir = "";
+        public string BdOutputDir { get => _bdOutputDir; set { _bdOutputDir = value; OnPropertyChanged(); } }
+        #endregion
+
         private int _patchFileCount = 0;
         public int PatchFileCount { get => _patchFileCount; set { _patchFileCount = value; OnPropertyChanged(); } }
 
@@ -96,10 +103,17 @@ namespace LinEncoder.ViewModels
         private string _estimatedRemaining = "";
         public string EstimatedRemaining { get => _estimatedRemaining; set { _estimatedRemaining = value; OnPropertyChanged(); } }
 
+        private bool _patchBusy;
+        public ObservableCollection<PatchFileRow> PatchFileRows { get; } = new();
+
         public ICommand MakeCommand { get; }
         public ICommand GenerateListCommand { get; }
         public ICommand GeneratePatchCommand { get; }
         public ICommand PackagePakCommand { get; }
+        public ICommand BrowsePatchSourceDirCommand { get; }
+        public ICommand BrowsePatchOutputDirCommand { get; }
+        public ICommand BrowseBdOutputDirCommand { get; }
+        public ICommand GenerateRsaKeyCommand { get; }
 
         public EncoderViewModel()
         {
@@ -121,8 +135,12 @@ namespace LinEncoder.ViewModels
                 LogService.Info("EncoderViewModel: 綁定 RelayCommands");
                 MakeCommand = new RelayCommand(_ => DoMake());
                 GenerateListCommand = new RelayCommand(_ => DoGenerateList());
-                GeneratePatchCommand = new RelayCommand(async _ => await DoGeneratePatchAsync());
+                GeneratePatchCommand = new RelayCommand(_ => { _ = DoGeneratePatchAsync(); }, _ => !_patchBusy);
                 PackagePakCommand = new RelayCommand(_ => DoPackagePak());
+                BrowsePatchSourceDirCommand = new RelayCommand(_ => BrowsePatchSourceDir());
+                BrowsePatchOutputDirCommand = new RelayCommand(_ => BrowsePatchOutputDir());
+                BrowseBdOutputDirCommand = new RelayCommand(_ => BrowseBdOutputDir());
+                GenerateRsaKeyCommand = new RelayCommand(_ => DoGenerateRsaKey());
 
                 LogService.Info("EncoderViewModel: 執行 LoadSettings()");
                 LoadSettings();
@@ -167,6 +185,10 @@ namespace LinEncoder.ViewModels
 
             CompressionLevel = _ini.ReadInt("PatcherMaker", "compress", 0);
             PatchBaseUrl = _ini.Read("PatcherMaker", "url", "");
+            PatchSourceDir = _ini.Read("PatcherMaker", "patch_source", "");
+            PatchOutputDir = _ini.Read("PatcherMaker", "patch_output", "");
+            BdOutputDir = _ini.Read("BdMaker", "bd_output_dir", "");
+            RefreshPatchSourcePreview();
         }
 
         private void SaveSettings()
@@ -202,6 +224,9 @@ namespace LinEncoder.ViewModels
 
             _ini.Write("PatcherMaker", "compress", CompressionLevel.ToString());
             _ini.Write("PatcherMaker", "url", PatchBaseUrl);
+            _ini.Write("PatcherMaker", "patch_source", PatchSourceDir ?? "");
+            _ini.Write("PatcherMaker", "patch_output", PatchOutputDir ?? "");
+            _ini.Write("BdMaker", "bd_output_dir", BdOutputDir ?? "");
         }
 
         private void SearchBDFiles()
@@ -248,37 +273,95 @@ namespace LinEncoder.ViewModels
             SelectedTemplate = LauncherTemplates[0];
         }
 
+        /// <summary>
+        /// EncoderForPartners 根目錄——Encoder.exe 實際跑在其下的 EncoderTool\ 子目錄，
+        /// 殼 exe／login\／update\ 這些「要給客戶端」的產出都要往上一層寫回根目錄。
+        /// </summary>
+        private static string GetPartnersRootDir()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/');
+            return Directory.GetParent(baseDir)?.FullName ?? baseDir;
+        }
+
+        /// <summary>
+        /// 產生一組新的 RSA-32 金鑰（Rsa32Service，移植自 Rust rsa32.rs），寫入目前選中的伺服器槽位，
+        /// 並在 EncoderTool\pack.properties（跟 LinEncoder.exe 同層）寫一份給伺服器端參考的設定檔——
+        /// 操作者需要手動把內容合併到伺服器的 ./config/pack.properties 並重啟伺服器。
+        /// </summary>
+        private void DoGenerateRsaKey()
+        {
+            if (SelectedServer == null)
+            {
+                MessageBox.Show("請先選擇一個伺服器槽位。");
+                return;
+            }
+
+            var key = Rsa32Service.Generate();
+            SelectedServer.E = key.E;
+            SelectedServer.D = key.D;
+            SelectedServer.N = key.N;
+
+            string packPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pack.properties");
+            string content = "; 由 LinEncoder.exe 產生 — 伺服器綑綁金鑰\n" +
+                "; 請將此檔內容合併到伺服器的 ./config/pack.properties（Autoentication + RSA_KEY_E/D/N 三行）\n" +
+                "Autoentication=True\n" +
+                $"RSA_KEY_E={key.E}\n" +
+                $"RSA_KEY_D={key.D}\n" +
+                $"RSA_KEY_N={key.N}\n";
+            File.WriteAllText(packPath, content, new UTF8Encoding(false));
+
+            MessageBox.Show(
+                $"已產生新金鑰並套用到「{SelectedServer.Name}」\n\nE = {key.E}\nD = {key.D}\nN = {key.N}\n\n" +
+                $"已寫入 {packPath}\n（請將此檔內容合併到伺服器的 ./config/pack.properties 並重啟伺服器）",
+                "產生金鑰", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            LogService.WriteOperationSummary(
+                "產生金鑰",
+                $"已為「{SelectedServer.Name}」產生新 RSA-32 金鑰（E={key.E}, D={key.D}, N={key.N}），寫入 `{packPath}`。",
+                "1. 把 `pack.properties` 的內容合併到伺服器的 `./config/pack.properties`，重啟伺服器\n2. 用「產生清單」把新的 D/N 寫進 `login\\list.txt`\n3. 兩邊都更新後再測試登入");
+        }
+
         private void DoMake()
         {
             SaveSettings();
-            string defaultFileName = OutputLauncherName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? OutputLauncherName : OutputLauncherName + ".exe";
-            var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Executable (*.exe)|*.exe", FileName = defaultFileName, InitialDirectory = AppDomain.CurrentDomain.BaseDirectory };
-            if (dlg.ShowDialog() == true)
+            // 自動命名＋直接寫入 EncoderForPartners 最上層（跟 Core 同層）——
+            // 這是要交給客戶端的殼 exe，不需要每次手動選存檔位置，重新產生就直接覆蓋舊檔。
+            string safeName = string.IsNullOrWhiteSpace(OutputLauncherName) ? "Launcher" : OutputLauncherName;
+            if (safeName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                safeName = safeName.Substring(0, safeName.Length - 4);
+            string outputPath = Path.Combine(GetPartnersRootDir(), safeName + ".exe");
+
+            var config = new LauncherConfig
             {
-                var config = new LauncherConfig
-                {
-                    Title = Title,
-                    Ver = Version,
-                    Web = Web,
-                    List = List,
-                    UseUpdate = UseUpdate,
-                    Update = UpdateUrl,
-                    Width = Width,
-                    Height = Height,
-                    Configed = true
-                };
-                for (int i = 0; i < 5; i++)
-                {
-                    config.UseLink[i] = Links[i].Enabled;
-                    byte[] nameBytes = Encoding.Unicode.GetBytes(Links[i].Name.PadRight(16, '\0').Substring(0, 16));
-                    byte[] urlBytes = Encoding.Unicode.GetBytes(Links[i].Url.PadRight(256, '\0').Substring(0, 256));
-                    Array.Copy(nameBytes, 0, config.LinkNamesRaw, i * 32, 32);
-                    Array.Copy(urlBytes, 0, config.LinkUrlsRaw, i * 512, 512);
-                }
-                if (_encoderService.CreateLauncher(config, SelectedTemplate, dlg.FileName))
-                {
-                    MessageBox.Show("產生成功！");
-                }
+                Title = Title,
+                Ver = Version,
+                Web = Web,
+                List = List,
+                UseUpdate = UseUpdate,
+                Update = UpdateUrl,
+                Width = Width,
+                Height = Height,
+                Configed = true
+            };
+            for (int i = 0; i < 5; i++)
+            {
+                config.UseLink[i] = Links[i].Enabled;
+                byte[] nameBytes = Encoding.Unicode.GetBytes(Links[i].Name.PadRight(16, '\0').Substring(0, 16));
+                byte[] urlBytes = Encoding.Unicode.GetBytes(Links[i].Url.PadRight(256, '\0').Substring(0, 256));
+                Array.Copy(nameBytes, 0, config.LinkNamesRaw, i * 32, 32);
+                Array.Copy(urlBytes, 0, config.LinkUrlsRaw, i * 512, 512);
+            }
+            if (_encoderService.CreateLauncher(config, SelectedTemplate, outputPath))
+            {
+                MessageBox.Show($"產生成功！\n{outputPath}");
+                LogService.WriteOperationSummary(
+                    "產生登入器",
+                    $"已產生登入殼 `{Path.GetFileName(outputPath)}`，寫入 `{outputPath}`。",
+                    "1. 測試這個 exe 能否正常啟動並進入遊戲\n2. 確認 `Core\\` 是最新版（用 deploy.ps1 建置的版本）\n3. 確認後即可把這個 exe 連同 `Core\\` 一起交給客戶端");
+            }
+            else
+            {
+                MessageBox.Show($"產生失敗，請確認範本檔案存在：{SelectedTemplate}");
             }
         }
 
@@ -302,10 +385,10 @@ namespace LinEncoder.ViewModels
                 try
                 {
                     ServerListEntryNative native = BuildListEntryNative(srv);
-                    byte[] raw = ListEntryMarshal.StructureToBytes(native);
-                    int paddedLen = (raw.Length + 15) / 16 * 16;
-                    byte[] buf = new byte[paddedLen];
-                    Array.Copy(raw, buf, raw.Length);
+                    // 不補齊到 16 的倍數 — ConfigEncrypt 本身就支援非對齊長度（尾端只做 XOR，
+                    // 不做 AES），補 padding 只會讓密文長度跟 Server_Info 原始格式（213 bytes）
+                    // 對不起來，導致跟 Rust 工具／真實伺服器產生的 list.txt 無法互通。
+                    byte[] buf = ListEntryMarshal.StructureToBytes(native);
                     CryptoService.ConfigEncrypt(key, buf);
                     sb.AppendLine($"ServerData{idx}={Convert.ToBase64String(buf)}");
                     idx++;
@@ -323,9 +406,15 @@ namespace LinEncoder.ViewModels
                 return;
             }
 
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "list.txt");
+            string loginDir = Path.Combine(GetPartnersRootDir(), "login");
+            Directory.CreateDirectory(loginDir);
+            string path = Path.Combine(loginDir, "list.txt");
             File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
             MessageBox.Show($"已產生 list.txt（加密與 LinLauncher 登入器相容）：\n{path}", "LinEncoder");
+            LogService.WriteOperationSummary(
+                "產生清單",
+                $"已產生 `login\\list.txt`（{idx} 筆啟用中的伺服器），寫入 `{path}`。",
+                "把 `login\\` 整個資料夾上傳到 `LinEncoder.ini` 裡 `list=` 網址對應的路徑（例：`list=http://你的網址/login/list.txt` → 上傳到網站的 `/login/` 目錄）。");
         }
 
         /// <summary>對應 LinLauncher.Models.ServerListEntryNative 欄位。</summary>
@@ -346,12 +435,12 @@ namespace LinEncoder.ViewModels
                 Port = srv.Port,
                 Used = srv.IsUsed,
                 Key = new byte[16],
-                Encrypt = false,
+                Encrypt = srv.Encrypt,
                 UseHelper = false,
                 UseBd = srv.UseBd,
                 BdFile = bd,
-                RandKey = false,
-                E = 0,
+                RandKey = srv.RandKey,
+                E = srv.E,
                 D = srv.D,
                 N = srv.N,
                 Fix = new byte[16]
@@ -361,10 +450,213 @@ namespace LinEncoder.ViewModels
             return n;
         }
 
+        private void BrowsePatchSourceDir()
+        {
+            string? path = ShowFolderDialog(PatchSourceDir, "選擇補丁來源目錄");
+            if (path != null)
+            {
+                PatchSourceDir = path;
+                SaveSettings();
+                RefreshPatchSourcePreview();
+            }
+        }
+
+        /// <summary>依目前「來源目錄」重新填入檔案清單（選完目錄或手動改路徑後呼叫）。</summary>
+        public void RefreshPatchSourcePreview()
+        {
+            PatchFileRows.Clear();
+            if (string.IsNullOrWhiteSpace(PatchSourceDir) || !Directory.Exists(PatchSourceDir))
+            {
+                PatchFileCount = 0;
+                return;
+            }
+
+            try
+            {
+                foreach (PatchFileRow row in EncoderService.BuildPatchFilePreview(PatchSourceDir))
+                    PatchFileRows.Add(row);
+                PatchFileCount = PatchFileRows.Count;
+            }
+            catch (Exception ex)
+            {
+                LogService.Error("RefreshPatchSourcePreview", ex);
+                PatchFileCount = 0;
+            }
+        }
+
+        private void BrowsePatchOutputDir()
+        {
+            string? path = ShowFolderDialog(PatchOutputDir, "選擇補丁輸出目錄");
+            if (path != null)
+            {
+                PatchOutputDir = path;
+                SaveSettings();
+            }
+        }
+
+        private void BrowseBdOutputDir()
+        {
+            string? path = ShowFolderDialog(BdOutputDir, "選擇變身檔輸出目錄");
+            if (path != null)
+            {
+                BdOutputDir = path;
+                SaveSettings();
+            }
+        }
+
+        private static string? ShowFolderDialog(string? initialPath, string description)
+        {
+            using var dlg = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = description,
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true
+            };
+            if (!string.IsNullOrWhiteSpace(initialPath))
+            {
+                try
+                {
+                    string full = Path.GetFullPath(initialPath);
+                    if (Directory.Exists(full))
+                        dlg.SelectedPath = full;
+                }
+                catch
+                {
+                    /* ignore invalid path */
+                }
+            }
+
+            System.Windows.Forms.DialogResult r;
+            Window? main = Application.Current?.MainWindow;
+            if (main != null)
+            {
+                IntPtr owner = new WindowInteropHelper(main).Handle;
+                if (owner != IntPtr.Zero)
+                    r = dlg.ShowDialog(new Win32Window(owner));
+                else
+                    r = dlg.ShowDialog();
+            }
+            else
+            {
+                r = dlg.ShowDialog();
+            }
+
+            return r == System.Windows.Forms.DialogResult.OK ? dlg.SelectedPath : null;
+        }
+
+        private sealed class Win32Window : System.Windows.Forms.IWin32Window
+        {
+            public IntPtr Handle { get; }
+            public Win32Window(IntPtr handle) => Handle = handle;
+        }
+
         private async Task DoGeneratePatchAsync()
         {
-            await Task.Delay(100);
-            MessageBox.Show("補丁產生完成！");
+            if (_patchBusy)
+                return;
+            _patchBusy = true;
+            CommandManager.InvalidateRequerySuggested();
+            PatchProgressPercent = 0;
+            CurrentPatchFile = "";
+            EstimatedRemaining = "…";
+            var sw = Stopwatch.StartNew();
+
+            try
+            {
+                SaveSettings();
+                if (string.IsNullOrWhiteSpace(PatchSourceDir) || !Directory.Exists(PatchSourceDir))
+                {
+                    MessageBox.Show("請選擇有效的來源目錄。", "補丁打包", MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(PatchOutputDir))
+                {
+                    MessageBox.Show("請選擇輸出目錄。", "補丁打包", MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                System.Windows.Threading.Dispatcher? ui = Application.Current?.Dispatcher;
+                var progress = new Progress<(int current, int total, string relativePath)>(p =>
+                {
+                    void Apply()
+                    {
+                        if (p.total <= 0)
+                        {
+                            PatchProgressPercent = 0;
+                        }
+                        else if (p.current <= 0)
+                        {
+                            PatchProgressPercent = 0;
+                        }
+                        else
+                        {
+                            PatchProgressPercent = Math.Min(100.0,
+                                Math.Round(100.0 * p.current / p.total, 1));
+                        }
+
+                        CurrentPatchFile = string.IsNullOrEmpty(p.relativePath)
+                            ? "準備中…"
+                            : p.relativePath;
+
+                        double pct = PatchProgressPercent;
+                        if (pct > 0.5 && sw.Elapsed.TotalSeconds > 0)
+                        {
+                            double totalEstSec = sw.Elapsed.TotalSeconds * 100.0 / pct;
+                            double rem = Math.Max(0, totalEstSec - sw.Elapsed.TotalSeconds);
+                            EstimatedRemaining = $"{rem:F0} 秒";
+                        }
+                        else
+                            EstimatedRemaining = "…";
+                    }
+
+                    if (ui != null && !ui.CheckAccess())
+                        ui.Invoke(Apply);
+                    else
+                        Apply();
+                });
+
+                PatchPackageResult result = await Task.Run(() =>
+                    _encoderService.BuildUpdatePackage(
+                        PatchSourceDir,
+                        PatchOutputDir,
+                        PatchBaseUrl ?? "",
+                        CompressionLevel,
+                        progress));
+
+                if (result.Success)
+                {
+                    PatchFileRows.Clear();
+                    foreach (PatchFileRow f in result.Files)
+                        PatchFileRows.Add(f);
+                    PatchFileCount = result.Files.Count;
+                    PatchProgressPercent = 100;
+                    EstimatedRemaining = "0 秒";
+                    MessageBox.Show(
+                        $"打包完成。\n\n更新清單：\n{result.UpdateListPath}\n\n" +
+                        "產物位於「輸出目錄」根目錄：update.txt 與各相對路徑.bin。請上傳至網站；「下載網址」請填可對應到此路徑的基底 URL（與 update.txt 內 [main] url 一致，且能下載 相對路徑.bin）。",
+                        "補丁打包",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    LogService.WriteOperationSummary(
+                        "補丁產生工具",
+                        $"已把 `{PatchSourceDir}` 的素材（共 {result.Files.Count} 個檔案）打包到 `{PatchOutputDir}`，更新清單：`{result.UpdateListPath}`。",
+                        $"把 `{PatchOutputDir}` 整個資料夾上傳到網站，路徑要對齊「下載網址」（`{PatchBaseUrl}`）。");
+                }
+                else
+                {
+                    PatchProgressPercent = 0;
+                    MessageBox.Show(result.ErrorMessage ?? "未知錯誤", "補丁打包失敗", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+            finally
+            {
+                _patchBusy = false;
+                CommandManager.InvalidateRequerySuggested();
+            }
         }
 
         private void DoPackagePak()
@@ -375,12 +667,21 @@ namespace LinEncoder.ViewModels
                 return;
             }
 
-            string input = SelectedBdSourceFile + ".txt";
-            string output = SelectedServer?.BdFile;
-            if (string.IsNullOrEmpty(output))
+            // 沒有記錄過輸出目錄就先跳瀏覽視窗讓使用者選一次；選了才繼續，取消就中止打包
+            if (string.IsNullOrWhiteSpace(BdOutputDir))
             {
-                output = SelectedBdSourceFile + ".pak";
+                BrowseBdOutputDir();
+                if (string.IsNullOrWhiteSpace(BdOutputDir))
+                    return;
             }
+
+            string input = SelectedBdSourceFile + ".txt";
+            string? fileName = SelectedServer?.BdFile;
+            if (string.IsNullOrEmpty(fileName))
+            {
+                fileName = SelectedBdSourceFile + ".pak";
+            }
+            string output = Path.Combine(BdOutputDir, fileName);
 
             if (_encoderService.PackagePak(input, output))
             {

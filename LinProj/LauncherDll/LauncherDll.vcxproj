@@ -60,7 +60,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LAUNCHERDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -81,7 +80,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>../../openssl/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LAUNCHERDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -117,13 +115,15 @@
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
     </ClCompile>
     <ClCompile Include="HelperDlg.cpp" />
-    <ClCompile Include="MimirPowerDlg.cpp" />
     <ClCompile Include="LauncherDll.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="windowController.cpp" />
+    <ClCompile Include="NakedBloodHook.cpp" />
+    <ClCompile Include="NakedFlinchHook.cpp" />
+    <ClCompile Include="NakedLocomotionHook.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LauncherDll.def" />
@@ -134,12 +134,14 @@
     <ClInclude Include="configenc.h" />
     <ClInclude Include="ShareMemory.h" />
     <ClInclude Include="HelperDlg.h" />
-    <ClInclude Include="MimirPowerDlg.h" />
     <ClInclude Include="LauncherDll.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="windowController.h" />
+    <ClInclude Include="NakedBloodHook.h" />
+    <ClInclude Include="NakedFlinchHook.h" />
+    <ClInclude Include="NakedLocomotionHook.h" />
     <ClInclude Include="L1Offsets.h" />
     <ClInclude Include="packet.h" />
   </ItemGroup>

@@ -30,9 +30,6 @@
     <ClCompile Include="HelperDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MimirPowerDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="LauncherDll.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -43,6 +40,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="windowController.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NakedBloodHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NakedFlinchHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NakedLocomotionHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -64,9 +70,6 @@
     <ClInclude Include="HelperDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MimirPowerDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="LauncherDll.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -83,6 +86,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="windowController.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NakedBloodHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NakedFlinchHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NakedLocomotionHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="L1Offsets.h">

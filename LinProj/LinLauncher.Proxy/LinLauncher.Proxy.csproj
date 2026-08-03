@@ -2,14 +2,23 @@
 
   <!--
     LinLauncher.Proxy：建置輸出檔名為 LinLauncher.exe（外殼）。
-    • AfterTargets=Build 會複製至 Encoder\LinLauncher.dat，供 LinEncoder「產生登入器」當位元組模板。
-    • 執行邏輯見 Program.cs：定位 LinLauncher_Environment、套用 *.pending、選用 eat.exe、
+    • AfterTargets=Publish 會複製至 Encoder\LinLauncher.dat，供 LinEncoder「產生登入器」當位元組模板。
+    • 執行邏輯見 Program.cs：定位 Core、套用 *.pending、選用 eat.exe、
       從自身尾端抽出內嵌組態寫入 config.dat、再啟動內層 WPF 登入器。
-    • 玩家端部署的是 Encoder 產出之單一 exe + LinLauncher_Environment 目錄；不必單獨發佈本專案原始碼。
+    • 玩家端部署的是 Encoder 產出之單一 exe + Core 目錄；不必單獨發佈本專案原始碼。
+    • 必須用 Publish（不是 Build）：PublishSingleFile 只在 publish 時生效。這裡刻意設成
+      「框架相依 + 單一檔案」（SelfContained=false + PublishSingleFile=true）——測試證實純
+      Build 產出的 apphost .exe 換位置/改名後找不到同層的 .dll/.deps.json/.runtimeconfig.json
+      會直接以 LibHostAppRootFindFailure（結束碼 0x8000809A）靜默崩潰；改成單一檔案發佈後，
+      所有相依都內嵌在這一個 .exe 裡，可以安全改名、搬到任何目錄執行，且因為框架相依（不含
+      執行環境），檔案仍然很小（~140KB），符合「殼 exe 要小」的原始設計目的。
+      RuntimeIdentifier/SelfContained 務必用屬性寫在這裡，不要只靠命令列參數（-r 與 self contained 開關）
+      指定（用命令列參數會被巢狀 MSBuild 呼叫覆蓋掉，實測會退化成臃腫的自封裝版本，
+      體積暴增到 100MB 以上）。
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>LinLauncher.Proxy</RootNamespace>
@@ -17,12 +26,15 @@
     <ApplicationIcon>..\LinLauncher\Assets\LinLauncher.ico</ApplicationIcon>
     <Platforms>x86</Platforms>
     <PlatformTarget>x86</PlatformTarget>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
     <LangVersion>latest</LangVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
-  <Target Name="CopyProxyTemplateToEncoder" AfterTargets="Build">
-    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(MSBuildThisFileDirectory)..\Encoder\LinLauncher.dat" SkipUnchangedFiles="false" />
+  <Target Name="CopyProxyTemplateToEncoder" AfterTargets="Publish">
+    <Copy SourceFiles="$(PublishDir)$(TargetName).exe" DestinationFiles="$(MSBuildThisFileDirectory)..\Encoder\LinLauncher.dat" SkipUnchangedFiles="false" />
   </Target>
 
 </Project>

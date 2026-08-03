@@ -4,18 +4,18 @@ using System.IO;
 namespace LinLauncher.Services
 {
     /// <summary>
-    /// 遊戲根目錄與 BD 資源檔路徑（與 LauncherDll ShareMemory wchar_t bdfile[32] 一致）。
+    /// 遊戲根目錄與 BD 資源檔路徑（與 LauncherDll ShareMemory wchar_t bdfile[260] 一致）。
     /// </summary>
     public static class GamePathHelper
     {
         /// <summary>
-        /// 遊戲根目錄（例如 C:\3.81Lineage）：登入器在 LinLauncher_Environment 內執行時為其父目錄，否則為 BaseDirectory。
+        /// 遊戲根目錄（例如 C:\3.81Lineage）：登入器在 Core 內執行時為其父目錄，否則為 BaseDirectory。
         /// </summary>
         public static string GetGameRootDirectory()
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             string leaf = Path.GetFileName(baseDir);
-            if (string.Equals(leaf, "LinLauncher_Environment", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(leaf, "Core", StringComparison.OrdinalIgnoreCase))
             {
                 var parent = Directory.GetParent(baseDir);
                 if (parent != null)
@@ -39,8 +39,8 @@ namespace LinLauncher.Services
             return Path.GetFullPath(Path.Combine(root, t));
         }
 
-        /// <summary>與 native wchar_t bdfile[32] 相容：最多 31 字元內容 + 終止 null。</summary>
-        public const int MaxBdFileCharCount = 31;
+        /// <summary>與 native wchar_t bdfile[260] 相容：可存完整本機路徑（與 Windows MAX_PATH 同級）。</summary>
+        public const int MaxBdFileCharCount = 259;
 
         public static string TruncateForBdFileBuffer(string fullPath)
         {
@@ -54,7 +54,7 @@ namespace LinLauncher.Services
         public const string DefaultGameExeFileName = "TW13081901.bin";
 
         /// <summary>
-        /// 依序尋找遊戲主程式：登入器目錄 → 遊戲根目錄（與 LinLauncher_Environment 同層之上一層）→ 開發用 Client 目錄。
+        /// 依序尋找遊戲主程式：登入器目錄 → 遊戲根目錄（與 Core 同層之上一層）→ 開發用 Client 目錄。
         /// </summary>
         public static bool TryResolveGameExecutablePath(out string fullPath)
         {

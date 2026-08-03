@@ -188,10 +188,19 @@
                 </Grid>
             </Grid>
 
-            <!-- 狀態列 -->
-            <Grid Grid.Row="2" Height="35" Background="#1a1a1a">
-                <ProgressBar Value="{Binding OverallProgress}" Height="3" VerticalAlignment="Top" Background="#222" BorderThickness="0" Foreground="#7232f2"/>
-                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="20,0,0,0" Foreground="#666" FontSize="11"/>
+            <!-- 狀態列：下載更新時顯示進度條與百分比 -->
+            <Grid Grid.Row="2" MinHeight="42" Background="#1a1a1a">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <ProgressBar Grid.Row="0" Value="{Binding OverallProgress}" Maximum="100" Height="10" VerticalAlignment="Stretch"
+                             Background="#222" BorderThickness="0" Foreground="#7232f2"/>
+                <DockPanel Grid.Row="1" LastChildFill="True" Margin="14,6,14,8">
+                    <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0"
+                               Text="{Binding OverallProgress, StringFormat={}{0}%}" Foreground="#888" FontSize="11" MinWidth="36" TextAlignment="Right"/>
+                    <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Foreground="#AAA" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
             </Grid>
         </Grid>
     </Border>
