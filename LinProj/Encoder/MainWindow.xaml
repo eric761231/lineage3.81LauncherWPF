@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:LinEncoder.ViewModels"
         xmlns:conv="clr-namespace:LinEncoder.Converters"
-        Title="Lineage Encoder" Height="934" Width="950" 
+        Title="Lineage Encoder" Height="934" Width="1300"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
     
@@ -13,6 +13,9 @@
     </WindowChrome.WindowChrome>
     <Window.Resources>
         <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <conv:BoolToStatusBrushConverter x:Key="BoolToStatusBrush"/>
+        <conv:StepStatusMultiConverter x:Key="StepStatusMulti"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
         <!-- Color Palette -->
         <SolidColorBrush x:Key="BgColor" Color="#121212"/>
@@ -320,7 +323,12 @@
 
             <!-- 內容區 -->
             <Grid Grid.Row="1" Margin="6,0,10,10">
-                <TabControl x:Name="MainTab">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="300"/>
+                </Grid.ColumnDefinitions>
+
+                <TabControl x:Name="MainTab" Grid.Column="0">
                     <!-- TAB 1: 核心工作區 -->
                     <TabItem Header=" 核心工作區 " Margin="12,1,-12,-1">
                         <StackPanel Margin="4,0,-4,0">
@@ -727,6 +735,143 @@
                         </Grid>
                     </TabItem>
                 </TabControl>
+
+                <!-- 常駐流程導覽面板：不在 TabControl 裡面，切標籤頁不會影響它 -->
+                <Border Grid.Column="1" Margin="8,0,0,0" Background="{StaticResource SurfaceColor}"
+                        BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="12">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14,12">
+                        <StackPanel>
+                            <TextBlock Text="流程導覽" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentPurple}" Margin="0,0,0,10"/>
+
+                            <!-- 群組 A：建置部署狀態（只有找得到 LinProj 原始碼的開發機才顯示；
+                                 純部署／夥伴環境沒有原始碼，整組跟開發者無關的東西直接隱藏，不留提示文字） -->
+                            <StackPanel Visibility="{Binding WorkflowStatus.RepoFound, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="建置部署（開發者）" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+
+                                <Grid Margin="0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                             Fill="{Binding WorkflowStatus.EncoderNeedsRebuild, Converter={StaticResource BoolToStatusBrush}, ConverterParameter=Warn}"/>
+                                    <TextBlock Grid.Column="1" Text="Encoder 原始碼" Foreground="White" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Button Content="重新建置 Encoder" Command="{Binding RebuildEncoderCommand}"
+                                        HorizontalAlignment="Stretch" Height="28" Margin="18,2,0,8" FontSize="11"
+                                        Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}"
+                                        Visibility="{Binding WorkflowStatus.EncoderNeedsRebuild, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                <Grid Margin="0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                             Fill="{Binding WorkflowStatus.LauncherNeedsRebuild, Converter={StaticResource BoolToStatusBrush}, ConverterParameter=Warn}"/>
+                                    <TextBlock Grid.Column="1" Text="LinLauncher 原始碼" Foreground="White" VerticalAlignment="Center"/>
+                                </Grid>
+                                <Button Content="重新建置 LinLauncher" Command="{Binding RebuildLauncherCommand}"
+                                        HorizontalAlignment="Stretch" Height="28" Margin="18,2,0,8" FontSize="11"
+                                        Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}"
+                                        Visibility="{Binding WorkflowStatus.LauncherNeedsRebuild, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                <TextBlock Text="LauncherDll（C++）請自行確認是否已用 Visual Studio 重新編譯，並手動複製到 Core\"
+                                           Foreground="{StaticResource TextSecondary}" FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                                <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="0,1,0,0" Margin="0,4,0,10"/>
+                            </StackPanel>
+
+                            <!-- 群組 B：伺服器／登入器——真正照順序的三步：金鑰 → 清單 → 登入器。
+                                 未完成＝灰、已完成＝綠；「2. 產生清單」多比對一個「金鑰是否比清單新」，
+                                 是的話代表金鑰重做後沒跟著重新產生清單，橘燈示警而不是單純未完成。 -->
+                            <TextBlock Text="伺服器／登入器（依序）" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{Binding WorkflowStatus.KeyGenerated, Converter={StaticResource BoolToStatusBrush}}"/>
+                                <TextBlock Grid.Column="1" Text="1. 產生金鑰" Foreground="White" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{StaticResource StepStatusMulti}">
+                                            <Binding Path="WorkflowStatus.ListGenerated"/>
+                                            <Binding Path="WorkflowStatus.ListStaleVsKey"/>
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Grid.Column="1" Text="2. 產生清單" Foreground="White" VerticalAlignment="Center"/>
+                            </Grid>
+                            <TextBlock Text="⚠ 金鑰已重新產生但清單還沒跟著更新，list.txt 裡的金鑰過時了，請重新「產生清單」"
+                                       Foreground="#FF851B" FontSize="10" TextWrapping="Wrap" Margin="18,0,0,6"
+                                       Visibility="{Binding WorkflowStatus.ListStaleVsKey, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <Grid Margin="0,3,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{Binding WorkflowStatus.LauncherExeGenerated, Converter={StaticResource BoolToStatusBrush}}"/>
+                                <TextBlock Grid.Column="1" Text="3. 生成登入器" Foreground="White" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- 變身檔／pak：不需要照順序，異動時單獨處理——只顯示目前有沒有東西、
+                                 檔案在哪、下一步是什麼，不套用 1/2/3 那套順序邏輯。 -->
+                            <TextBlock Text="變身檔（不需依序，異動時單獨處理）" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,6"/>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{Binding WorkflowStatus.PakGenerated, Converter={StaticResource BoolToStatusBrush}}"/>
+                                <TextBlock Grid.Column="1" Text="打包 pak（若有變身檔）" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </Grid>
+                            <TextBlock Text="異動變身編碼後：切到「變身檔製作」分頁重新打包，下方按鈕可直接開輸出資料夾對照檔案"
+                                       Foreground="{StaticResource TextSecondary}" FontSize="10" TextWrapping="Wrap" Margin="18,0,0,4"/>
+                            <Button Content="開啟輸出資料夾" Command="{Binding OpenBdOutputDirCommand}"
+                                    HorizontalAlignment="Stretch" Height="26" Margin="18,0,0,10" FontSize="11"
+                                    Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}"/>
+
+                            <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="0,1,0,0" Margin="0,4,0,10"/>
+
+                            <!-- 群組 C：補丁打包 SOP（獨立分組） -->
+                            <TextBlock Text="補丁打包" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{Binding WorkflowStatus.PatchUpToDate, Converter={StaticResource BoolToStatusBrush}, ConverterParameter=Warn}"/>
+                                <TextBlock Grid.Column="1" Text="1. 產生更新資源（最新）" Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{Binding WorkflowStatus.PatchUploaded, Converter={StaticResource BoolToStatusBrush}}"/>
+                                <TextBlock Grid.Column="1" Text="2. 上傳補丁" Foreground="White" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Button Content="重新整理狀態" Command="{Binding RefreshWorkflowStatusCommand}"
+                                    HorizontalAlignment="Stretch" Height="28" Margin="0,14,0,0" FontSize="11"
+                                    Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
             </Grid>
         </Grid>
     </Border>

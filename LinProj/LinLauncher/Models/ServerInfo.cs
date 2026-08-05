@@ -124,13 +124,19 @@ namespace LinLauncher.Models
         /// <summary>燈號是否為灰色（離線/查詢失敗/未知）——維護中不算，維護中是黃燈，可另外判斷是否為 GM 放行。</summary>
         public bool IsStatusUnknown => !_isMaintenance && (_onlineCount < 0 || _maxOnline <= 0);
 
+        /// <summary>跟 StatusLightBrush 用同一套門檻，燈號跟文字才會一致：
+        /// 灰=關閉、黃=維護中、綠=順暢(&lt;50%)、藍=普通(50-69%)、橘=擁擠(70-89%)、紅=過載(&gt;=90%)。</summary>
         public string StatusTooltip
         {
             get
             {
-                if (_isMaintenance) return "伺服器維護中";
+                if (_isMaintenance) return "維護中";
                 if (_onlineCount < 0 || _maxOnline <= 0) return "關閉";
-                return $"使用率 {_onlineCount}%";
+                double ratio = (double)_onlineCount / _maxOnline;
+                if (ratio >= 0.9) return "過載";
+                if (ratio >= 0.7) return "擁擠";
+                if (ratio >= 0.5) return "普通";
+                return "順暢";
             }
         }
 

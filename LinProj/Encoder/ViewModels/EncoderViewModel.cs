@@ -132,6 +132,13 @@ namespace LinEncoder.ViewModels
         private string _uploadEstimatedRemaining = "";
         public string UploadEstimatedRemaining { get => _uploadEstimatedRemaining; set { _uploadEstimatedRemaining = value; OnPropertyChanged(); } }
 
+        private WorkflowStatus _workflowStatus = new WorkflowStatus();
+        /// <summary>右側常駐流程導覽面板的狀態快照，每次相關操作完成後會重新計算一次。</summary>
+        public WorkflowStatus WorkflowStatus { get => _workflowStatus; private set { _workflowStatus = value; OnPropertyChanged(); } }
+
+        private bool _rebuildBusy;
+        private bool _patchUploadedThisSession;
+
         public ICommand MakeCommand { get; }
         public ICommand GenerateListCommand { get; }
         public ICommand GeneratePatchCommand { get; }
@@ -140,7 +147,11 @@ namespace LinEncoder.ViewModels
         public ICommand BrowsePatchSourceDirCommand { get; }
         public ICommand BrowsePatchOutputDirCommand { get; }
         public ICommand BrowseBdOutputDirCommand { get; }
+        public ICommand OpenBdOutputDirCommand { get; }
         public ICommand GenerateRsaKeyCommand { get; }
+        public ICommand RebuildEncoderCommand { get; }
+        public ICommand RebuildLauncherCommand { get; }
+        public ICommand RefreshWorkflowStatusCommand { get; }
 
         public EncoderViewModel()
         {
@@ -168,11 +179,16 @@ namespace LinEncoder.ViewModels
                 BrowsePatchSourceDirCommand = new RelayCommand(_ => BrowsePatchSourceDir());
                 BrowsePatchOutputDirCommand = new RelayCommand(_ => BrowsePatchOutputDir());
                 BrowseBdOutputDirCommand = new RelayCommand(_ => BrowseBdOutputDir());
+                OpenBdOutputDirCommand = new RelayCommand(_ => OpenBdOutputDir(), _ => !string.IsNullOrWhiteSpace(BdOutputDir) && Directory.Exists(BdOutputDir));
                 GenerateRsaKeyCommand = new RelayCommand(_ => DoGenerateRsaKey());
+                RebuildEncoderCommand = new RelayCommand(_ => RebuildAndRestart("encoder"), _ => !_rebuildBusy && WorkflowStatus.EncoderNeedsRebuild);
+                RebuildLauncherCommand = new RelayCommand(_ => RebuildAndRestart("launcher"), _ => !_rebuildBusy && WorkflowStatus.LauncherNeedsRebuild);
+                RefreshWorkflowStatusCommand = new RelayCommand(_ => RefreshWorkflowStatus());
 
                 LogService.Info("EncoderViewModel: 執行 LoadSettings()");
                 LoadSettings();
-                
+                RefreshWorkflowStatus();
+
                 LogService.Info("EncoderViewModel: 建構函式完成");
             }
             catch (Exception ex)
@@ -209,6 +225,14 @@ namespace LinEncoder.ViewModels
                 Servers[i].IsUsed = _ini.ReadBool("ServerList", "server_enable" + (i + 1), false);
                 Servers[i].UseBd = _ini.ReadBool("ServerList", "server_usebd" + (i + 1), false);
                 Servers[i].BdFile = _ini.Read("ServerList", "server_bdfile" + (i + 1), "");
+                // E/D/N 是 RSA-32 金鑰，數值常超過 int.MaxValue（例如 2778970907），不能用 ReadInt（32-bit signed）
+                // 讀，會溢位讀錯——讀原始字串自己 uint.Parse。之前這裡完全沒存檔，Encoder 一重開，金鑰就悄悄
+                // 變回 ServerInfo 裡寫死的舊預設值（看起來像正常金鑰，很難發現），跟伺服器 config/pack.properties
+                // 對不上，list.txt 就烘進錯的金鑰，登入會無聲無息失敗。ini 沒有這個 key 時保留物件原本的預設值
+                // （沒按過「產生金鑰」的全新設定檔還是能用同一組預設值開始）。
+                Servers[i].E = uint.TryParse(_ini.Read("ServerList", "server_e" + (i + 1), Servers[i].E.ToString()), out uint e) ? e : Servers[i].E;
+                Servers[i].D = uint.TryParse(_ini.Read("ServerList", "server_d" + (i + 1), Servers[i].D.ToString()), out uint d) ? d : Servers[i].D;
+                Servers[i].N = uint.TryParse(_ini.Read("ServerList", "server_n" + (i + 1), Servers[i].N.ToString()), out uint n) ? n : Servers[i].N;
             }
 
             CompressionLevel = _ini.ReadInt("PatcherMaker", "compress", 0);
@@ -253,6 +277,9 @@ namespace LinEncoder.ViewModels
                 _ini.WriteBool("ServerList", "server_enable" + (i + 1), Servers[i].IsUsed);
                 _ini.WriteBool("ServerList", "server_usebd" + (i + 1), Servers[i].UseBd);
                 _ini.Write("ServerList", "server_bdfile" + (i + 1), Servers[i].BdFile ?? "");
+                _ini.Write("ServerList", "server_e" + (i + 1), Servers[i].E.ToString());
+                _ini.Write("ServerList", "server_d" + (i + 1), Servers[i].D.ToString());
+                _ini.Write("ServerList", "server_n" + (i + 1), Servers[i].N.ToString());
             }
 
             _ini.Write("PatcherMaker", "compress", CompressionLevel.ToString());
@@ -321,6 +348,63 @@ namespace LinEncoder.ViewModels
             return Directory.GetParent(baseDir)?.FullName ?? baseDir;
         }
 
+        /// <summary>重新計算右側常駐面板的狀態；每次相關操作（產生金鑰／清單／登入器／pak／補丁）完成後都要呼叫。</summary>
+        private void RefreshWorkflowStatus()
+        {
+            try
+            {
+                var status = WorkflowStatusService.Compute(
+                    GetPartnersRootDir(),
+                    OutputLauncherName,
+                    BdOutputDir,
+                    PatchSourceDir,
+                    PatchOutputDir);
+                status.PatchUploaded = _patchUploadedThisSession;
+                WorkflowStatus = status;
+            }
+            catch (Exception ex)
+            {
+                LogService.Error("RefreshWorkflowStatus 失敗", ex);
+            }
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        /// <summary>
+        /// 啟動 DeployTool（dotnet run，不需要事先手動 publish）重新建置指定目標，
+        /// 然後結束 Encoder 自己的行程——Encoder.exe 沒辦法安全地重新建置＋覆蓋自己
+        /// 正在執行中的檔案，所以這個動作一定要交給外部行程做，做完再把自己收掉。
+        /// </summary>
+        private void RebuildAndRestart(string target)
+        {
+            if (_rebuildBusy) return;
+            if (!WorkflowStatus.RepoFound || string.IsNullOrEmpty(WorkflowStatus.RepoRoot))
+            {
+                MessageBox.Show("找不到原始碼目錄（LinProj\\），無法自動重新建置。", "重新建置", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            _rebuildBusy = true;
+            CommandManager.InvalidateRequerySuggested();
+            try
+            {
+                string deployToolProj = Path.Combine(WorkflowStatus.RepoRoot, "LinProj", "DeployTool", "DeployTool.csproj");
+                string args = $"run --project \"{deployToolProj}\" -c Release -- --target {target} --relaunch-encoder";
+                LogService.Info($"RebuildAndRestart: 啟動 dotnet {args}");
+                Process.Start(new ProcessStartInfo("dotnet", args)
+                {
+                    WorkingDirectory = WorkflowStatus.RepoRoot,
+                    UseShellExecute = true,
+                });
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                _rebuildBusy = false;
+                LogService.Error("RebuildAndRestart 失敗", ex);
+                MessageBox.Show("啟動建置工具失敗：" + ex.Message, "重新建置", MessageBoxButton.OK, MessageBoxImage.Error);
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         /// <summary>
         /// 產生一組新的 RSA-32 金鑰（Rsa32Service，移植自 Rust rsa32.rs），寫入目前選中的伺服器槽位，
         /// 並在 EncoderTool\pack.properties（跟 LinEncoder.exe 同層）寫一份給伺服器端參考的設定檔——
@@ -338,6 +422,9 @@ namespace LinEncoder.ViewModels
             SelectedServer.E = key.E;
             SelectedServer.D = key.D;
             SelectedServer.N = key.N;
+            // 金鑰產生後立刻存檔，不要依賴使用者接下來剛好去按「產生清單」／「產生登入器」
+            // 才間接觸發 SaveSettings()——之前就是因為這裡沒存檔，Encoder 重開一次金鑰就悄悄不見了。
+            SaveSettings();
 
             string packPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pack.properties");
             string content = "; 由 LinEncoder.exe 產生 — 伺服器綑綁金鑰\n" +
@@ -357,6 +444,8 @@ namespace LinEncoder.ViewModels
                 "產生金鑰",
                 $"已為「{SelectedServer.Name}」產生新 RSA-32 金鑰（E={key.E}, D={key.D}, N={key.N}），寫入 `{packPath}`。",
                 "1. 把 `pack.properties` 的內容合併到伺服器的 `./config/pack.properties`，重啟伺服器\n2. 用「產生清單」把新的 D/N 寫進 `login\\list.txt`\n3. 兩邊都更新後再測試登入");
+
+            RefreshWorkflowStatus();
         }
 
         private void DoMake()
@@ -395,7 +484,8 @@ namespace LinEncoder.ViewModels
                 LogService.WriteOperationSummary(
                     "產生登入器",
                     $"已產生登入殼 `{Path.GetFileName(outputPath)}`，寫入 `{outputPath}`。",
-                    "1. 測試這個 exe 能否正常啟動並進入遊戲\n2. 確認 `Core\\` 是最新版（用 deploy.ps1 建置的版本）\n3. 確認後即可把這個 exe 連同 `Core\\` 一起交給客戶端");
+                    "1. 測試這個 exe 能否正常啟動並進入遊戲\n2. 確認 `Core\\` 是最新版（右側面板顯示需要重新建置就先按「重新建置」）\n3. 確認後即可把這個 exe 連同 `Core\\` 一起交給客戶端");
+                RefreshWorkflowStatus();
             }
             else
             {
@@ -453,6 +543,7 @@ namespace LinEncoder.ViewModels
                 "產生清單",
                 $"已產生 `login\\list.txt`（{idx} 筆啟用中的伺服器），寫入 `{path}`。",
                 "把 `login\\` 整個資料夾上傳到 `LinEncoder.ini` 裡 `list=` 網址對應的路徑（例：`list=http://你的網址/login/list.txt` → 上傳到網站的 `/login/` 目錄）。");
+            RefreshWorkflowStatus();
         }
 
         /// <summary>對應 LinLauncher.Models.ServerListEntryNative 欄位。</summary>
@@ -539,6 +630,22 @@ namespace LinEncoder.ViewModels
             {
                 BdOutputDir = path;
                 SaveSettings();
+            }
+        }
+
+        /// <summary>對應右側面板「變身檔（不需依序）」項目的「開啟資料夾」——不需要照 1/2/3 那套順序，
+        /// 操作者異動變身編碼後只需要知道檔案在哪，這裡直接開總管給他看。</summary>
+        private void OpenBdOutputDir()
+        {
+            if (string.IsNullOrWhiteSpace(BdOutputDir) || !Directory.Exists(BdOutputDir))
+                return;
+            try
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{BdOutputDir}\"") { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                LogService.Error("OpenBdOutputDir 失敗", ex);
             }
         }
 
@@ -682,6 +789,9 @@ namespace LinEncoder.ViewModels
                         "補丁產生工具",
                         $"已把 `{PatchSourceDir}` 的素材（共 {result.Files.Count} 個檔案）打包到 `{PatchOutputDir}`，更新清單：`{result.UpdateListPath}`。",
                         $"把 `{PatchOutputDir}` 整個資料夾上傳到網站，路徑要對齊「下載網址」（`{PatchBaseUrl}`）。");
+                    // 重新打包過，之前上傳的內容已經過期，重新計時
+                    _patchUploadedThisSession = false;
+                    RefreshWorkflowStatus();
                 }
                 else
                 {
@@ -772,6 +882,8 @@ namespace LinEncoder.ViewModels
                         "補丁上傳",
                         $"已把 `{PatchOutputDir}`（共 {result.UploadedCount} 個檔案）上傳到 `ftp://{FtpHost}:{FtpPort}/{FtpRemoteDir}`。",
                         $"確認下載網址（`{PatchBaseUrl}`）能對應到這個 FTP 遠端目錄，再讓登入器測試更新。");
+                    _patchUploadedThisSession = true;
+                    RefreshWorkflowStatus();
                 }
                 else
                 {
@@ -815,6 +927,7 @@ namespace LinEncoder.ViewModels
             {
                 MessageBox.Show($"加密完成！\n輸出檔案：{output}", "完成", MessageBoxButton.OK, MessageBoxImage.Information);
                 SearchBdPaks();
+                RefreshWorkflowStatus();
             }
             else
             {

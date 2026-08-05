@@ -206,11 +206,14 @@
                                 <Grid Margin="5,2" ToolTip="{Binding StatusTooltip}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <Ellipse Grid.Column="0" Width="8" Height="8" Margin="0,0,8,0"
+                                    <Ellipse Grid.Column="0" Width="8" Height="8" Margin="0,0,4,0"
                                              Fill="{Binding StatusLightBrush}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding StatusTooltip, StringFormat=({0})}" FontSize="11"
+                                               Foreground="#AAAAAA" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
