@@ -84,6 +84,21 @@ namespace LinEncoder.ViewModels
 
         private int _compressionLevel = 0; // 0: Normal, 1: Fast, 2: Best
         public int CompressionLevel { get => _compressionLevel; set { _compressionLevel = value; OnPropertyChanged(); } }
+
+        private string _ftpHost = "";
+        public string FtpHost { get => _ftpHost; set { _ftpHost = value; OnPropertyChanged(); } }
+
+        private int _ftpPort = 21;
+        public int FtpPort { get => _ftpPort; set { _ftpPort = value; OnPropertyChanged(); } }
+
+        private string _ftpUsername = "";
+        public string FtpUsername { get => _ftpUsername; set { _ftpUsername = value; OnPropertyChanged(); } }
+
+        private string _ftpPassword = "";
+        public string FtpPassword { get => _ftpPassword; set { _ftpPassword = value; OnPropertyChanged(); } }
+
+        private string _ftpRemoteDir = "";
+        public string FtpRemoteDir { get => _ftpRemoteDir; set { _ftpRemoteDir = value; OnPropertyChanged(); } }
         #endregion
 
         #region BD Maker Properties
@@ -106,9 +121,21 @@ namespace LinEncoder.ViewModels
         private bool _patchBusy;
         public ObservableCollection<PatchFileRow> PatchFileRows { get; } = new();
 
+        private bool _uploadBusy;
+
+        private double _uploadProgressPercent = 0.0;
+        public double UploadProgressPercent { get => _uploadProgressPercent; set { _uploadProgressPercent = value; OnPropertyChanged(); } }
+
+        private string _currentUploadFile = "";
+        public string CurrentUploadFile { get => _currentUploadFile; set { _currentUploadFile = value; OnPropertyChanged(); } }
+
+        private string _uploadEstimatedRemaining = "";
+        public string UploadEstimatedRemaining { get => _uploadEstimatedRemaining; set { _uploadEstimatedRemaining = value; OnPropertyChanged(); } }
+
         public ICommand MakeCommand { get; }
         public ICommand GenerateListCommand { get; }
         public ICommand GeneratePatchCommand { get; }
+        public ICommand UploadPatchCommand { get; }
         public ICommand PackagePakCommand { get; }
         public ICommand BrowsePatchSourceDirCommand { get; }
         public ICommand BrowsePatchOutputDirCommand { get; }
@@ -136,6 +163,7 @@ namespace LinEncoder.ViewModels
                 MakeCommand = new RelayCommand(_ => DoMake());
                 GenerateListCommand = new RelayCommand(_ => DoGenerateList());
                 GeneratePatchCommand = new RelayCommand(_ => { _ = DoGeneratePatchAsync(); }, _ => !_patchBusy);
+                UploadPatchCommand = new RelayCommand(_ => { _ = DoUploadPatchAsync(); }, _ => !_uploadBusy);
                 PackagePakCommand = new RelayCommand(_ => DoPackagePak());
                 BrowsePatchSourceDirCommand = new RelayCommand(_ => BrowsePatchSourceDir());
                 BrowsePatchOutputDirCommand = new RelayCommand(_ => BrowsePatchOutputDir());
@@ -187,6 +215,11 @@ namespace LinEncoder.ViewModels
             PatchBaseUrl = _ini.Read("PatcherMaker", "url", "");
             PatchSourceDir = _ini.Read("PatcherMaker", "patch_source", "");
             PatchOutputDir = _ini.Read("PatcherMaker", "patch_output", "");
+            FtpHost = _ini.Read("PatcherMaker", "ftp_host", "");
+            FtpPort = _ini.ReadInt("PatcherMaker", "ftp_port", 21);
+            FtpUsername = _ini.Read("PatcherMaker", "ftp_user", "");
+            FtpPassword = _ini.Read("PatcherMaker", "ftp_pass", "");
+            FtpRemoteDir = _ini.Read("PatcherMaker", "ftp_remote_dir", "");
             BdOutputDir = _ini.Read("BdMaker", "bd_output_dir", "");
             RefreshPatchSourcePreview();
         }
@@ -226,6 +259,11 @@ namespace LinEncoder.ViewModels
             _ini.Write("PatcherMaker", "url", PatchBaseUrl);
             _ini.Write("PatcherMaker", "patch_source", PatchSourceDir ?? "");
             _ini.Write("PatcherMaker", "patch_output", PatchOutputDir ?? "");
+            _ini.Write("PatcherMaker", "ftp_host", FtpHost ?? "");
+            _ini.Write("PatcherMaker", "ftp_port", FtpPort.ToString());
+            _ini.Write("PatcherMaker", "ftp_user", FtpUsername ?? "");
+            _ini.Write("PatcherMaker", "ftp_pass", FtpPassword ?? "");
+            _ini.Write("PatcherMaker", "ftp_remote_dir", FtpRemoteDir ?? "");
             _ini.Write("BdMaker", "bd_output_dir", BdOutputDir ?? "");
         }
 
@@ -655,6 +693,96 @@ namespace LinEncoder.ViewModels
             finally
             {
                 _patchBusy = false;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        private async Task DoUploadPatchAsync()
+        {
+            if (_uploadBusy)
+                return;
+            _uploadBusy = true;
+            CommandManager.InvalidateRequerySuggested();
+            UploadProgressPercent = 0;
+            CurrentUploadFile = "";
+            UploadEstimatedRemaining = "…";
+            var sw = Stopwatch.StartNew();
+
+            try
+            {
+                SaveSettings();
+                if (string.IsNullOrWhiteSpace(PatchOutputDir) || !Directory.Exists(PatchOutputDir))
+                {
+                    MessageBox.Show("找不到補丁輸出目錄，請先執行「產生補丁」。", "補丁上傳", MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(FtpHost))
+                {
+                    MessageBox.Show("請填寫 FTP 主機。", "補丁上傳", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                System.Windows.Threading.Dispatcher? ui = Application.Current?.Dispatcher;
+                var progress = new Progress<(int current, int total, string relativePath)>(p =>
+                {
+                    void Apply()
+                    {
+                        UploadProgressPercent = p.total <= 0 ? 0 : Math.Min(100.0, Math.Round(100.0 * p.current / p.total, 1));
+                        CurrentUploadFile = string.IsNullOrEmpty(p.relativePath) ? "準備中…" : p.relativePath;
+
+                        double pct = UploadProgressPercent;
+                        if (pct > 0.5 && sw.Elapsed.TotalSeconds > 0)
+                        {
+                            double totalEstSec = sw.Elapsed.TotalSeconds * 100.0 / pct;
+                            double rem = Math.Max(0, totalEstSec - sw.Elapsed.TotalSeconds);
+                            UploadEstimatedRemaining = $"{rem:F0} 秒";
+                        }
+                        else
+                            UploadEstimatedRemaining = "…";
+                    }
+
+                    if (ui != null && !ui.CheckAccess())
+                        ui.Invoke(Apply);
+                    else
+                        Apply();
+                });
+
+                FtpUploadResult result = await Task.Run(() =>
+                    FtpUploadService.UploadDirectory(
+                        PatchOutputDir,
+                        FtpHost,
+                        FtpPort,
+                        FtpUsername,
+                        FtpPassword,
+                        FtpRemoteDir,
+                        progress));
+
+                if (result.Success)
+                {
+                    UploadProgressPercent = 100;
+                    UploadEstimatedRemaining = "0 秒";
+                    MessageBox.Show(
+                        $"上傳完成，共 {result.UploadedCount} 個檔案。",
+                        "補丁上傳",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    LogService.WriteOperationSummary(
+                        "補丁上傳",
+                        $"已把 `{PatchOutputDir}`（共 {result.UploadedCount} 個檔案）上傳到 `ftp://{FtpHost}:{FtpPort}/{FtpRemoteDir}`。",
+                        $"確認下載網址（`{PatchBaseUrl}`）能對應到這個 FTP 遠端目錄，再讓登入器測試更新。");
+                }
+                else
+                {
+                    UploadProgressPercent = 0;
+                    MessageBox.Show(result.ErrorMessage ?? "未知錯誤", "補丁上傳失敗", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+            finally
+            {
+                _uploadBusy = false;
                 CommandManager.InvalidateRequerySuggested();
             }
         }

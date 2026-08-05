@@ -153,17 +153,12 @@ namespace LinEncoder.Services
                     };
                 }
 
-                int totalLen = 4 + compressed.Length;
-                if (totalLen < MinBinTotalBytes)
-                {
-                    return new PatchPackageResult
-                    {
-                        Success = false,
-                        ErrorMessage =
-                            $"封裝後長度不足 {MinBinTotalBytes} bytes（登入器無法處理）：{rel}\n" +
-                            "請增大檔案內容或合併小檔後再打包。"
-                    };
-                }
+                // 小檔案壓縮後可能不足 MinBinTotalBytes（解密端需要至少 16 bytes 可供 XOR）。
+                // zlib 壓縮串流本身有結束標記（DEFLATE final block + Adler-32），解壓縮只會讀到
+                // 真正資料結束的地方，尾端補的 0 bytes 不會被讀到，也不影響 XOR（逐 byte 對稱操作）——
+                // 補 0 到最小長度即可，不用因為極小檔案就整個拒絕打包。
+                int compressedLen = Math.Max(compressed.Length, MinBinTotalBytes - 4);
+                int totalLen = 4 + compressedLen;
 
                 var packet = new byte[totalLen];
                 // 前 4 bytes 保留；登入器自 offset 4 做 XOR 與 ZLib 解壓

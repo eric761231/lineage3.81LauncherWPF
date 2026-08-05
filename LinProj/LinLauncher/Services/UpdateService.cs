@@ -126,7 +126,7 @@ namespace LinLauncher.Services
         /// <summary>
         /// 下載更新檔（串流）、回報進度、解壓寫入；log 供除錯。
         /// </summary>
-        public async Task<(bool ok, string? error)> DownloadUpdatesAsync(
+        public async Task<(bool ok, string? error, bool anyDeferred)> DownloadUpdatesAsync(
             List<UpdateInfo> needUpdate,
             string baseUrl,
             string baseDir,
@@ -142,17 +142,18 @@ namespace LinLauncher.Services
             }
 
             if (needUpdate.Count == 0)
-                return (true, null);
+                return (true, null, false);
 
             baseUrl = (baseUrl ?? "").Trim();
             if (string.IsNullOrEmpty(baseUrl))
             {
                 L("DownloadUpdates: baseUrl 空白（update.txt [main] url）");
-                return (false, "更新清單未設定下載基底網址（[main] url）。");
+                return (false, "更新清單未設定下載基底網址（[main] url）。", false);
             }
 
             int total = needUpdate.Count;
             int fileIndex = 0;
+            bool anyDeferred = false;
 
             foreach (var info in needUpdate)
             {
@@ -188,7 +189,7 @@ namespace LinLauncher.Services
                         if (!resp.IsSuccessStatusCode)
                         {
                             L($"DownloadUpdates: HTTP {(int)resp.StatusCode} {downloadUrl}");
-                            return (false, $"下載失敗 ({(int)resp.StatusCode}): {relativeUrl}.bin");
+                            return (false, $"下載失敗 ({(int)resp.StatusCode}): {relativeUrl}.bin", anyDeferred);
                         }
 
                         long? contentLen = resp.Content.Headers.ContentLength;
@@ -215,7 +216,7 @@ namespace LinLauncher.Services
                     if (data.Length < 20)
                     {
                         L($"DownloadUpdates: 檔案過短 len={data.Length} {downloadUrl}");
-                        return (false, $"下載內容異常（過短）：{relativeUrl}.bin");
+                        return (false, $"下載內容異常（過短）：{relativeUrl}.bin", anyDeferred);
                     }
 
                     byte[] decrypted = (byte[])data.Clone();
@@ -223,18 +224,21 @@ namespace LinLauncher.Services
                     for (int i = 0; i < 16; i++)
                         decrypted[i + 4] ^= key[i % key.Length];
 
-                    bool applied = false;
+                    bool contentOk = false;
                     string? lastReason = null;
 
-                    // 正常路徑：解密後走 zlib 解壓。
+                    // 正常路徑：解密後走 zlib 解壓（對應 Encoder 端 EncoderService.BuildUpdatePackage
+                    // 用的 ZLibStream 壓縮——這是使用者實際在用的打包工具，格式本來就正確對得起來；
+                    // 另一個 tools/Generate-LauncherUpdatePackage.ps1 用 GZipStream 壓縮，
+                    // 跟這裡不相容，是那支腳本本身的既有缺陷，不是這裡要改的方向）。
                     try
                     {
                         using var ms = new MemoryStream(decrypted, 4, decrypted.Length - 4);
                         using var zs = new ZLibStream(ms, CompressionMode.Decompress);
                         using var fs = new FileStream(pendingPath, FileMode.Create, FileAccess.Write, FileShare.None);
                         await zs.CopyToAsync(fs).ConfigureAwait(false);
-                        applied = await VerifyAndPromotePendingAsync(pendingPath, localPath, info.Md5).ConfigureAwait(false);
-                        if (!applied)
+                        contentOk = await VerifyPendingMd5Async(pendingPath, info.Md5).ConfigureAwait(false);
+                        if (!contentOk)
                             lastReason = "zlib 解壓成功但 MD5 不符";
                     }
                     catch (Exception ex)
@@ -243,13 +247,13 @@ namespace LinLauncher.Services
                     }
 
                     // Fallback 1：部分來源只做了加密，未壓縮。
-                    if (!applied)
+                    if (!contentOk)
                     {
                         try
                         {
                             await File.WriteAllBytesAsync(pendingPath, decrypted.AsSpan(4).ToArray()).ConfigureAwait(false);
-                            applied = await VerifyAndPromotePendingAsync(pendingPath, localPath, info.Md5).ConfigureAwait(false);
-                            if (applied)
+                            contentOk = await VerifyPendingMd5Async(pendingPath, info.Md5).ConfigureAwait(false);
+                            if (contentOk)
                                 L($"DownloadUpdates: fallback(raw decrypted payload) OK {downloadUrl}");
                             else
                                 lastReason = "raw decrypted payload MD5 不符";
@@ -261,13 +265,13 @@ namespace LinLauncher.Services
                     }
 
                     // Fallback 2：極端情況直接為明文檔。
-                    if (!applied)
+                    if (!contentOk)
                     {
                         try
                         {
                             await File.WriteAllBytesAsync(pendingPath, data).ConfigureAwait(false);
-                            applied = await VerifyAndPromotePendingAsync(pendingPath, localPath, info.Md5).ConfigureAwait(false);
-                            if (applied)
+                            contentOk = await VerifyPendingMd5Async(pendingPath, info.Md5).ConfigureAwait(false);
+                            if (contentOk)
                                 L($"DownloadUpdates: fallback(raw full file) OK {downloadUrl}");
                             else
                                 lastReason = "raw full file MD5 不符";
@@ -278,7 +282,7 @@ namespace LinLauncher.Services
                         }
                     }
 
-                    if (!applied)
+                    if (!contentOk)
                     {
                         try
                         {
@@ -286,10 +290,23 @@ namespace LinLauncher.Services
                                 File.Delete(pendingPath);
                         }
                         catch { }
-                        return (false, $"下載失敗：{relativeUrl}\n{lastReason ?? "無法解包更新檔"}");
+                        return (false, $"下載失敗：{relativeUrl}\n{lastReason ?? "無法解包更新檔"}", anyDeferred);
                     }
 
-                    RaiseProgress((int)Math.Round(fileIndex * 100.0 / total), Path.GetFileName(info.Filename) ?? info.Filename, 100);
+                    // 內容已驗證正確，接著嘗試套用到正式檔名。若目標檔案被鎖住
+                    // （最常見情況：正在更新登入器自己目前執行中的 Core\LinLauncher.exe/.dll），
+                    // 不當成失敗，保留 .pending，交給 lineage381.exe（Proxy）下次啟動時的
+                    // *.pending 掃描完成套用（見 LinLauncher.Proxy/Program.cs）。
+                    if (TryPromotePending(pendingPath, localPath))
+                    {
+                        RaiseProgress((int)Math.Round(fileIndex * 100.0 / total), Path.GetFileName(info.Filename) ?? info.Filename, 100);
+                    }
+                    else
+                    {
+                        anyDeferred = true;
+                        L($"DownloadUpdates: {relativeUrl} 內容已驗證正確但目標檔案使用中，保留為 .pending，將於下次啟動登入器時套用");
+                        RaiseProgress((int)Math.Round(fileIndex * 100.0 / total), Path.GetFileName(info.Filename) ?? info.Filename, 100);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -301,27 +318,46 @@ namespace LinLauncher.Services
                     }
                     catch { }
 
-                    return (false, $"下載失敗：{relativeUrl}\n{ex.Message}");
+                    return (false, $"下載失敗：{relativeUrl}\n{ex.Message}", anyDeferred);
                 }
             }
 
             RaiseProgress(100, "", 100);
-            return (true, null);
+            return (true, null, anyDeferred);
         }
 
-        private async Task<bool> VerifyAndPromotePendingAsync(string pendingPath, string localPath, string expectedMd5)
+        private async Task<bool> VerifyPendingMd5Async(string pendingPath, string expectedMd5)
         {
             if (!File.Exists(pendingPath))
                 return false;
 
             string md5 = await CalculateMd5Async(pendingPath).ConfigureAwait(false);
-            if (!string.Equals(md5, expectedMd5, StringComparison.OrdinalIgnoreCase))
-                return false;
+            return string.Equals(md5, expectedMd5, StringComparison.OrdinalIgnoreCase);
+        }
 
-            if (File.Exists(localPath))
-                File.Delete(localPath);
-            File.Move(pendingPath, localPath);
-            return true;
+        /// <summary>
+        /// 嘗試把已驗證正確的 .pending 檔案套用成正式檔名。
+        /// 回傳 false 代表目標檔案目前被鎖住（例如登入器自己正在執行中的 exe/dll），
+        /// 此時 .pending 會保留在原地，不視為錯誤——lineage381.exe 下次啟動時會自動掃描
+        /// *.pending 並完成套用（見 LinLauncher.Proxy/Program.cs 的對應邏輯）。
+        /// </summary>
+        private static bool TryPromotePending(string pendingPath, string localPath)
+        {
+            try
+            {
+                if (File.Exists(localPath))
+                    File.Delete(localPath);
+                File.Move(pendingPath, localPath);
+                return true;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
         }
 
         private static async Task<string> CalculateMd5Async(string filePath)

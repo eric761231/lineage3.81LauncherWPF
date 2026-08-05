@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Net.Http;
 using System.Threading;
@@ -29,11 +30,10 @@ namespace LinLauncher.ViewModels
         private int _overallProgress = 0;
         private bool _isBusy = false;
 
-        private CancellationTokenSource? _serverProbeCts;
-        private int _serverProbeSeq;
-        private bool _serverProbePending;
-        private bool _serverReachable;
         private string _startButtonCaption = "遊戲開始";
+        private DateTime _lastServerRefreshUtc = DateTime.MinValue;
+        private bool _canRefreshServers = true;
+        private readonly DispatcherTimer _maintenanceCountdownTimer;
 
         public ObservableCollection<ServerInfo> Servers { get => _servers; set { _servers = value; OnPropertyChanged(); } }
         public ServerInfo? SelectedServer
@@ -45,8 +45,17 @@ namespace LinLauncher.ViewModels
                 _selectedServer = value;
                 OnPropertyChanged();
                 CommandManager.InvalidateRequerySuggested();
-                _ = RunServerProbeAsync();
+                UpdateMaintenanceCountdownCaption();
             }
+        }
+
+        /// <summary>重新整理伺服器狀態指令：5 分鐘內只能觸發一次。</summary>
+        public ICommand RefreshServersCommand { get; }
+
+        public bool CanRefreshServers
+        {
+            get => _canRefreshServers;
+            private set { _canRefreshServers = value; OnPropertyChanged(); }
         }
 
         /// <summary>開始按鈕文字：檢查中／可玩／無法遊玩。</summary>
@@ -75,13 +84,24 @@ namespace LinLauncher.ViewModels
         public MainViewModel()
         {
             // 初始化指令與事件訂閱。 (Initialize commands and event subscriptions.)
-            // 注意：不要把 _serverReachable 放進這裡當作硬性條件——背景連線探測
-            // （ServerReachabilityService）本身有時間點上的race condition，偶爾會誤判
-            // 為不可連線（尤其是伺服器剛啟動、連線瞬間被視為斷線時），若拿它鎖死開始按鈕，
-            // 使用者會完全無法測試真正的遊戲連線。探測結果只用來顯示提示文字，不擋按鈕。
+            // 灰燈（IsStatusUnknown，離線/查詢失敗）鎖住開始按鈕——這是使用者明確要求的行為。
+            // 注意：這跟先前拿掉「背景探測」硬性條件的取捨不同：之前是探測機制本身不穩定、
+            // 會「意外」把使用者鎖死；這次是使用者「刻意」要求灰燈就不能玩，且有「重新整理」
+            // 按鈕可以手動重試，不是無法挽回的死鎖。
             StartCommand = new RelayCommand(
                 async _ => await StartGameAsync(),
-                _ => SelectedServer != null && !IsBusy && !_serverProbePending);
+                _ => SelectedServer != null && !IsBusy && !SelectedServer.IsStatusUnknown);
+            RefreshServersCommand = new RelayCommand(
+                async _ => await RefreshAllServerStatusAsync(isManualRefresh: true),
+                _ => CanRefreshServers);
+
+            // 選取的伺服器維護中時，「開始遊戲」按鈕文字顯示即時倒數；每秒重新計算一次
+            // （MaintenanceEndAtUtc 是查詢當下算好的固定時間點，這裡只是每秒重新算「還剩多少」，
+            // 不用每秒重新查詢伺服器）。
+            _maintenanceCountdownTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _maintenanceCountdownTimer.Tick += (s, e) => UpdateMaintenanceCountdownCaption();
+            _maintenanceCountdownTimer.Start();
+
             _updateService.ProgressChanged += OnUpdateProgressChanged;
             _launchService.GameExited += (s, e) => { IsBusy = false; StatusText = "Ready"; };
             
@@ -169,6 +189,42 @@ namespace LinLauncher.ViewModels
             catch (Exception ex)
             {
                 StartupLog.Append($"TryRunEatExe: 執行失敗 {eatPath}", ex);
+            }
+        }
+
+        /// <summary>依 SelectedServer 目前的維護狀態，更新「開始遊戲」按鈕文字（每秒由計時器呼叫一次）。</summary>
+        private void UpdateMaintenanceCountdownCaption()
+        {
+            var server = SelectedServer;
+            if (server == null || !server.IsMaintenance)
+            {
+                if (StartButtonCaption != "遊戲開始") StartButtonCaption = "遊戲開始";
+                return;
+            }
+
+            if (server.MaintenanceEndAtUtc is DateTime endAtUtc)
+            {
+                TimeSpan remaining = endAtUtc - DateTime.UtcNow;
+                if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+                StartButtonCaption = $"維護倒數 {remaining:hh\\:mm\\:ss}";
+            }
+            else
+            {
+                StartButtonCaption = "維護中";
+            }
+        }
+
+        /// <summary>偵測遊戲主程式是否正在執行中（不限於這次登入器工作階段啟動的行程）。</summary>
+        private static bool IsGameProcessRunning()
+        {
+            try
+            {
+                string name = Path.GetFileNameWithoutExtension(GamePathHelper.DefaultGameExeFileName);
+                return Process.GetProcessesByName(name).Length > 0;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -349,6 +405,7 @@ namespace LinLauncher.ViewModels
                     if (Servers.Count > 0) SelectedServer = Servers[0];
                     StatusText = "Ready";
                     StartupLog.Append($"[清單] 已套用至介面，筆數={servers.Count}");
+                    _ = RefreshAllServerStatusAsync(isManualRefresh: false);
                 }
                 catch (Exception ex)
                 {
@@ -548,7 +605,12 @@ namespace LinLauncher.ViewModels
                     return;
                 }
 
-                var needUpdate = await _updateService.CheckFilesAsync(allFiles, AppDomain.CurrentDomain.BaseDirectory);
+                // update.txt 裡的檔名（例如 "sprite/12267-0.spr"）是相對「遊戲根目錄」，
+                // 不是相對登入器自己的 Core 目錄——sprite 跟 Core 是同層目錄，用
+                // AppDomain.CurrentDomain.BaseDirectory（= Core）會把檔案解到 Core\sprite\
+                // 這個不存在、遊戲也不會讀的地方。
+                string updateRoot = GamePathHelper.GetGameRootDirectory();
+                var needUpdate = await _updateService.CheckFilesAsync(allFiles, updateRoot);
                 StartupLog.Append($"[更新] 需更新檔案數={needUpdate.Count}");
                 if (needUpdate.Count == 0)
                 {
@@ -558,20 +620,39 @@ namespace LinLauncher.ViewModels
 
                 OverallProgress = 0;
                 StatusText = $"下載更新（{needUpdate.Count} 個檔案）…";
-                var (ok, err) = await _updateService.DownloadUpdatesAsync(
+                var (ok, err, anyDeferred) = await _updateService.DownloadUpdatesAsync(
                     needUpdate,
                     baseUrl,
-                    AppDomain.CurrentDomain.BaseDirectory,
+                    updateRoot,
                     msg => StartupLog.Append($"UpdateDownload: {msg}"));
 
                 if (ok)
                 {
-                    TryRunEatExe();
-                    MessageBox.Show(
-                        "更新下載完成，已執行 eat.exe（若存在）。請重新啟動登入器以套用變更。",
-                        "更新提示",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    // Sprite.pak 等資源檔案是 eat.exe 寫入的目標；若遊戲本體目前正在執行中，
+                    // 這些檔案可能被遊戲行程開著讀取，eat.exe 這時候去寫可能會失敗或寫壞。
+                    // 偵測到遊戲還在跑就跳過這次 eat.exe，提示使用者關閉遊戲後重開登入器再套用。
+                    if (IsGameProcessRunning())
+                    {
+                        StartupLog.Append("[更新] 偵測到遊戲仍在執行中，跳過 eat.exe，避免寫入衝突");
+                        MessageBox.Show(
+                            "更新檔案已下載完成，但偵測到遊戲目前仍在執行中，暫時跳過套用資源封裝（eat.exe）步驟。\n\n" +
+                            "請先關閉遊戲，再重新開啟登入器一次以完成套用。",
+                            "更新提示",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    }
+                    else
+                    {
+                        TryRunEatExe();
+                        string extra = anyDeferred
+                            ? "\n\n部分登入器自身檔案目前使用中，已保留待更新，將於下次啟動登入器時自動完成。"
+                            : "";
+                        MessageBox.Show(
+                            "更新下載完成，已執行 eat.exe（若存在）。請重新啟動登入器以套用變更。" + extra,
+                            "更新提示",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                    }
                 }
                 else if (!string.IsNullOrEmpty(err))
                 {
@@ -602,75 +683,62 @@ namespace LinLauncher.ViewModels
         }
 
         /// <summary>
-        /// 對目前選取之伺服器做 TCP 連線測試；成功才可按「遊戲開始」。
-        /// 使用序號避免快速換選時舊工作回寫狀態。
+        /// 對整個伺服器清單查詢狀態（在線人數／上限），更新每一項的燈號。
+        /// 開啟登入器時自動跑一次（isManualRefresh=false，不佔用冷卻額度）；
+        /// 之後只能透過使用者按「重新整理」觸發（isManualRefresh=true），
+        /// 且 5 分鐘內只能觸發一次。
         /// </summary>
-        private async Task RunServerProbeAsync()
+        private async Task RefreshAllServerStatusAsync(bool isManualRefresh)
         {
-            int seq = Interlocked.Increment(ref _serverProbeSeq);
-            _serverProbeCts?.Cancel();
-            _serverProbeCts?.Dispose();
-            _serverProbeCts = new CancellationTokenSource();
-            CancellationToken ct = _serverProbeCts.Token;
-
-            ServerInfo? server = SelectedServer;
-            if (server == null)
+            if (isManualRefresh)
             {
-                if (Volatile.Read(ref _serverProbeSeq) == seq)
+                if (!CanRefreshServers) return;
+                _lastServerRefreshUtc = DateTime.UtcNow;
+                CanRefreshServers = false;
+                CommandManager.InvalidateRequerySuggested();
+                _ = Task.Delay(TimeSpan.FromMinutes(5)).ContinueWith(_ =>
                 {
-                    _serverProbePending = false;
-                    _serverReachable = false;
-                    StartButtonCaption = "遊戲開始";
+                    CanRefreshServers = true;
                     CommandManager.InvalidateRequerySuggested();
-                }
-                return;
+                }, TaskScheduler.FromCurrentSynchronizationContext());
             }
 
-            _serverProbePending = true;
-            _serverReachable = false;
-            StartButtonCaption = "檢查連線中...";
-            CommandManager.InvalidateRequerySuggested();
-
-            const int timeoutMs = 5000;
-            StatusText = "檢查伺服器連線...";
-            try
+            const int timeoutMs = 3000;
+            var servers = Servers.ToList();
+            var tasks = servers.Select(async s =>
             {
-                var probe = await ServerReachabilityService.ProbeAsync(server.Ip, server.Port, timeoutMs, ct).ConfigureAwait(true);
-                if (ct.IsCancellationRequested) return;
-                if (!ReferenceEquals(SelectedServer, server)) return;
-                if (Volatile.Read(ref _serverProbeSeq) != seq) return;
-
-                _serverReachable = probe.Ok;
-                StartButtonCaption = probe.Ok ? "遊戲開始" : "無法遊玩";
-                if (probe.Ok)
+                var status = await ServerReachabilityService.QueryStatusAsync(s.Ip, s.Port, timeoutMs).ConfigureAwait(true);
+                if (status.Ok)
                 {
-                    StartupLog.Append($"RunServerProbe: TCP {server.Ip}:{server.Port} 成功");
-                    StatusText = "Ready";
+                    s.IsMaintenance = status.IsMaintenance;
+                    s.OnlineCount = status.IsMaintenance ? -1 : status.Online;
+                    s.MaxOnline = status.IsMaintenance ? -1 : status.Max;
+                    s.MaintenanceEndAtUtc = (status.IsMaintenance && status.MaintenanceRemainingSeconds >= 0)
+                        ? DateTime.UtcNow.AddSeconds(status.MaintenanceRemainingSeconds)
+                        : (DateTime?)null;
                 }
                 else
                 {
-                    StartupLog.Append($"RunServerProbe: TCP {server.Ip}:{server.Port} 失敗 — {probe.ErrorSummary ?? "未知"}");
-                    StatusText = $"無法連線 {server.Ip}:{server.Port} — {probe.ErrorSummary ?? ""}";
+                    s.IsMaintenance = false;
+                    s.OnlineCount = -1;
+                    s.MaxOnline = -1;
+                    s.MaintenanceEndAtUtc = null;
                 }
-            }
-            catch (OperationCanceledException)
+            });
+            try
             {
-                return;
+                await Task.WhenAll(tasks).ConfigureAwait(true);
+                StartupLog.Append($"RefreshAllServerStatus: 完成，共 {servers.Count} 台");
             }
-            catch
+            catch (Exception ex)
             {
-                if (!ReferenceEquals(SelectedServer, server)) return;
-                if (Volatile.Read(ref _serverProbeSeq) != seq) return;
-                _serverReachable = false;
-                StartButtonCaption = "無法遊玩";
+                StartupLog.Append("RefreshAllServerStatus: 發生錯誤", ex);
             }
             finally
             {
-                if (Volatile.Read(ref _serverProbeSeq) == seq)
-                {
-                    _serverProbePending = false;
-                    CommandManager.InvalidateRequerySuggested();
-                }
+                // 狀態查詢結果會影響「開始遊戲」按鈕（灰燈鎖住），查詢完一定要重新檢查一次 CanExecute。
+                CommandManager.InvalidateRequerySuggested();
+                UpdateMaintenanceCountdownCaption();
             }
         }
 
@@ -680,7 +748,7 @@ namespace LinLauncher.ViewModels
         /// </summary>
         private async Task StartGameAsync()
         {
-            if (SelectedServer == null || _serverProbePending) return;
+            if (SelectedServer == null) return;
             IsBusy = true;
             StatusText = "Launching game...";
             string appDir = AppDomain.CurrentDomain.BaseDirectory;

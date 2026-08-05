@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Windows.Media;
 
 namespace LinLauncher.Models
 {
@@ -64,6 +65,72 @@ namespace LinLauncher.Models
                 Array.Clear(_ipBytes, 0, 32);
                 Array.Copy(b, _ipBytes, Math.Min(b.Length, 32));
                 OnPropertyChanged();
+            }
+        }
+
+        // --- 以下為執行期才有的狀態查詢結果，不屬於 list.txt 的二進位格式，不參與 Marshal ---
+
+        private int _onlineCount = -1;
+        /// <summary>伺服器使用率百分比（0-100）；-1 代表尚未查詢或查詢失敗。
+        /// 命名沿用 OnlineCount 是因為早期設計是實際人數，伺服器端後來改成只回傳
+        /// 使用率（AcceptDispatcher.java），這裡沒有跟著改欄位名稱，避免牽動綁定範圍。</summary>
+        public int OnlineCount
+        {
+            get => _onlineCount;
+            set { _onlineCount = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusLightBrush)); OnPropertyChanged(nameof(StatusTooltip)); }
+        }
+
+        private int _maxOnline = -1;
+        /// <summary>固定為 100（伺服器端回傳的是使用率百分比，非實際人數上限）；-1 代表尚未查詢或查詢失敗。</summary>
+        public int MaxOnline
+        {
+            get => _maxOnline;
+            set { _maxOnline = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusLightBrush)); OnPropertyChanged(nameof(StatusTooltip)); }
+        }
+
+        private bool _isMaintenance;
+        /// <summary>伺服器目前是否處於維護中（維護期間只允許 GM 登入）。</summary>
+        public bool IsMaintenance
+        {
+            get => _isMaintenance;
+            set { _isMaintenance = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusLightBrush)); OnPropertyChanged(nameof(StatusTooltip)); }
+        }
+
+        /// <summary>維護預計結束時間（UTC）；查詢當下用剩餘秒數換算，供前端算即時倒數。非維護中為 null。</summary>
+        public DateTime? MaintenanceEndAtUtc { get; set; }
+
+        private static readonly SolidColorBrush GrayBrush = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88));
+        private static readonly SolidColorBrush GreenBrush = new SolidColorBrush(Color.FromRgb(0x2E, 0xCC, 0x40));
+        private static readonly SolidColorBrush BlueBrush = new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0xE0));
+        private static readonly SolidColorBrush OrangeBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0x85, 0x1B));
+        private static readonly SolidColorBrush RedBrush = new SolidColorBrush(Color.FromRgb(0xE0, 0x2A, 0x2A));
+        private static readonly SolidColorBrush YellowBrush = new SolidColorBrush(Color.FromRgb(0xF0, 0xC0, 0x1E));
+
+        /// <summary>燈號顏色：灰=離線/未知、黃=維護中、綠=順暢(&lt;50%)、藍=普通(50-69%)、橘=擁擠(70-89%)、紅=過載(&gt;=90%)。</summary>
+        public SolidColorBrush StatusLightBrush
+        {
+            get
+            {
+                if (_isMaintenance) return YellowBrush;
+                if (_onlineCount < 0 || _maxOnline <= 0) return GrayBrush;
+                double ratio = (double)_onlineCount / _maxOnline;
+                if (ratio >= 0.9) return RedBrush;
+                if (ratio >= 0.7) return OrangeBrush;
+                if (ratio >= 0.5) return BlueBrush;
+                return GreenBrush;
+            }
+        }
+
+        /// <summary>燈號是否為灰色（離線/查詢失敗/未知）——維護中不算，維護中是黃燈，可另外判斷是否為 GM 放行。</summary>
+        public bool IsStatusUnknown => !_isMaintenance && (_onlineCount < 0 || _maxOnline <= 0);
+
+        public string StatusTooltip
+        {
+            get
+            {
+                if (_isMaintenance) return "伺服器維護中";
+                if (_onlineCount < 0 || _maxOnline <= 0) return "關閉";
+                return $"使用率 {_onlineCount}%";
             }
         }
 

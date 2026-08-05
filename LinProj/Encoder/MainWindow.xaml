@@ -6,7 +6,7 @@
         xmlns:conv="clr-namespace:LinEncoder.Converters"
         Title="Lineage Encoder" Height="934" Width="950" 
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
     
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="0" CornerRadius="20" CaptionHeight="40" NonClientFrameEdges="None" ResizeBorderThickness="8" />
@@ -661,8 +661,68 @@
                                     <TextBlock Text=")" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
                                 </StackPanel>
 
-                                <Button Content="產生更新資源" Command="{Binding GeneratePatchCommand}" 
+                                <Button Content="產生更新資源" Command="{Binding GeneratePatchCommand}"
                                         Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" Height="36" Padding="24,0" Width="172"/>
+                            </StackPanel>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- TAB 4: 補丁上傳 -->
+                    <TabItem Header=" 補丁上傳 " Margin="13,1,-13,-1">
+                        <Grid Margin="12,0,12,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <GroupBox Margin="0,8,0,8" Header="FTP 上傳設定" Foreground="{StaticResource TextSecondary}">
+                                <Grid Margin="4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" MinWidth="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Text="主機：" Foreground="White" VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding FtpHost}" Grid.Column="1" Margin="10,5"/>
+                                    <TextBlock Text="埠號：" Foreground="White" VerticalAlignment="Center" Grid.Column="2" Margin="16,0,0,0"/>
+                                    <TextBox Text="{Binding FtpPort}" Grid.Column="3" Margin="10,5"/>
+
+                                    <TextBlock Text="帳號：" Foreground="White" VerticalAlignment="Center" Grid.Row="1"/>
+                                    <TextBox Text="{Binding FtpUsername}" Grid.Row="1" Grid.Column="1" Margin="10,5"/>
+                                    <TextBlock Text="密碼：" Foreground="White" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Margin="16,0,0,0"/>
+                                    <PasswordBox x:Name="FtpPasswordBox" PasswordChanged="FtpPassword_PasswordChanged" Grid.Row="1" Grid.Column="3" Margin="10,5"/>
+
+                                    <TextBlock Text="遠端目錄：" Foreground="White" VerticalAlignment="Center" Grid.Row="2"/>
+                                    <TextBox Text="{Binding FtpRemoteDir}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="10,5"
+                                             ToolTip="相對於 FTP 帳號根目錄的路徑，例如 update"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,12,0,20">
+                                <TextBlock Text="{Binding PatchOutputDir, StringFormat=將上傳「補丁產生工具」輸出目錄的內容：{0}}"
+                                           Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0">
+                                        <ProgressBar Width="361" Height="18" Minimum="0" Maximum="100" Value="{Binding UploadProgressPercent}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="上傳進度：" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Text="{Binding UploadProgressPercent, StringFormat={}{0:F0}%}" Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        <TextBlock Text=" | " Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0"/>
+                                        <TextBlock Text="{Binding CurrentUploadFile}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Width="220" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text=" (" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Text="{Binding UploadEstimatedRemaining}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                        <TextBlock Text=")" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <Button Content="上傳補丁" Command="{Binding UploadPatchCommand}"
+                                            Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" Height="36" Padding="24,0" Width="172"/>
+                                </StackPanel>
                             </StackPanel>
                         </Grid>
                     </TabItem>

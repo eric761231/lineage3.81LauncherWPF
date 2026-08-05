@@ -168,15 +168,49 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="伺服器列表" Foreground="#7232f2" FontSize="14" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <DockPanel Margin="0,0,0,15">
+                        <Button DockPanel.Dock="Right" Command="{Binding RefreshServersCommand}" IsEnabled="{Binding CanRefreshServers}"
+                                ToolTip="重新整理伺服器狀態" BorderThickness="0" Cursor="Hand"
+                                Width="26" Height="26" Padding="0">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bg" Background="#000000" CornerRadius="4">
+                                        <TextBlock x:Name="Icon" Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                                   Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bg" Property="Background" Value="#2A2A2A"/>
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="Bg" Property="Background" Value="#000000"/>
+                                            <Setter TargetName="Icon" Property="Foreground" Value="#666666"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <TextBlock Text="伺服器列表" Foreground="#7232f2" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </DockPanel>
 
-                    <ListBox Grid.Row="1" ItemsSource="{Binding Servers}" SelectedItem="{Binding SelectedServer}" 
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Servers}" SelectedItem="{Binding SelectedServer}"
                              Background="#1a1a1a" BorderThickness="1" BorderBrush="#222" Foreground="White"
                              ItemContainerStyle="{StaticResource ServerListItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="5,2">
-                                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <Grid Margin="5,2" ToolTip="{Binding StatusTooltip}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Grid.Column="0" Width="8" Height="8" Margin="0,0,8,0"
+                                             Fill="{Binding StatusLightBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

@@ -10,6 +10,13 @@ namespace LinEncoder
             InitializeComponent();
         }
 
+        // PasswordBox 不能資料綁定，初始值要在 DataContext 就緒後手動從 ViewModel 帶進來。
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is EncoderViewModel vm)
+                FtpPasswordBox.Password = vm.FtpPassword;
+        }
+
         private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
@@ -45,6 +52,13 @@ namespace LinEncoder
         {
             if (DataContext is EncoderViewModel vm)
                 vm.RefreshPatchSourcePreview();
+        }
+
+        // PasswordBox.Password 基於安全考量無法直接資料綁定，這裡用 code-behind 手動同步回 ViewModel。
+        private void FtpPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is EncoderViewModel vm && sender is System.Windows.Controls.PasswordBox pb)
+                vm.FtpPassword = pb.Password;
         }
     }
 }
