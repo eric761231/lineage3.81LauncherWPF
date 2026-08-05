@@ -23,5 +23,21 @@ namespace LinEncoder.Services
                 Marshal.FreeHGlobal(ptr);
             }
         }
+
+        /// <summary>StructureToBytes 的反向操作，供「驗證金鑰」讀回 list.txt 解密後的 ServerListEntryNative 用。</summary>
+        public static T BytesToStructure<T>(byte[] bytes) where T : struct
+        {
+            int size = Marshal.SizeOf<T>();
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+            try
+            {
+                Marshal.Copy(bytes, 0, ptr, size);
+                return Marshal.PtrToStructure<T>(ptr);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+            }
+        }
     }
 }

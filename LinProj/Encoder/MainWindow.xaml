@@ -814,6 +814,9 @@
                             <TextBlock Text="⚠ 金鑰已重新產生但清單還沒跟著更新，list.txt 裡的金鑰過時了，請重新「產生清單」"
                                        Foreground="#FF851B" FontSize="10" TextWrapping="Wrap" Margin="18,0,0,6"
                                        Visibility="{Binding WorkflowStatus.ListStaleVsKey, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <Button Content="驗證金鑰" Command="{Binding VerifyListKeysCommand}"
+                                    HorizontalAlignment="Stretch" Height="24" Margin="18,0,0,6" FontSize="10"
+                                    Style="{StaticResource ModernButton}" Background="{StaticResource BorderColor}"/>
                             <Grid Margin="0,3,0,10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>

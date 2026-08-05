@@ -141,6 +141,7 @@ namespace LinEncoder.ViewModels
 
         public ICommand MakeCommand { get; }
         public ICommand GenerateListCommand { get; }
+        public ICommand VerifyListKeysCommand { get; }
         public ICommand GeneratePatchCommand { get; }
         public ICommand UploadPatchCommand { get; }
         public ICommand PackagePakCommand { get; }
@@ -173,6 +174,7 @@ namespace LinEncoder.ViewModels
                 LogService.Info("EncoderViewModel: 綁定 RelayCommands");
                 MakeCommand = new RelayCommand(_ => DoMake());
                 GenerateListCommand = new RelayCommand(_ => DoGenerateList());
+                VerifyListKeysCommand = new RelayCommand(_ => DoVerifyListKeys());
                 GeneratePatchCommand = new RelayCommand(_ => { _ = DoGeneratePatchAsync(); }, _ => !_patchBusy);
                 UploadPatchCommand = new RelayCommand(_ => { _ = DoUploadPatchAsync(); }, _ => !_uploadBusy);
                 PackagePakCommand = new RelayCommand(_ => DoPackagePak());
@@ -544,6 +546,81 @@ namespace LinEncoder.ViewModels
                 $"已產生 `login\\list.txt`（{idx} 筆啟用中的伺服器），寫入 `{path}`。",
                 "把 `login\\` 整個資料夾上傳到 `LinEncoder.ini` 裡 `list=` 網址對應的路徑（例：`list=http://你的網址/login/list.txt` → 上傳到網站的 `/login/` 目錄）。");
             RefreshWorkflowStatus();
+        }
+
+        /// <summary>
+        /// 「驗證金鑰」：把 login\list.txt 裡每筆伺服器資料解密回來，跟目前 Servers 記憶體裡的 E/D/N 比對，
+        /// 直接告訴操作者「list.txt 裡烘的金鑰」跟「現在打算用的金鑰」是不是同一組——不用等玩家登入失敗才發現。
+        /// 純本機比對，不會連線到實際在跑的 Java 伺服器（那一層之後有需要再另外做）。
+        /// </summary>
+        private void DoVerifyListKeys()
+        {
+            string listPath = Path.Combine(GetPartnersRootDir(), "login", "list.txt");
+            if (!File.Exists(listPath))
+            {
+                MessageBox.Show("找不到 login\\list.txt，請先「產生清單」。", "驗證金鑰", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            byte[] key = Encoding.ASCII.GetBytes(Constants.ServerListKey);
+            var decodedByName = new Dictionary<string, (uint E, uint D, uint N)>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                foreach (string line in File.ReadAllLines(listPath))
+                {
+                    string trimmed = line.Trim();
+                    if (!trimmed.StartsWith("ServerData", StringComparison.OrdinalIgnoreCase)) continue;
+                    int eq = trimmed.IndexOf('=');
+                    if (eq < 0) continue;
+                    byte[] buf = Convert.FromBase64String(trimmed.Substring(eq + 1));
+                    CryptoService.ConfigDecrypt(key, buf);
+                    ServerListEntryNative native = ListEntryMarshal.BytesToStructure<ServerListEntryNative>(buf);
+                    string name = (native.Name ?? "").Trim();
+                    if (name.Length == 0) continue;
+                    decodedByName[name] = (native.E, native.D, native.N);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("解密 list.txt 失敗：" + ex.Message, "驗證金鑰", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var lines = new List<string>();
+            var matchedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ServerInfo srv in Servers)
+            {
+                if (!srv.IsUsed) continue;
+                string name = (srv.Name ?? "").Trim();
+                if (!decodedByName.TryGetValue(name, out var decoded))
+                {
+                    lines.Add($"？ {name}：目前是啟用中，但 list.txt 裡沒有這筆資料（還沒「產生清單」，或剛改過名字）");
+                    continue;
+                }
+                matchedNames.Add(name);
+                if (decoded.E == srv.E && decoded.D == srv.D && decoded.N == srv.N)
+                {
+                    lines.Add($"✓ {name}：金鑰一致");
+                }
+                else
+                {
+                    lines.Add($"⚠ {name}：金鑰不一致，需要重新「產生清單」\n    list.txt = E:{decoded.E} D:{decoded.D} N:{decoded.N}\n    目前設定 = E:{srv.E} D:{srv.D} N:{srv.N}");
+                }
+            }
+            foreach (string name in decodedByName.Keys)
+            {
+                if (!matchedNames.Contains(name))
+                    lines.Add($"？ {name}：list.txt 裡有這筆資料，但目前 Servers 清單裡找不到同名的伺服器（改過名字或已停用）");
+            }
+
+            if (lines.Count == 0)
+            {
+                MessageBox.Show("目前沒有啟用中的伺服器，也沒有 list.txt 資料可以比對。", "驗證金鑰", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            MessageBox.Show(string.Join("\n\n", lines), "驗證金鑰結果", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         /// <summary>對應 LinLauncher.Models.ServerListEntryNative 欄位。</summary>
