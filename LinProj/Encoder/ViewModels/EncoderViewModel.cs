@@ -227,6 +227,10 @@ namespace LinEncoder.ViewModels
                 Servers[i].IsUsed = _ini.ReadBool("ServerList", "server_enable" + (i + 1), false);
                 Servers[i].UseBd = _ini.ReadBool("ServerList", "server_usebd" + (i + 1), false);
                 Servers[i].BdFile = _ini.Read("ServerList", "server_bdfile" + (i + 1), "");
+                // Encrypt / RandKey 必須持久化：對應伺服器 Autoentication / RandomEnc。
+                // 先前只寫在 ini 殘留鍵、Load/Save 卻沒讀寫，重開後永遠回到 false，list 烘出未加密設定。
+                Servers[i].Encrypt = _ini.ReadBool("ServerList", "server_encrypt" + (i + 1), Servers[i].Encrypt);
+                Servers[i].RandKey = _ini.ReadBool("ServerList", "server_randkey" + (i + 1), Servers[i].RandKey);
                 // E/D/N 是 RSA-32 金鑰，數值常超過 int.MaxValue（例如 2778970907），不能用 ReadInt（32-bit signed）
                 // 讀，會溢位讀錯——讀原始字串自己 uint.Parse。之前這裡完全沒存檔，Encoder 一重開，金鑰就悄悄
                 // 變回 ServerInfo 裡寫死的舊預設值（看起來像正常金鑰，很難發現），跟伺服器 config/pack.properties
@@ -249,6 +253,8 @@ namespace LinEncoder.ViewModels
             BdOutputDir = _ini.Read("BdMaker", "bd_output_dir", "");
             RefreshPatchSourcePreview();
         }
+
+        public void PersistSettings() => SaveSettings();
 
         private void SaveSettings()
         {
@@ -279,6 +285,8 @@ namespace LinEncoder.ViewModels
                 _ini.WriteBool("ServerList", "server_enable" + (i + 1), Servers[i].IsUsed);
                 _ini.WriteBool("ServerList", "server_usebd" + (i + 1), Servers[i].UseBd);
                 _ini.Write("ServerList", "server_bdfile" + (i + 1), Servers[i].BdFile ?? "");
+                _ini.WriteBool("ServerList", "server_encrypt" + (i + 1), Servers[i].Encrypt);
+                _ini.WriteBool("ServerList", "server_randkey" + (i + 1), Servers[i].RandKey);
                 _ini.Write("ServerList", "server_e" + (i + 1), Servers[i].E.ToString());
                 _ini.Write("ServerList", "server_d" + (i + 1), Servers[i].D.ToString());
                 _ini.Write("ServerList", "server_n" + (i + 1), Servers[i].N.ToString());
@@ -507,11 +515,19 @@ namespace LinEncoder.ViewModels
 
             var sb = new StringBuilder();
             sb.AppendLine("[list]");
+            var usedKeys = new StringBuilder();
             int idx = 0;
             for (int i = 0; i < Servers.Count; i++)
             {
                 ServerInfo srv = Servers[i];
                 if (!srv.IsUsed) continue;
+                if (srv.Encrypt && (srv.D == 0 || srv.N == 0))
+                {
+                    MessageBox.Show(
+                        $"伺服器「{srv.Name}」已開封包加密，但 D 或 N 是 0。\n請在 E／D／N 欄位填入伺服器 pack.properties 的 RSA_KEY，或先載入 LinEncoder.ini 裡已存的金鑰。",
+                        "LinEncoder");
+                    return;
+                }
                 try
                 {
                     ServerListEntryNative native = BuildListEntryNative(srv);
@@ -519,8 +535,10 @@ namespace LinEncoder.ViewModels
                     // 不做 AES），補 padding 只會讓密文長度跟 Server_Info 原始格式（213 bytes）
                     // 對不起來，導致跟 Rust 工具／真實伺服器產生的 list.txt 無法互通。
                     byte[] buf = ListEntryMarshal.StructureToBytes(native);
+                    ListEntryMarshal.WriteCryptoFields(buf, srv.Encrypt, srv.RandKey, srv.E, srv.D, srv.N);
                     CryptoService.ConfigEncrypt(key, buf);
                     sb.AppendLine($"ServerData{idx}={Convert.ToBase64String(buf)}");
+                    usedKeys.AppendLine($"[{idx + 1}] {srv.Name}  E={srv.E}  D={srv.D}  N={srv.N}  Encrypt={(srv.Encrypt ? 1 : 0)}  RandKey={(srv.RandKey ? 1 : 0)}");
                     idx++;
                 }
                 catch (Exception ex)
@@ -540,10 +558,12 @@ namespace LinEncoder.ViewModels
             Directory.CreateDirectory(loginDir);
             string path = Path.Combine(loginDir, "list.txt");
             File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
-            MessageBox.Show($"已產生 list.txt（加密與 LinLauncher 登入器相容）：\n{path}", "LinEncoder");
+            MessageBox.Show(
+                $"已產生 list.txt（使用 UI／LinEncoder.ini 的金鑰）：\n{path}\n\n{usedKeys}",
+                "LinEncoder");
             LogService.WriteOperationSummary(
                 "產生清單",
-                $"已產生 `login\\list.txt`（{idx} 筆啟用中的伺服器），寫入 `{path}`。",
+                $"已產生 `login\\list.txt`（{idx} 筆啟用中的伺服器），寫入 `{path}`。金鑰來自 UI／LinEncoder.ini：\n{usedKeys}",
                 "把 `login\\` 整個資料夾上傳到 `LinEncoder.ini` 裡 `list=` 網址對應的路徑（例：`list=http://你的網址/login/list.txt` → 上傳到網站的 `/login/` 目錄）。");
             RefreshWorkflowStatus();
         }
@@ -563,7 +583,7 @@ namespace LinEncoder.ViewModels
             }
 
             byte[] key = Encoding.ASCII.GetBytes(Constants.ServerListKey);
-            var decodedByName = new Dictionary<string, (uint E, uint D, uint N)>(StringComparer.OrdinalIgnoreCase);
+            var decodedByName = new Dictionary<string, (uint E, uint D, uint N, bool Encrypt, bool RandKey)>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
@@ -578,7 +598,7 @@ namespace LinEncoder.ViewModels
                     ServerListEntryNative native = ListEntryMarshal.BytesToStructure<ServerListEntryNative>(buf);
                     string name = (native.Name ?? "").Trim();
                     if (name.Length == 0) continue;
-                    decodedByName[name] = (native.E, native.D, native.N);
+                    decodedByName[name] = ListEntryMarshal.ReadCryptoFields(buf);
                 }
             }
             catch (Exception ex)
@@ -599,13 +619,15 @@ namespace LinEncoder.ViewModels
                     continue;
                 }
                 matchedNames.Add(name);
-                if (decoded.E == srv.E && decoded.D == srv.D && decoded.N == srv.N)
+                bool keysOk = decoded.E == srv.E && decoded.D == srv.D && decoded.N == srv.N;
+                bool flagsOk = decoded.Encrypt == srv.Encrypt && decoded.RandKey == srv.RandKey;
+                if (keysOk && flagsOk)
                 {
-                    lines.Add($"✓ {name}：金鑰一致");
+                    lines.Add($"✓ {name}：金鑰一致（Encrypt={decoded.Encrypt}, RandKey={decoded.RandKey}）");
                 }
                 else
                 {
-                    lines.Add($"⚠ {name}：金鑰不一致，需要重新「產生清單」\n    list.txt = E:{decoded.E} D:{decoded.D} N:{decoded.N}\n    目前設定 = E:{srv.E} D:{srv.D} N:{srv.N}");
+                    lines.Add($"⚠ {name}：設定不一致，需要重新「產生清單」\n    list.txt = E:{decoded.E} D:{decoded.D} N:{decoded.N} Encrypt:{decoded.Encrypt} RandKey:{decoded.RandKey}\n    目前設定 = E:{srv.E} D:{srv.D} N:{srv.N} Encrypt:{srv.Encrypt} RandKey:{srv.RandKey}");
                 }
             }
             foreach (string name in decodedByName.Keys)

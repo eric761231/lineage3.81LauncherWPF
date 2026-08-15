@@ -6,7 +6,7 @@
         xmlns:conv="clr-namespace:LinEncoder.Converters"
         Title="Lineage Encoder" Height="934" Width="1300"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
+        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing">
     
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="0" CornerRadius="20" CaptionHeight="40" NonClientFrameEdges="None" ResizeBorderThickness="8" />
@@ -433,15 +433,36 @@
                                             <Button Content="瀏覽…" Command="{Binding BrowseBdOutputDirCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Margin="5,0,0,0"/>
                                         </StackPanel>
 
-                                        <!-- RSA 金鑰：唯讀顯示目前套用值，按「產生金鑰」整組覆蓋 -->
-                                        <StackPanel Orientation="Horizontal" Grid.Row="5" Margin="14,10,0,0" HorizontalAlignment="Left" Width="323">
-                                            <TextBlock VerticalAlignment="Center" FontSize="11">
-                                                <Run Text="E="/><Run Text="{Binding SelectedServer.E, Mode=OneWay}"/>
-                                                <Run Text=" D="/><Run Text="{Binding SelectedServer.D, Mode=OneWay}"/>
-                                                <Run Text=" N="/><Run Text="{Binding SelectedServer.N, Mode=OneWay}"/>
-                                            </TextBlock>
-                                            <Button Content="產生金鑰" Command="{Binding GenerateRsaKeyCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" Margin="5,0,0,0"/>
-                                        </StackPanel>
+                                        <!-- RSA 金鑰：可手動填 pack.properties 的 RSA_KEY_E/D/N；產生清單會用這組值 -->
+                                        <Grid Grid.Row="5" Margin="14,8,0,0" HorizontalAlignment="Left" Width="336">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="22"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="88"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="E" Grid.Row="0" VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding SelectedServer.EText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Grid.Row="0" Grid.Column="1" Margin="4,2,8,2"
+                                                     ToolTip="伺服器 pack.properties 的 RSA_KEY_E"/>
+                                            <TextBlock Text="D" Grid.Row="1" VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding SelectedServer.DText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Grid.Row="1" Grid.Column="1" Margin="4,2,8,2"
+                                                     ToolTip="伺服器 pack.properties 的 RSA_KEY_D（登入器解握手用）"/>
+                                            <TextBlock Text="N" Grid.Row="2" VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding SelectedServer.NText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Grid.Row="2" Grid.Column="1" Margin="4,2,8,2"
+                                                     ToolTip="伺服器 pack.properties 的 RSA_KEY_N"/>
+                                            <Button Content="產生金鑰" Command="{Binding GenerateRsaKeyCommand}"
+                                                    Grid.Row="0" Grid.Column="2" Grid.RowSpan="3"
+                                                    Width="88" Height="32" VerticalAlignment="Center"
+                                                    Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}"
+                                                    ToolTip="隨機產生一組新金鑰並寫入欄位／LinEncoder.ini"/>
+                                        </Grid>
                                     </Grid>
                                 </Grid>
                             </GroupBox>

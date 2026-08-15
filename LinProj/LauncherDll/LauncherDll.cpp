@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "LauncherDll.h"
 #include "L1Offsets.h"
+#include "DisconnectHook.h"
+#include "MimirPowerHook.h"
 
 #include "VMProtectSDK.h"
 #include <map>
@@ -382,27 +384,59 @@ __declspec(naked) void GetPassword(void) {
   }
 }
 
-const DWORD SETID_HOOK_ADDR = 0x00772BA3;
-const DWORD SETID_RETN_ADDR = 0x00772BAD;
+// Login77：對齊 Rust login.rs（Login.dll 相容 opcode 0x77 / cssddddddd）
+// 取代舊 path_code opcode 0xD2 @ 0x00772BA0 + SetIdPass。
+const DWORD LOGIN77_HOOK_ADDR = 0x00772E07;
+const DWORD LOGIN77_RETN_ADDR = 0x00772E77;
+const DWORD LOGIN77_HOOK_SIZE = 10;
+const DWORD SEND_PACKET_DATA = 0x00580E50;
+static const char LOGIN77_FORMAT[] = "cssddddddd";
+static bool g_loginHooksInstalled = false;
 
-// 把攔截到的帳密資料回填至遊戲原流程。
-__declspec(naked) void SetIdPass(void) {
+// SendPacketData("cssddddddd", 0x77, id, pwd, 127.0.0.1, 0,0,0,0,0, 0x1F)
+__declspec(naked) void Login77(void) {
   __asm
   {
-		mov g_pwd_pos, 0
+		push 0x1F
+		push 0
+		push 0
+		push 0
+		push 0
+		push 0
+		push 0x0100007F
 		lea eax, g_pwd
 		push eax
 		lea eax, g_id
 		push eax
-		jmp SETID_RETN_ADDR
+		push 0x77
+		lea eax, LOGIN77_FORMAT
+		push eax
+		mov eax, SEND_PACKET_DATA
+		call eax
+		add esp, 0x2C
+		mov g_pwd_pos, 0
+		jmp LOGIN77_RETN_ADDR
   }
 }
 
-const BYTE path_code[] = {0x60, 0x6A, 0x00, 0x68, 0xC8, 0xAB, 0x9A, 0x00,
-                          0x68, 0x48, 0xAC, 0x9A, 0x00, 0x6A, 0x06, 0x68,
-                          0xD2, 0x00, 0x00, 0x00, 0x68, 0x14, 0x15, 0x8D,
-                          0x00, 0xE8, 0x92, 0xE2, 0xE0, 0xFF, 0x83, 0xC4,
-                          0x18, 0x61, 0xC3, 0x90, 0x90};
+// 對齊 Rust login.rs::install_login_hooks：USER + PASS + Login77（無 path_code）
+static void InstallLogin77Hooks() {
+  if (g_loginHooksInstalled)
+    return;
+  g_loginHooksInstalled = true;
+
+  HookCode((void *)USER_HOOK_ADDR, (void *)GetUsername,
+           USER_RETN_ADDR - USER_HOOK_ADDR);
+  HookCode((void *)PASS_HOOK_ADDR, (void *)GetPassword,
+           PASS_RETN_ADDR - PASS_HOOK_ADDR);
+  HookCode((void *)LOGIN77_HOOK_ADDR, (void *)Login77, LOGIN77_HOOK_SIZE);
+
+  launcherdll_net_log(
+      "[Login77] hooks installed: User@0x%08X Pass@0x%08X Login77@0x%08X "
+      "(opcode 0x77 cssddddddd)",
+      (unsigned)USER_HOOK_ADDR, (unsigned)PASS_HOOK_ADDR,
+      (unsigned)LOGIN77_HOOK_ADDR);
+}
 
 __declspec(naked) void GetFileData(void) {
   __asm {
@@ -465,10 +499,16 @@ static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen)
   }
   if (hasMappedHost) {
     mappedAddr.sin_port = htons(ShareInfo.port);
+    DisconnectHook_ResetSession();
+    MimirPowerHook_ResetSession();
+    MimirPowerHook_SetSocket(s);
     VMProtectEnd;
     inited = false;
     return real_connect(s, (const sockaddr *)&mappedAddr, sizeof(mappedAddr));
   }
+  DisconnectHook_ResetSession();
+  MimirPowerHook_ResetSession();
+  MimirPowerHook_SetSocket(s);
   VMProtectEnd;
   inited = false;
   return real_connect(s, name, namelen);
@@ -491,10 +531,23 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
     bytes_to_ascii_preview((const BYTE *)buffer_ptr, len, preview,
                            sizeof(preview), 32);
     bytes_to_hex_preview((const BYTE *)buffer_ptr, len, hex, sizeof(hex), 32);
+    unsigned op0 = (unsigned)buffer_ptr[0];
+    unsigned opBody = (len >= 3) ? (unsigned)buffer_ptr[2] : 0;
     launcherdll_net_log(
-        "[my_send] socket=%u len=%u opcode=0x%02X msg=[%s] hex=[%s]",
-        (unsigned)s, (unsigned)len, (unsigned)buffer_ptr[0], preview, hex);
+        "[my_send] socket=%u len=%u opcode=0x%02X bodyOp=0x%02X msg=[%s] hex=[%s]",
+        (unsigned)s, (unsigned)len, op0, opBody, preview, hex);
+
+    // Arm after account/password submit.
+    // 0x77 = C_OPCODE_AUTHLOGIN / Login77; 0x2E seen on this client pack as login-sized send.
+    if (op0 == 0x77 || opBody == 0x77 ||
+        (op0 == 0x2E && len >= 30 && len <= 80)) {
+      DisconnectHook_OnClientLoginSent();
+    }
   }
+  // 封包加密：依 Encoder UI / LinEncoder.ini 寫進 list 的 RandKey（ShareInfo.randenc）。
+  //   randenc=0 → xorByte = (plain % 255) + 1，C2S 固定 XOR
+  //   randenc=1 → 明文當 LCG 種子，C2S 逐 byte nextRand()
+  // 須與後端 RandomEnc 開關一致。
   if (ShareInfo.encrypt && inited) {
     if (ShareInfo.randenc) {
       for (int i = 0; i < len; i++)
@@ -526,23 +579,40 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
           return ret;
       }
     }
-    // xor_byte = (plain % 255) + 1 —— 對齊 Rust src/packet_proxy.rs::auth_xor_from_cipher。
-    // 舊版直接把 modpow 結果截斷成最低 1 byte，公式錯誤，會導致封包全部亂碼。
-    // randenc 模式（ShareInfo.randenc=1）則對齊 L1J380odin ClientExecutor.java 的
-    // _randEncEveyPacket 分支：不用固定 _xorByte，而是直接把明文亂數當 LCG 種子，
-    // 之後每個 byte 用 nextRand() 逐一產生金鑰（my_send 裡已經有這段邏輯）。
+    // 4-byte RSA authdata：用 D,N 還原明文後，依 randenc 開關選路徑（對齊伺服器 RandomEnc）。
     {
       unsigned long plain = modpow(*(unsigned long *)buffer, _rsaD, _rsaN);
+      DisconnectHook_InitRecvCipher((int)plain);
       if (ShareInfo.randenc) {
         _seed = (int)plain;
-        launcherdll_net_log("[my_recv] randenc mode: seed=%d", _seed);
+        launcherdll_net_log("[my_recv] randenc=1 LCG seed=%d", _seed);
       } else {
         _xorByte = (unsigned char)((plain % 255) + 1);
+        launcherdll_net_log("[my_recv] randenc=0 xorByte=0x%02X plain=%lu",
+                            (unsigned)_xorByte, plain);
       }
     }
     inited = true;
   }
   int ret = real_recv(s, buf, len, flag);
+  if (ret <= 0) {
+    int err = (ret < 0) ? WSAGetLastError() : 0;
+    if (ret < 0 && err == WSAEWOULDBLOCK) {
+      // Non-blocking socket with nothing available yet; not a disconnect.
+      return ret;
+    }
+    launcherdll_net_log(
+        "[my_recv] socket=%u ret=%d WSAGetLastError=%d (connection closed/error)",
+        (unsigned)s, ret, err);
+    DisconnectHook_OnRecvClosed();
+    return ret;
+  }
+  if (ret > 0) {
+    // 密米爾之泉：偽裝成 opcode132 (S_OPCODE_HIRESOLDIERLIST) 的封包在這裡被
+    // 整段攔截、拿掉，原生 ProcessPacket 跟下面的 log/DisconnectHook 都看不到
+    // 這段位元組。必須放在其他任何處理 buf 的邏輯之前。
+    MimirPowerHook_OnRecv((unsigned char *)buf, ret);
+  }
   if (ret > 0) {
     unsigned char opcode = (unsigned char)buf[0];
     char hex[512] = {0};
@@ -550,13 +620,13 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
     bytes_to_hex_preview((const BYTE *)buf, ret, hex, sizeof(hex), 64);
     bytes_to_ascii_preview((const BYTE *)buf, ret, ascii, sizeof(ascii), 32);
 
-    // 診斷用：驗證 _xorByte 有沒有失步。固定 XOR 模式下，把收到的原始 bytes
-    // 用 _xorByte 解出來，前 2 bytes 是長度標頭，理論上解出來的長度應該永遠
-    // 等於這次 recv 實際收到的位元組數（ret）。只要哪一筆對不上，就是從那筆
-    // 封包（或更早）開始 XOR 已經失步、後面的內容全部是亂碼。
     unsigned decodedLen = 0xFFFFFFFFu;
     bool lenMismatch = false;
     char decodedHex[512] = {0};
+
+    // S2C 長度頭是明文；payload 走天堂自身加密。xorByte 反解只在 randenc=0 當 log 對照。
+    DisconnectHook_InspectRecvPlain((const unsigned char *)buf, ret);
+
     if (ShareInfo.encrypt && !ShareInfo.randenc && inited && ret >= 2) {
       BYTE decoded[4096];
       int decodeCount = (ret < (int)sizeof(decoded)) ? ret : (int)sizeof(decoded);
@@ -573,18 +643,24 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
           hex, ascii);
     } else {
       launcherdll_net_log(
-          "[my_recv] socket=%u ret=%d opcode=0x%02X inited=%d encrypt=%d "
-          "xorByte=0x%02X decodedLen=%u %s decodedHex=[%s]",
+          "[my_recv] socket=%u ret=%d opcode=0x%02X inited=%d encrypt=%d randenc=%d "
+          "xorByte=0x%02X decodedLen=%u %s decodedHex=[%s] rawHex=[%s]",
           (unsigned)s, ret, (unsigned)opcode, (int)inited,
-          (int)ShareInfo.encrypt, (unsigned)_xorByte, decodedLen,
-          lenMismatch ? "*** MISMATCH ***" : "(match)", decodedHex);
+          (int)ShareInfo.encrypt, (int)ShareInfo.randenc, (unsigned)_xorByte, decodedLen,
+          lenMismatch ? "*** MISMATCH ***" : "(match)", decodedHex, hex);
     }
   }
   return ret;
 }
 
 // =============================================================================
-// Window Hook（視窗建立 / 標題隨機化 / MessageBox）
+// Window Hook（視窗建立 / 標題隨機化）
+//
+// 對照 L1J3.8Launcher(RUST)參考：
+//   - 時間保護／PATCHCODE1 → PatchThread（對齊 patch.rs::wait_and_patch）
+//   - 帳密／Login77        → InstallLogin77Hooks（對齊 login.rs）
+//   - CreateWindowEx 只負責 UI：標題隨機化、g_hGameWnd、Helper、可選 GetFileData
+//   - MessageBoxA/W Detour：斷線期間條件吞掉（見 DisconnectHook.cpp）
 // =============================================================================
 HWND(WINAPI *real_CreateWindowEx)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int,
                                   int, HWND, HMENU, HINSTANCE,
@@ -592,70 +668,61 @@ HWND(WINAPI *real_CreateWindowEx)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int,
 HWND(WINAPI *real_CreateWindowExW)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int,
                                    int, int, HWND, HMENU, HINSTANCE,
                                    LPVOID) = CreateWindowExW;
+
+// 遊戲主窗 class "Lineage" 首次建立：只裝 UI 側（登入／PATCHCODE1 已移出）。
+static void OnLineageWindowCreating() {
+  if (g_hooked)
+    return;
+  g_hooked = true;
+  launcherdll_net_log(
+      "[Hook] CreateWindowEx(Lineage): title/helper/GetFileData only");
+
+  if (buffer != NULL) {
+    HookCode((void *)0x0058788B, (void *)GetFileData, 5);
+    launcherdll_net_log("[Hook] Core Pak loading (GetFileData) RESTORED.");
+  }
+
+  if (!h_hook) {
+    h_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)HookProc, hins,
+                              GetCurrentThreadId());
+  }
+}
+
+static void MakeRandomTitleA(char *out, size_t outLen) {
+  srand(GetTickCount());
+  char randomStr[16]{};
+  for (int i = 0; i < 8; i++) {
+    if (i < 4)
+      randomStr[i] = 'A' + (rand() % 26);
+    else
+      randomStr[i] = '0' + (rand() % 10);
+  }
+  randomStr[8] = '\0';
+  sprintf_s(out, outLen, "%s", randomStr);
+}
+
 static HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
                               LPCSTR lpWindowName, DWORD dwStyle, int x, int y,
                               int nWidth, int nHeight, HWND hWndParent,
                               HMENU hMenu, HINSTANCE hInstance,
                               LPVOID lpParam) {
-  HWND hWndRet;
-  bool bCreate = false;
+  bool isLineage = false;
   launcherdll_net_log(
       "[CreateWindowExA] class='%s' title='%s'",
       (lpClassName && HIWORD(lpClassName) != 0) ? lpClassName : "(atom)",
       (lpWindowName && HIWORD(lpWindowName) != 0) ? lpWindowName : "(null)");
   if (lpClassName && HIWORD(lpClassName) != 0 &&
       _stricmp(lpClassName, "Lineage") == 0) {
-    if (!g_hooked) {
-      g_hooked = true;
-      launcherdll_net_log(
-          "[Hook] CreateWindowEx triggered, installing patches");
-      // 恢復原始 LinProject3.8 的補丁：0x859001B0 (強制遊戲核心使用純文字連線)
-      DWORD forceDisableEnc = 0x859001B0;
-      PatchCode((void *)0x00722761, &forceDisableEnc, sizeof(DWORD));
-      // 恢復原始 LinProject3.8 的補丁與全掛鉤功能
-      PatchCode((void *)0x00772BA0, (void *)path_code, sizeof(path_code));
-
-      HookCode((void *)USER_HOOK_ADDR, (void *)GetUsername,
-               USER_RETN_ADDR - USER_HOOK_ADDR);
-      HookCode((void *)PASS_HOOK_ADDR, (void *)GetPassword,
-               PASS_RETN_ADDR - PASS_HOOK_ADDR);
-      HookCode((void *)SETID_HOOK_ADDR, (void *)SetIdPass,
-               SETID_RETN_ADDR - SETID_HOOK_ADDR);
-
-      if (buffer != NULL) {
-        HookCode((void *)0x0058788B, (void *)GetFileData, 5);
-      }
-      
-      launcherdll_net_log("[Hook] Core Pak loading (GetFileData) RESTORED.");
-      
-      launcherdll_net_log("[Hook] ALL hooks and patches RESTORED for full functionality.");
-
-      // --- Helper 輔助對話框安裝 ---
-      if (!h_hook) {
-        h_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)HookProc, hins,
-                                  GetCurrentThreadId());
-      }
-    }
-    srand(GetTickCount());
-    char randomStr[16]{};
-    for (int i = 0; i < 8; i++) {
-      if (i < 4)
-        randomStr[i] = 'A' + (rand() % 26);
-      else
-        randomStr[i] = '0' + (rand() % 10);
-    }
-    randomStr[8] = '\0';
-    sprintf_s(szTitle, "%s", randomStr);
+    OnLineageWindowCreating();
+    MakeRandomTitleA(szTitle, sizeof(szTitle));
     lpWindowName = szTitle;
-    bCreate = true;
+    isLineage = true;
   }
-  hWndRet = real_CreateWindowEx(dwExStyle, lpClassName, lpWindowName, dwStyle,
-                                x, y, nWidth, nHeight, hWndParent, hMenu,
-                                hInstance, lpParam);
-  if (bCreate && hWndRet != NULL) {
+  HWND hWndRet = real_CreateWindowEx(dwExStyle, lpClassName, lpWindowName,
+                                     dwStyle, x, y, nWidth, nHeight, hWndParent,
+                                     hMenu, hInstance, lpParam);
+  if (isLineage && hWndRet != NULL)
     g_hGameWnd = hWndRet;
-  }
-
   return hWndRet;
 }
 
@@ -664,55 +731,25 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
                                int y, int nWidth, int nHeight, HWND hWndParent,
                                HMENU hMenu, HINSTANCE hInstance,
                                LPVOID lpParam) {
+  bool isLineage = false;
+  static wchar_t szTitleW[32];
   if (lpClassName && HIWORD(lpClassName) != 0 &&
       _wcsicmp(lpClassName, L"Lineage") == 0) {
-    // (W) 寬字元版本處理邏輯與 ANSI 版本類似，以 A 版為主
-    if (!g_hooked) {
-      // 同 my_CreateWindowEx 流程，僅安裝鍵盤 Hook
-      g_hooked = true;
-      if (!h_hook)
-        h_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)HookProc, hins,
-                                  GetCurrentThreadId());
-    }
-    srand(GetTickCount());
-    static wchar_t szTitleW[32];
-    char randomStr[16];
-    for (int i = 0; i < 8; i++) {
-      if (i < 4)
-        randomStr[i] = 'A' + (rand() % 26);
-      else
-        randomStr[i] = '0' + (rand() % 10);
-    }
-    randomStr[8] = '\0';
-    swprintf_s(szTitleW, 32, L"%hs", randomStr);
+    OnLineageWindowCreating();
+    MakeRandomTitleA(szTitle, sizeof(szTitle));
+    swprintf_s(szTitleW, 32, L"%hs", szTitle);
     lpWindowName = szTitleW;
+    isLineage = true;
   }
   HWND hWnd = real_CreateWindowExW(dwExStyle, lpClassName, lpWindowName,
                                    dwStyle, x, y, nWidth, nHeight, hWndParent,
                                    hMenu, hInstance, lpParam);
-
+  if (isLineage && hWnd != NULL)
+    g_hGameWnd = hWnd;
   return hWnd;
 }
 
-// MessageBox
-int(WINAPI *real_MessageBoxA)(HWND, LPCSTR, LPCSTR, UINT) = MessageBoxA;
-int(WINAPI *real_MessageBoxW)(HWND, LPCWSTR, LPCWSTR, UINT) = MessageBoxW;
-static int WINAPI my_MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption,
-                          UINT uType) {
-  launcherdll_net_log("[MessageBoxA] Caption='%s', Text='%s'", 
-      lpCaption ? lpCaption : "(null)", 
-      lpText ? lpText : "(null)");
-  return real_MessageBoxA(hWnd, lpText, lpCaption, uType);
-}
-
-static int WINAPI my_MessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption,
-                          UINT uType) {
-  // 注意：日誌使用 %ls 來處理寬字元
-  launcherdll_net_log("[MessageBoxW] Caption='%ls', Text='%ls'", 
-      lpCaption ? lpCaption : L"(null)", 
-      lpText ? lpText : L"(null)");
-  return real_MessageBoxW(hWnd, lpText, lpCaption, uType);
-}
+// MessageBox Detour 實作見 DisconnectHook.cpp（斷線 Layered 彈窗）
 
 // 設定檔解密 / 檔案讀取（純 XOR 還原 + 虛擬編譯模式）
 // =============================================================================
@@ -1023,17 +1060,10 @@ namespace EquipUiPatch {
 } // namespace EquipUiPatch
 
 // =============================================================================
-// PatchThread：遊戲記憶體補丁執行緒
-// 目的：將地址 0x004E204E 的條件跳轉指令 JNZ (0F 85) 改為無條件跳轉 JMP (90 E9)
-//       藉此繞過遊戲內部的某項檢查邏輯（例如版本驗證或功能限制）
-//
-// 時序：由 DelayedDetourThread 在保護殼解密完成後啟動
-//       此時遊戲程式碼已還原為原始指令，可以安全地讀取與修改
-//
-// x86 指令對照：
-//   修改前 (記憶體中的位元組): 0F 85 97 00 → JNZ rel32（條件跳轉：ZF=0 才跳）
-//   修改後 (記憶體中的位元組): 90 E9 97 00 → NOP + JMP
-//   rel32（無條件跳轉：永遠跳） 效果：原本有條件才執行的分支，變成永遠執行
+// PatchThread：對齊 Rust patch.rs::wait_and_patch（進程內版）
+//   1) 0x004E204E：JNZ → NOP+JMP（ConditionalPatch）
+//   2) 0x00722761 ← 0x859001B0（PATCHCODE1）
+// 時序：DelayedDetourThread 在保護殼解密完成後啟動
 // =============================================================================
 static DWORD WINAPI PatchThread(void *p) {
   __try {
@@ -1044,11 +1074,14 @@ static DWORD WINAPI PatchThread(void *p) {
 
         DWORD kernelPatch = 0x0097E990;
         PatchCode((void *)0x004E204E, &kernelPatch, sizeof(DWORD));
-        launcherdll_net_log("[Patch] 1. 核心診斷補丁已套用 @0x004E204E ");
+        launcherdll_net_log("[Patch] 1. ConditionalPatch @0x004E204E ");
+
+        // ↔ Rust PATCHCODE1_ADDR / PATCHCODE1_VAL
+        DWORD patchCode1 = 0x859001B0;
+        PatchCode((void *)0x00722761, &patchCode1, sizeof(DWORD));
+        launcherdll_net_log("[Patch] 2. PATCHCODE1 @0x00722761 = 0x859001B0 ");
 
         // 裝備欄擴展 A+B+D（AOB 動態定位，14->31，對照 Rust src/equip_ui.rs）。
-        // 舊版寫死位址（L1Offsets::PatchTargets）稽核時比對正式 dump 發現完全對不上，
-        // 已移除，改用這裡的特徵碼掃描版本，見上方 EquipUiPatch 命名空間。
         EquipUiPatch::InstallAll();
 
         break;
@@ -1118,16 +1151,26 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
                reinterpret_cast<PVOID>(my_CreateWindowEx));
   DetourAttach(&(PVOID &)real_CreateWindowExW,
                reinterpret_cast<PVOID>(my_CreateWindowExW));
+  // 斷線：條件吞掉原生 MessageBox 白窗（見 DisconnectHook）
   DetourAttach(&(PVOID &)real_MessageBoxA,
                reinterpret_cast<PVOID>(my_MessageBoxA));
   DetourAttach(&(PVOID &)real_MessageBoxW,
                reinterpret_cast<PVOID>(my_MessageBoxW));
+  DetourAttach(&(PVOID &)real_closesocket,
+               reinterpret_cast<PVOID>(my_closesocket));
   LONG detourResult = DetourTransactionCommit();
   launcherdll_net_log("[DelayedDetour] DetourTransactionCommit result=%ld",
                       detourResult);
 
-  // [恢復] 啟動 PatchThread 對遊戲核心進行診斷性補丁
+  // wait_and_patch（ConditionalPatch + PATCHCODE1）+ 裝備欄等
   CloseHandle(CreateThread(NULL, 0, PatchThread, NULL, 0, NULL));
+
+  // 對齊 Rust login.rs：解殼後立刻裝 USER/PASS/Login77（不綁 CreateWindowEx）
+  InstallLogin77Hooks();
+
+  // S_Disconnect Layered 彈窗：ProcessPacket cave + overlay UI thread
+  InstallDisconnectHooks();
+
   // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動
   // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
 

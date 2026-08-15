@@ -17,6 +17,12 @@ namespace LinEncoder
                 FtpPasswordBox.Password = vm.FtpPassword;
         }
 
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (DataContext is EncoderViewModel vm)
+                vm.PersistSettings();
+        }
+
         private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.ChangedButton == System.Windows.Input.MouseButton.Left)

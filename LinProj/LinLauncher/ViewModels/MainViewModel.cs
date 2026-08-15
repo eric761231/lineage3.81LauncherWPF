@@ -34,8 +34,46 @@ namespace LinLauncher.ViewModels
         private DateTime _lastServerRefreshUtc = DateTime.MinValue;
         private bool _canRefreshServers = true;
         private readonly DispatcherTimer _maintenanceCountdownTimer;
+        private bool _windowed = true;
+        private uint _windowMode = 5;
+        private bool _prefsReady;
 
         public ObservableCollection<ServerInfo> Servers { get => _servers; set { _servers = value; OnPropertyChanged(); } }
+
+        /// <summary>視窗模式偏好（預設 true，對齊 Rust）。</summary>
+        public bool Windowed
+        {
+            get => _windowed;
+            set
+            {
+                if (_windowed == value) return;
+                _windowed = value;
+                OnPropertyChanged();
+                PersistDisplayPrefs();
+            }
+        }
+
+        /// <summary>WindowMode 4..=7（預設 5=800x600）。</summary>
+        public uint WindowMode
+        {
+            get => _windowMode;
+            set
+            {
+                uint mode = value is >= 4 and <= 7 ? value : 5u;
+                if (_windowMode == mode) return;
+                _windowMode = mode;
+                OnPropertyChanged();
+                PersistDisplayPrefs();
+            }
+        }
+
+        public IReadOnlyList<WindowModeOption> WindowModeOptions { get; } = new[]
+        {
+            new WindowModeOption(4, "400×300"),
+            new WindowModeOption(5, "800×600"),
+            new WindowModeOption(6, "1200×900"),
+            new WindowModeOption(7, "1600×1200"),
+        };
         public ServerInfo? SelectedServer
         {
             get => _selectedServer;
@@ -117,6 +155,21 @@ namespace LinLauncher.ViewModels
             catch (Exception ex)
             {
                 StartupLog.Append("MainViewModel: LoadConfigFromResource 失敗", ex);
+            }
+
+            try
+            {
+                UserDisplayPrefs prefs = UserPrefsService.Load();
+                _windowed = prefs.Windowed;
+                _windowMode = prefs.WindowMode is >= 4 and <= 7 ? prefs.WindowMode : 5u;
+                _prefsReady = true;
+                OnPropertyChanged(nameof(Windowed));
+                OnPropertyChanged(nameof(WindowMode));
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("MainViewModel: 載入顯示偏好失敗", ex);
+                _prefsReady = true;
             }
 
             _ = InitializeAsync();
@@ -774,9 +827,28 @@ namespace LinLauncher.ViewModels
                 StatusText = "Ready";
                 return;
             }
-            bool launched = await _launchService.LaunchGameAsync(SelectedServer, gameExe, dllPath, "", "");
+            bool launched = await _launchService.LaunchGameAsync(
+                SelectedServer, gameExe, dllPath, "", "", Windowed, WindowMode);
             if (launched) StatusText = "Game Running...";
             else { StatusText = "Launch failed!"; IsBusy = false; }
         }
+
+        private void PersistDisplayPrefs()
+        {
+            if (!_prefsReady) return;
+            UserPrefsService.Save(new UserDisplayPrefs { Windowed = Windowed, WindowMode = WindowMode });
+        }
+    }
+
+    public sealed class WindowModeOption
+    {
+        public WindowModeOption(uint value, string label)
+        {
+            Value = value;
+            Label = label;
+        }
+
+        public uint Value { get; }
+        public string Label { get; }
     }
 }

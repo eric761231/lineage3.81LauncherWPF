@@ -85,10 +85,17 @@ namespace LinLauncher.Services
                                      Array.Copy(encryptedData, raw, nativeSize);
                                      ServerListEntryNative native = ByteToStruct<ServerListEntryNative>(raw);
                                      ServerInfo info = ServerInfo.FromNative(native);
+                                     // wchar BdFile 後面的 bool 用 Marshal 容易讀丟；改跟 RUST
+                                     // server_list.rs 一樣從 213-byte 偏移取旗標（encrypt=+0x75, randkey=+0xB8）。
+                                     if (raw.Length > 184)
+                                     {
+                                         info.Encrypt = raw[117] != 0;
+                                         info.RandKey = raw[184] != 0;
+                                     }
                                      if (!string.IsNullOrEmpty(info.Name))
                                      {
                                          servers.Add(info);
-                                         System.Diagnostics.Debug.WriteLine($"Loaded server: {info.Name}");
+                                         StartupLog.Append($"[清單] {info.Name} encrypt={info.Encrypt} randkey={info.RandKey} {info.Ip}:{info.Port}");
                                      }
                                  }
                                  catch (Exception ex)

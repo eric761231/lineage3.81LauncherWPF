@@ -1,0 +1,55 @@
+<MimirUI>
+  <!-- width/height: 視窗基準像素尺寸（未縮放）。refW/refH: 這個版面是照多大的遊戲
+       視窗解析度設計的，實際顯示時會依目前遊戲視窗大小等比例縮放。
+       posX/posY: 相對遊戲視窗 client area 左上角的偏移量（同 refW/refH 座標系），
+       不填就自動置中在遊戲視窗正中央。bg: 背景圖檔名（pak 裡的 entry 名稱）。 -->
+  <Window width="380" height="700" refW="1153" refH="798" posX="600" posY="60" bg="mimir_bg.png"/>
+
+  <Title text="日常活躍" rect="0,20,380,40" fontSize="22" color="C9A6FF"
+         fontFamily="標楷體" align="center"/>
+
+  <!-- rect 是「第一列」的位置跟大小，第二列、第三列（固定 3 筆）自動往下疊
+       (height + spacing)，不用每列都寫一次。 -->
+  <RowLayout rect="20,80,340,64" spacing="8" iconSize="48" fontSize="16" color="FFFFFF"/>
+  <!-- normal: 卡片底圖。hover: 發亮邊框，滑鼠移過或該項目還在「選取待確認」時
+       都會疊在 normal 上面（不是整張換掉），沒有 hover 圖就退回純色高亮。
+       按下方確認鈕才是真的送出選擇，這裡不需要另外一張「已選中」的圖。 -->
+  <RowImage normal="row_bg.png" hover="row_bg_hover.png"/>
+
+  <!-- 詳情卡：一開視窗就顯示（預設用伺服器送的 defaultDetail 資料），玩家點了
+       某一筆卡片才換成那筆的資料。name 是粗體標題，desc 是換行本文。 -->
+  <Detail rect="20,320,340,110" iconSize="64" nameFontSize="18" descFontSize="14"
+          color="FFFFFF" bg="detail_bg.png"/>
+
+  <!-- 詳情卡下方 2 欄統計格（效果類型/來源/持續時間...），純版面佔位，目前封包
+       沒有帶這些資料，所以是寫死的靜態文字，不是每個選項各自不同。不需要就把
+       下面幾行 <DetailStat> 刪掉即可，一筆都沒有就完全不畫這塊。 -->
+  <DetailStats rect="20,440,340,60" fontSize="12" color="999999"/>
+  <!--
+  <DetailStat label="效果類型" value="被動效果"/>
+  <DetailStat label="來源" value="日常活躍獎勵"/>
+  <DetailStat label="持續時間" value="24 小時"/>
+  <DetailStat label="是否可疊加" value="否"/>
+  <DetailStat label="冷卻時間" value="無"/>
+  <DetailStat label="PVP" value="適用"/>
+  -->
+
+  <!-- 起始秒數是伺服器送的（S 包最後一個 DWORD），client 收到後每秒往下扣顯示，
+       不會自己另外猜時間。 -->
+  <Countdown rect="20,510,340,20" fontSize="13" color="AAAAAA"
+             prefix="選擇將於 " suffix=" 後更新"/>
+
+  <ConfirmButton rect="20,540,340,44" normal="btn_confirm.png" hover="btn_confirm_hover.png"
+                 pressed="btn_confirm_pressed.png" fontSize="18" color="FFFFFF" text="選擇此能力"/>
+
+  <!-- 右上角關閉鈕（X）：純粹關掉視窗，不送任何封包回伺服器 -->
+  <CloseButton rect="344,12,364,32" normal="btn_close.png" hover="btn_close_hover.png"
+               pressed="btn_close_pressed.png"/>
+
+  <!-- iconId 對照不到就用這張 -->
+  <DefaultIcon file="icon_default.png"/>
+  <!-- 每個 iconId（S 包裡的「選項圖片編號」欄位）對應的圖示檔名，之後照 Java 端
+       實際的編號清單增補即可，不用改程式碼、也不用重新編譯 DLL，改完重新執行
+       Pack-DisconnectUiAssets.ps1（帶 -SourceFolder/-Files 參數指到這個資料夾）就好 -->
+  <Icon iconId="1555" file="icon_dmg_reduce.png"/>
+</MimirUI>

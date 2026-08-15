@@ -1,0 +1,50 @@
+<!--
+  DisconnectOverlay 外部文字設定範例。
+  必須存成 UTF-8。跟 bg_disconnect.png 放在同一個資料夾，
+  用 Pack-DisconnectUiAssets.ps1 打包成 disconnect_ui.pak/.idx。
+
+  每個標籤請各自佔一行（跟 LauncherDll.cpp 裡 bloodeffect.xml 的手刻解析器
+  相容，不是真正的 XML parser，屬性順序不重要，但一個標籤不要跨行）。
+
+  <Screen mode="disconnect" title="..." width=".." height=".."
+          refW=".." refH=".." posX=".." posY=".."
+          btnX=".." btnY=".." btnW=".." btnH=".."
+          titleRect="x,y,w,h" bodyRect="x,y,w,h"
+          titleFontSize=".." bodyFontSize=".."
+          showTitle="true|false" titleAlign="left|center" bodyAlign="left|center">
+    <Body reason="default 或數字">...</Body>   可重複，依 reason code 客製文字
+  </Screen>
+
+  posX/posY：覆蓋層左上角座標（相對遊戲視窗 client area 左上角，同一個
+  refW/refH 座標系）。沒填的話會自動置中在遊戲視窗正中間；native 的斷線視窗
+  沒有剛好在正中間的話，填這個對齊。
+
+  showTitle="false"：完全不畫標題文字。預設 true（畫）。
+
+  titleAlign/bodyAlign="center"：文字水平+垂直都置中在 titleRect/bodyRect
+  （或沒設就是整個視窗扣掉邊界）範圍正中間；內文多行文字也會正確整塊置中。
+  預設是 "left"。
+
+  width/height：視窗顯示大小（像素）。沒填的話用 bg_disconnect.png 原始尺寸；
+  有填的話會把圖片拉伸/縮放到這個尺寸再顯示。
+
+  refW/refH：填調整 width/height/btn/text 座標時，遊戲 client area 解析度
+  （例如 1024x768）。有填才會等比例隨遊戲視窗縮放。
+
+  btnX/Y/W/H：確認按鈕的點擊熱區（像素，相對於 width/height 座標系）。
+
+  titleRect/bodyRect="x,y,w,h"：標題/內文文字顯示位置。
+
+  body_<reason> 找不到時退回 body_default；再沒有就用程式內建中文對照表。
+-->
+<DisconnectUI>
+  <Screen mode="disconnect" width="194" height="143"
+          refW="1153" refH="798" posX="466" posY="312"
+          btnX="62" btnY="105" btnW="70" btnH="28"
+          bodyFontSize="20"
+          showTitle="false" bodyAlign="center">
+    <Body reason="default">連線中斷。</Body>
+    <Body reason="44">連線中斷。</Body>
+    <Body reason="22">有人以同樣的帳號登入，請注意，您的密碼可能已經外洩。</Body>
+  </Screen>
+</DisconnectUI>

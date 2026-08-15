@@ -40,18 +40,33 @@ namespace LinLauncher.Services
         public event EventHandler? GameExited;
 
         /// <summary>
-        /// 啟動遊戲核心流程：1. 檢查檔案 2. 掛起建立進程 3. 設定共享記憶體 4. 注入 DLL 5. 恢復執行。
-        /// (Core game launch flow: 1. Check files 2. Create suspended process 3. Setup SHM 4. Inject DLL 5. Resume.)
+        /// 啟動遊戲核心流程：1. 顯示模式／相容性旗標 2. 掛起建立進程 3. 設定共享記憶體 4. 注入 DLL 5. 恢復執行。
         /// </summary>
-        public async Task<bool> LaunchGameAsync(ServerInfo server, string gameExePath, string dllPath, string account, string password)
+        /// <param name="windowed">true=視窗模式（對齊 Rust 預設）；false=全螢幕。</param>
+        /// <param name="windowMode">視窗解析度代碼 4..=7（預設 5=800x600）。</param>
+        public async Task<bool> LaunchGameAsync(
+            ServerInfo server,
+            string gameExePath,
+            string dllPath,
+            string account,
+            string password,
+            bool windowed = true,
+            uint windowMode = 5)
         {
             if (!File.Exists(gameExePath) || !File.Exists(dllPath)) return false;
+
+            string? dir = Path.GetDirectoryName(gameExePath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                uint mode = windowMode is >= 4 and <= 7 ? windowMode : 5u;
+                LineageCfgService.ApplyDisplayMode(dir, windowed, mode);
+                CompatFlagsService.ApplyForLaunch(gameExePath, windowed);
+            }
 
             var si = new NativeMethods.STARTUPINFO();
             si.cb = (uint)Marshal.SizeOf(si);
             var pi = new NativeMethods.PROCESS_INFORMATION();
 
-            string? dir = Path.GetDirectoryName(gameExePath);
             bool success = NativeMethods.CreateProcess(gameExePath, null, IntPtr.Zero, IntPtr.Zero, false,
                 NativeMethods.ProcessCreationFlags.Suspended, IntPtr.Zero, dir!, ref si, out pi);
 
@@ -106,6 +121,7 @@ namespace LinLauncher.Services
                     Process.GetProcessById((int)pi.dwProcessId).Kill();
                     return false;
                 }
+                StartupLog.Append($"LaunchGame: SHM {server.Name} encrypt={server.Encrypt} randenc={server.RandKey} {server.Ip}:{server.Port}");
                 if (!InjectDll(pi.dwProcessId, dllPath))
                 {
                     System.Windows.MessageBox.Show("DLL Injection failed!");

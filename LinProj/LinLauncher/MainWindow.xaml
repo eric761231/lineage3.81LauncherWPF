@@ -220,6 +220,16 @@
                     </ListBox>
 
                     <StackPanel Grid.Row="2" Margin="0,20,0,5">
+                        <DockPanel Margin="0,0,0,10" LastChildFill="False">
+                            <CheckBox DockPanel.Dock="Left" Content="視窗模式" IsChecked="{Binding Windowed}"
+                                      Foreground="#CCCCCC" FontSize="12" VerticalAlignment="Center"/>
+                            <ComboBox DockPanel.Dock="Right" Width="120" VerticalAlignment="Center"
+                                      ItemsSource="{Binding WindowModeOptions}"
+                                      SelectedValue="{Binding WindowMode}"
+                                      SelectedValuePath="Value"
+                                      DisplayMemberPath="Label"
+                                      IsEnabled="{Binding Windowed}"/>
+                        </DockPanel>
                         <Button Command="{Binding StartCommand}" Style="{StaticResource StartButtonStyle}" Height="60" Content="{Binding StartButtonCaption}" FontSize="22" FontWeight="Bold"/>
                     </StackPanel>
                 </Grid>
