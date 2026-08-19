@@ -58,13 +58,14 @@ struct MimirUiConfig {
   RectCfg titleRect;
   int titleFontSize = 22;
   COLORREF titleColor = RGB(0xC9, 0xA6, 0xFF);
-  std::wstring titleFontFamily = L"標楷體";
+  std::wstring titleFontFamily = L"微軟正黑體";
   bool titleCenter = true;
 
   RectCfg rowRect; // first row's rect; subsequent rows stack below by (height+spacing)
   int rowSpacing = 8;
   int rowIconSize = 48;
   int rowFontSize = 16;
+  int rowTextLeftMin = 110; // 選項列文字離左邊界至少多遠，XML 可調，不用重編 DLL
   COLORREF rowColor = RGB(0xFF, 0xFF, 0xFF);
   TripleImage rowImages;
 
@@ -114,8 +115,13 @@ HWND g_threadHwnd = NULL;
 HANDLE g_thread = NULL;
 std::atomic<bool> g_visible{false};
 double g_scaleX = 1.0, g_scaleY = 1.0;
+// 玩家拖曳過視窗之後設 true：PositionWindow 之後就不再把視窗拉回置中/設定位置，
+// 不然 PaintLayered 幾乎每次滑鼠移動、每秒倒數都會重畫，若每次都重新置中，玩家
+// 剛拖完手一放視窗就彈回去，等於永遠拖不動。這個 flag 故意不會在 WM_SHOW_MIMIR
+// 時重置——視窗只是 SW_HIDE，位置本來就還在，讓玩家下次重新打開時停在上次拖過
+// 的地方（同一次遊戲 session 內），不用每次都重新閃開背包等原生視窗一次。
+bool g_userMoved = false;
 
-DWORD g_objid = 0;
 MimirOption g_options[MIMIR_OPTION_COUNT];
 MimirOption g_defaultDetail;
 int g_selectedIndex = 0; // 一開視窗就預選第 0 筆（畫面上第一列亮起），玩家點別列才換
@@ -129,6 +135,9 @@ bool g_hoverClose = false;
 bool g_pressedClose = false;
 
 void NetLog(const char *fmt, ...) {
+  // 密米爾之泉功能已經確認穩定運作，暫時關掉這個檔案的 log，要恢復就把這行 return
+  // 拿掉。
+  return;
   char exePath[MAX_PATH] = {0};
   char logPath[MAX_PATH] = "./launcherdll_net.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
@@ -217,6 +226,22 @@ std::wstring Utf8ToWide(const char *utf8) {
   return w;
 }
 
+// Java 端 writeS() 送出的字串是 Big5（碼頁 950）雙位元組編碼，不是 UTF-8（這點
+// 是從真實封包 dump 逐 byte 比對確認的）。密米爾 name/desc 這兩個欄位是直接從
+// wire 讀出來的原始文字，要用這個轉換，不能用上面的 Utf8ToWide；mimir_ui.xml
+// 本身是我們自己準備的檔案，維持存 UTF-8，繼續用 Utf8ToWide。
+std::wstring Big5ToWide(const char *big5) {
+  if (!big5 || !big5[0])
+    return std::wstring();
+  int chars = MultiByteToWideChar(950, 0, big5, -1, NULL, 0);
+  if (chars <= 0)
+    return std::wstring();
+  std::wstring w;
+  w.resize((size_t)chars - 1);
+  MultiByteToWideChar(950, 0, big5, -1, &w[0], chars);
+  return w;
+}
+
 void ParseMimirXml(const BYTE *data, size_t len, MimirUiConfig *cfg) {
   size_t pos = 0;
   while (pos < len) {
@@ -275,6 +300,8 @@ void ParseMimirXml(const BYTE *data, size_t len, MimirUiConfig *cfg) {
         cfg->rowIconSize = atoi(buf);
       if (ExtractAttr(line, "fontSize", buf, sizeof(buf)))
         cfg->rowFontSize = atoi(buf);
+      if (ExtractAttr(line, "textLeftMin", buf, sizeof(buf)))
+        cfg->rowTextLeftMin = atoi(buf);
       cfg->rowColor = ExtractColor(line, "color", cfg->rowColor);
     } else if (strstr(line, "<RowImage")) {
       // normal: base card. hover: glow-border overlay drawn on top of normal
@@ -427,23 +454,45 @@ HFONT MakeFont(int ptSize, const std::wstring &family, bool bold) {
                      PROOF_QUALITY, 0x02, family.c_str());
 }
 
+// 沒有點陣字/描邊字型可用（原生介面的字型檔是遊戲自己的舊版點陣字格式，測過
+// AddFontResourceEx 載不進來），改用系統粗體字＋經典 GDI 描邊技巧模擬：先用外框
+// 色在上下左右四個方向各偏移 1px 畫一次，最後再用填色在正中央畫一次蓋上去，
+// 讓文字在淺色背景/深色背景下都比純色文字更好辨識。字型選取/呼叫端（HFONT 已
+// SelectObject 進 memDc）不變，這裡只是把單次 DrawTextW 換成 5 次。
+void DrawOutlinedText(HDC memDc, const RECT &rc, const std::wstring &text,
+                      COLORREF fillColor, COLORREF outlineColor, UINT dtFlags) {
+  static const int kOffsets[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+  SetTextColor(memDc, outlineColor);
+  for (auto &off : kOffsets) {
+    RECT r = rc;
+    OffsetRect(&r, off[0], off[1]);
+    DrawTextW(memDc, text.c_str(), -1, &r, dtFlags);
+  }
+  SetTextColor(memDc, fillColor);
+  RECT r = rc;
+  DrawTextW(memDc, text.c_str(), -1, &r, dtFlags);
+}
+
 // 卡片列表用：圖示 + 單行名稱（不換行、不顯示 desc）。
 void DrawRowContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const MimirOption &opt) {
   int iconSize = (int)(g_cfg.rowIconSize * g_scaleY + 0.5);
   Gdiplus::Bitmap *icon = GetImg(IconFileFor(opt.iconId));
-  int textLeft = rc.left + 8;
+  // 文字至少要離列左邊界 g_cfg.rowTextLeftMin px（xml <RowLayout textLeftMin="..">
+  // 可調，不用重編 DLL），不管圖示有沒有載入成功都一樣（圖示本身較寬時用圖示
+  // 實際寬度往右推，避免壓到圖示）。
+  int minTextLeft = rc.left + g_cfg.rowTextLeftMin;
+  int textLeft = minTextLeft;
   if (icon) {
     int iy = rc.top + ((rc.bottom - rc.top) - iconSize) / 2;
     g.DrawImage(icon, rc.left + 8, iy, iconSize, iconSize);
-    textLeft = rc.left + 8 + iconSize + 10;
+    textLeft = max(rc.left + 8 + iconSize + 10, minTextLeft);
   }
   HFONT font = MakeFont((int)(g_cfg.rowFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, false);
   HGDIOBJ old = SelectObject(memDc, font);
-  SetTextColor(memDc, g_cfg.rowColor);
   SetBkMode(memDc, TRANSPARENT);
   RECT textRc = {textLeft, rc.top, rc.right - 8, rc.bottom};
-  DrawTextW(memDc, Utf8ToWide(opt.name).c_str(), -1, &textRc,
-            DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_NOPREFIX);
+  DrawOutlinedText(memDc, textRc, Big5ToWide(opt.name), g_cfg.rowColor, RGB(0, 0, 0),
+                   DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_NOPREFIX);
   SelectObject(memDc, old);
   DeleteObject(font);
 }
@@ -462,11 +511,10 @@ void DrawDetailContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const Mi
   int nameFontSize = (int)(g_cfg.detailNameFontSize * g_scaleY + 0.5);
   HFONT nameFont = MakeFont(nameFontSize, g_cfg.titleFontFamily, true);
   HGDIOBJ oldName = SelectObject(memDc, nameFont);
-  SetTextColor(memDc, g_cfg.detailColor);
   SetBkMode(memDc, TRANSPARENT);
   RECT nameRc = {textLeft, rc.top + 12, rc.right - 12, rc.top + 12 + nameFontSize + 8};
-  DrawTextW(memDc, Utf8ToWide(opt.name).c_str(), -1, &nameRc,
-            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX);
+  DrawOutlinedText(memDc, nameRc, Big5ToWide(opt.name), g_cfg.detailColor, RGB(0, 0, 0),
+                   DT_SINGLELINE | DT_LEFT | DT_NOPREFIX);
   SelectObject(memDc, oldName);
   DeleteObject(nameFont);
 
@@ -474,8 +522,8 @@ void DrawDetailContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const Mi
   HFONT descFont = MakeFont(descFontSize, g_cfg.titleFontFamily, false);
   HGDIOBJ oldDesc = SelectObject(memDc, descFont);
   RECT descRc = {textLeft, nameRc.bottom + 4, rc.right - 12, rc.bottom - 12};
-  DrawTextW(memDc, Utf8ToWide(opt.desc).c_str(), -1, &descRc,
-            DT_WORDBREAK | DT_LEFT | DT_NOPREFIX);
+  DrawOutlinedText(memDc, descRc, Big5ToWide(opt.desc), g_cfg.detailColor, RGB(0, 0, 0),
+                   DT_WORDBREAK | DT_LEFT | DT_NOPREFIX);
   SelectObject(memDc, oldDesc);
   DeleteObject(descFont);
 }
@@ -493,7 +541,6 @@ void DrawDetailStats(Gdiplus::Graphics &g, HDC memDc) {
   int fontSize = (int)(g_cfg.detailStatsFontSize * g_scaleY + 0.5);
   HFONT font = MakeFont(fontSize, g_cfg.titleFontFamily, false);
   HGDIOBJ old = SelectObject(memDc, font);
-  SetTextColor(memDc, g_cfg.detailStatsColor);
   SetBkMode(memDc, TRANSPARENT);
 
   int colW = (rc.right - rc.left) / 2;
@@ -505,7 +552,8 @@ void DrawDetailStats(Gdiplus::Graphics &g, HDC memDc) {
                    rc.left + (col + 1) * colW, rc.top + (row + 1) * rowH};
     std::wstring line = L"◇" + g_cfg.detailStats[i].first + L"：" +
                         g_cfg.detailStats[i].second; // ◇label：value
-    DrawTextW(memDc, line.c_str(), -1, &cellRc, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_NOPREFIX);
+    DrawOutlinedText(memDc, cellRc, line, g_cfg.detailStatsColor, RGB(0, 0, 0),
+                     DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_NOPREFIX);
   }
   SelectObject(memDc, old);
   DeleteObject(font);
@@ -540,18 +588,20 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
     DeleteObject(bgBrush);
   }
 
-  // Title
-  RECT titleRc = ScaledRect(g_cfg.titleRect);
-  if (titleRc.right == 0)
-    titleRc = {0, (int)(16 * g_scaleY), winW, (int)(50 * g_scaleY)};
-  HFONT titleFont = MakeFont((int)(g_cfg.titleFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, true);
-  HGDIOBJ oldFont = SelectObject(memDc, titleFont);
-  SetTextColor(memDc, g_cfg.titleColor);
+  // Title：背景圖（bg）本身已經把標題文字畫進去了，只有背景圖沒載入成功時才
+  // 用程式碼畫的文字當備援，不然會跟圖裡的字疊成兩份。
   SetBkMode(memDc, TRANSPARENT);
-  DrawTextW(memDc, g_cfg.titleText.c_str(), -1, &titleRc,
-            (g_cfg.titleCenter ? DT_CENTER : DT_LEFT) | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
-  SelectObject(memDc, oldFont);
-  DeleteObject(titleFont);
+  if (!bg) {
+    RECT titleRc = ScaledRect(g_cfg.titleRect);
+    if (titleRc.right == 0)
+      titleRc = {0, (int)(16 * g_scaleY), winW, (int)(50 * g_scaleY)};
+    HFONT titleFont = MakeFont((int)(g_cfg.titleFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, true);
+    HGDIOBJ oldFont = SelectObject(memDc, titleFont);
+    DrawOutlinedText(memDc, titleRc, g_cfg.titleText, g_cfg.titleColor, RGB(0, 0, 0),
+                     (g_cfg.titleCenter ? DT_CENTER : DT_LEFT) | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+    SelectObject(memDc, oldFont);
+    DeleteObject(titleFont);
+  }
 
   // Rows: base card always drawn first, then (if hovered OR the pending
   // selection) the glow-border image is overlaid on top of it -- not a full
@@ -603,9 +653,9 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
   if (cdRc.right > cdRc.left) {
     HFONT cdFont = MakeFont((int)(g_cfg.countdownFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, false);
     HGDIOBJ oldCd = SelectObject(memDc, cdFont);
-    SetTextColor(memDc, g_cfg.countdownColor);
     std::wstring cd = CountdownText();
-    DrawTextW(memDc, cd.c_str(), -1, &cdRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+    DrawOutlinedText(memDc, cdRc, cd, g_cfg.countdownColor, RGB(0, 0, 0),
+                     DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
     SelectObject(memDc, oldCd);
     DeleteObject(cdFont);
   }
@@ -613,34 +663,49 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
   // Confirm button
   RECT btnRc = ScaledRect(g_cfg.confirmRect);
   if (btnRc.right > btnRc.left) {
-    Gdiplus::Bitmap *btnImg = g_pressedConfirm ? GetImg(g_cfg.confirmImages.pressed)
-                              : g_hoverConfirm ? GetImg(g_cfg.confirmImages.hover)
-                                               : GetImg(g_cfg.confirmImages.normal);
+    // hover/pressed 沒對應圖（例如只準備了 normal+pressed 兩張，沒有另外做 hover
+    // 圖）就退回 normal 圖，不要直接跳去下面純色方塊 fallback——純色方塊只在連
+    // normal 圖都沒載入成功時才該出現。
+    Gdiplus::Bitmap *normalImg = GetImg(g_cfg.confirmImages.normal);
+    Gdiplus::Bitmap *btnImg =
+        g_pressedConfirm
+            ? (GetImg(g_cfg.confirmImages.pressed) ? GetImg(g_cfg.confirmImages.pressed) : normalImg)
+        : g_hoverConfirm ? (GetImg(g_cfg.confirmImages.hover) ? GetImg(g_cfg.confirmImages.hover) : normalImg)
+                         : normalImg;
     if (btnImg) {
+      // 素材圖本身已經把「選擇此能力」畫進去了，圖有載入成功就不用再疊一次文字
+      // 上去，不然會變成兩份字疊在一起。
       g.DrawImage(btnImg, btnRc.left, btnRc.top, btnRc.right - btnRc.left, btnRc.bottom - btnRc.top);
     } else {
       HBRUSH b = CreateSolidBrush(g_pressedConfirm ? RGB(0x4A, 0x2C, 0x72) : RGB(0x6A, 0x3C, 0x9A));
       FillRect(memDc, &btnRc, b);
       DeleteObject(b);
+      HFONT btnFont = MakeFont((int)(g_cfg.confirmFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, true);
+      HGDIOBJ oldBtn = SelectObject(memDc, btnFont);
+      DrawOutlinedText(memDc, btnRc, g_cfg.confirmText, g_cfg.confirmColor, RGB(0, 0, 0),
+                       DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+      SelectObject(memDc, oldBtn);
+      DeleteObject(btnFont);
     }
-    HFONT btnFont = MakeFont((int)(g_cfg.confirmFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, true);
-    HGDIOBJ oldBtn = SelectObject(memDc, btnFont);
-    SetTextColor(memDc, g_cfg.confirmColor);
-    DrawTextW(memDc, g_cfg.confirmText.c_str(), -1, &btnRc,
-              DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
-    SelectObject(memDc, oldBtn);
-    DeleteObject(btnFont);
   }
 
-  // Close button (top-right X): dismisses the window, sends nothing.
+  // Close button (top-right X): dismisses the window, sends nothing. 只有一張
+  // 素材圖（沒有另外的 hover/pressed 圖），按下時直接把同一張圖往下移 1-2px 當
+  // 互動回饋，不需要額外素材。
   RECT closeRc = ScaledRect(g_cfg.closeRect);
   if (closeRc.right > closeRc.left) {
-    Gdiplus::Bitmap *closeImg = g_pressedClose ? GetImg(g_cfg.closeImages.pressed)
-                                : g_hoverClose  ? GetImg(g_cfg.closeImages.hover)
-                                                : GetImg(g_cfg.closeImages.normal);
+    Gdiplus::Bitmap *closeImg = GetImg(g_cfg.closeImages.normal);
     if (closeImg) {
-      g.DrawImage(closeImg, closeRc.left, closeRc.top, closeRc.right - closeRc.left,
+      int pressOffset = g_pressedClose ? max(1, (int)(2 * g_scaleY + 0.5)) : 0;
+      // 素材圖只有 33x32，跟顯示的方框幾乎 1:1，但整體 UI 又會依遊戲視窗大小再
+      // 縮放一次（g_scaleX/Y），縮放比例不是整數倍時，全域設定的
+      // HighQualityBicubic 對這種小圖示還是會糊。小圖示邊緣（X 字、金色外框）都
+      // 是硬邊，改用最近鄰內插比較銳利，畫完再切回原本的內插模式，不影響背景圖
+      // 等其他元素。
+      g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+      g.DrawImage(closeImg, closeRc.left, closeRc.top + pressOffset, closeRc.right - closeRc.left,
                   closeRc.bottom - closeRc.top);
+      g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     } else {
       HBRUSH b = CreateSolidBrush(g_pressedClose ? RGB(0x5A, 0x1A, 0x1A)
                                   : g_hoverClose  ? RGB(0x8A, 0x2A, 0x2A)
@@ -649,8 +714,8 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
       DeleteObject(b);
       HFONT xFont = MakeFont((int)(16 * g_scaleY + 0.5), g_cfg.titleFontFamily, true);
       HGDIOBJ oldX = SelectObject(memDc, xFont);
-      SetTextColor(memDc, RGB(0xFF, 0xFF, 0xFF));
-      DrawTextW(memDc, L"X", -1, &closeRc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+      DrawOutlinedText(memDc, closeRc, L"X", RGB(0xFF, 0xFF, 0xFF), RGB(0, 0, 0),
+                       DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
       SelectObject(memDc, oldX);
       DeleteObject(xFont);
     }
@@ -673,6 +738,14 @@ void ComputeWinSize(int *outW, int *outH) {
 }
 
 void PositionWindow(HWND hwnd, int winW, int winH) {
+  if (g_userMoved) {
+    // 玩家已經手動拖過，尊重目前位置，只更新尺寸（正常情況尺寸在同一次顯示中
+    // 不會變，但遊戲視窗被拉伸縮放時 winW/winH 可能跟著變，還是要跟上）。
+    RECT cur;
+    GetWindowRect(hwnd, &cur);
+    SetWindowPos(hwnd, NULL, cur.left, cur.top, winW, winH, SWP_NOZORDER | SWP_NOACTIVATE);
+    return;
+  }
   HWND game = g_hGameWnd;
   int x, y;
   if (game && IsWindow(game)) {
@@ -719,9 +792,10 @@ void PaintLayered(HWND hwnd) {
   HGDIOBJ oldBmp = SelectObject(memDc, bmp);
   DrawInto(memDc, bitsPtr, winW, winH);
 
-  // No real background art loaded -> force opaque so ULW_ALPHA doesn't show
-  // the fallback fill as see-through.
-  if (!GetImg(g_cfg.bgImage)) {
+  // 視窗本來就是矩形面板，不需要圓角/羽化透明邊緣。不管背景圖有沒有載入成功、
+  // 不管列高亮/按鈕文字這些 GDI fallback 有沒有補上 alpha，這裡一律把整個
+  // buffer 的 alpha 都設成 255，避免任何區域因為漏設 alpha 而穿幫透出遊戲畫面。
+  {
     BYTE *bits = (BYTE *)bitsPtr;
     size_t total = (size_t)winW * winH * 4;
     for (size_t i = 3; i < total; i += 4)
@@ -761,6 +835,22 @@ bool HitTestClose(int x, int y) {
   return rc.right > rc.left && x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom;
 }
 
+// 標題列當拖曳把手：滑鼠在這個區域按住拖曳可以移動整個視窗（見 WM_NCHITTEST）。
+// 排除掉右上角關閉鈕那塊，不然關閉鈕會被拖曳搶走點擊。標題文字現在畫進背景圖
+// 裡了，xml 不一定會設 <Title> 標籤（g_cfg.titleRect 可能沒設），拖曳熱區不能
+// 跟著消失，沒設就跟 DrawInto 同一套 fallback（視窗最上面那一條）。
+bool HitTestTitleDragZone(int x, int y) {
+  RECT rc = ScaledRect(g_cfg.titleRect);
+  if (rc.right <= rc.left) {
+    RECT client;
+    GetClientRect(g_hwnd, &client);
+    rc = {0, (int)(16 * g_scaleY), client.right, (int)(50 * g_scaleY)};
+  }
+  if (!(x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom))
+    return false;
+  return !HitTestClose(x, y);
+}
+
 void HideWindow(HWND hwnd) {
   g_visible.store(false);
   KillTimer(hwnd, TIMER_COUNTDOWN);
@@ -771,6 +861,10 @@ LRESULT CALLBACK MimirWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   switch (msg) {
   case WM_SHOW_MIMIR: {
     g_visible.store(true);
+    // 不重置 g_userMoved：視窗只是 SW_HIDE 不是銷毀，GetWindowRect 本來就還留著
+    // 玩家上次拖曳到的位置，PositionWindow 看到 g_userMoved==true 就會沿用那個
+    // 位置（只補尺寸），這樣同一次遊戲 session 內重新打開會停在玩家上次拖過的
+    // 地方，不會每次都彈回預設位置去擋到背包之類的原生視窗。
     g_selectedIndex = 0; // 預選第一項，跟 g_usingDefaultDetail 一起讓詳情卡一開就有東西
     g_usingDefaultDetail = true;
     g_hoverRow = -1;
@@ -781,13 +875,63 @@ LRESULT CALLBACK MimirWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     ShowWindow(hwnd, SW_SHOW);
     PaintLayered(hwnd);
     SetTimer(hwnd, TIMER_COUNTDOWN, 1000, NULL);
-    NetLog("[mimir-ui] shown objid=0x%08X countdown=%us", g_objid,
-           (unsigned)g_countdownTotalSeconds);
+    NetLog("[mimir-ui] shown countdown=%us", (unsigned)g_countdownTotalSeconds);
     return 0;
   }
   case WM_HIDE_MIMIR:
     if (g_visible.load())
       HideWindow(hwnd);
+    return 0;
+  case WM_NCHITTEST: {
+    // 標題列區域回報 HTCAPTION，讓 Windows 用內建的視窗拖曳機制處理移動（不用
+    // 自己手動追蹤滑鼠位移），其他區域照正常方式判斷（按鈕/清單才收得到滑鼠
+    // 訊息）。lp 在 WM_NCHITTEST 是螢幕座標，要先轉成這個視窗的 client 座標。
+    POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+    ScreenToClient(hwnd, &pt);
+    if (HitTestTitleDragZone(pt.x, pt.y))
+      return HTCAPTION;
+    return HTCLIENT;
+  }
+  case WM_WINDOWPOSCHANGING: {
+    // 標題列拖曳走的是 Windows 內建的 HTCAPTION 移動，中途每一步都會先送這個
+    // 訊息，在真正移動生效「之前」把座標夾在遊戲視窗範圍內，玩家會感覺拖到邊界
+    // 就卡住，而不是拖出去之後才彈回來（用 WM_MOVE 事後修正會抖動）。只在視窗
+    // 真的要移動（沒設 SWP_NOMOVE）且已經顯示時夾範圍，避免影響 PositionWindow
+    // 自己算好座標的初始定位（那時視窗還沒 SW_SHOW，或者是程式主動置中/回復
+    // 拖曳位置，不是玩家正在拖）。
+    WINDOWPOS *wp = (WINDOWPOS *)lp;
+    if (g_visible.load() && !(wp->flags & SWP_NOMOVE) && IsWindowVisible(hwnd)) {
+      HWND game = g_hGameWnd;
+      if (game && IsWindow(game)) {
+        RECT grc;
+        GetClientRect(game, &grc);
+        POINT tl = {0, 0};
+        ClientToScreen(game, &tl);
+        int minX = tl.x, minY = tl.y;
+        int maxX = tl.x + grc.right - wp->cx;
+        int maxY = tl.y + grc.bottom - wp->cy;
+        if (maxX < minX)
+          maxX = minX;
+        if (maxY < minY)
+          maxY = minY;
+        if (wp->x < minX)
+          wp->x = minX;
+        if (wp->x > maxX)
+          wp->x = maxX;
+        if (wp->y < minY)
+          wp->y = minY;
+        if (wp->y > maxY)
+          wp->y = maxY;
+      }
+    }
+    return 0;
+  }
+  case WM_MOVE:
+    // 只要視窗移動過（不管是不是使用者手動拖的，SetWindowPos 也會觸發，但那些
+    // 情況下座標本來就沒變，多設一次 g_userMoved 也無害），之後 PositionWindow
+    // 就不再把視窗拉回預設位置。
+    if (g_visible.load())
+      g_userMoved = true;
     return 0;
   case WM_MOUSEMOVE: {
     int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
@@ -829,12 +973,11 @@ LRESULT CALLBACK MimirWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       g_pressedConfirm = false;
       ReleaseCapture();
       if (HitTestConfirm(x, y)) {
-        DWORD objid = g_objid;
         BYTE idx = (BYTE)g_selectedIndex;
         NetLog("[mimir-ui] confirm clicked, selectedIndex=%d name=%s", g_selectedIndex,
                g_options[g_selectedIndex].name);
         HideWindow(hwnd);
-        MimirPowerHook_SendChoice(objid, idx);
+        MimirPowerHook_SendChoice(idx);
         return 0;
       }
       PaintLayered(hwnd);
@@ -927,12 +1070,11 @@ bool StartThread() {
 
 } // namespace
 
-void MimirPowerOverlay_Show(DWORD objid, const MimirOption options[MIMIR_OPTION_COUNT],
+void MimirPowerOverlay_Show(const MimirOption options[MIMIR_OPTION_COUNT],
                             const MimirOption &defaultDetail, DWORD countdownSeconds) {
   HWND hwnd = NULL;
   {
     std::lock_guard<std::mutex> lock(g_lock);
-    g_objid = objid;
     memcpy(g_options, options, sizeof(MimirOption) * MIMIR_OPTION_COUNT);
     g_defaultDetail = defaultDetail;
     g_countdownTotalSeconds = countdownSeconds;
@@ -947,5 +1089,5 @@ void MimirPowerOverlay_Show(DWORD objid, const MimirOption options[MIMIR_OPTION_
   if (hwnd)
     PostMessageW(hwnd, WM_SHOW_MIMIR, 0, 0);
   else
-    NetLog("[mimir-ui] Show failed: no hwnd objid=0x%08X", objid);
+    NetLog("[mimir-ui] Show failed: no hwnd");
 }

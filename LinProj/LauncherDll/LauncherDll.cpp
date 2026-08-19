@@ -3,6 +3,7 @@
 #include "L1Offsets.h"
 #include "DisconnectHook.h"
 #include "MimirPowerHook.h"
+#include "LineageEncryption.h"
 
 #include "VMProtectSDK.h"
 #include <map>
@@ -500,23 +501,94 @@ static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen)
   if (hasMappedHost) {
     mappedAddr.sin_port = htons(ShareInfo.port);
     DisconnectHook_ResetSession();
-    MimirPowerHook_ResetSession();
     MimirPowerHook_SetSocket(s);
     VMProtectEnd;
     inited = false;
     return real_connect(s, (const sockaddr *)&mappedAddr, sizeof(mappedAddr));
   }
   DisconnectHook_ResetSession();
-  MimirPowerHook_ResetSession();
   MimirPowerHook_SetSocket(s);
   VMProtectEnd;
   inited = false;
   return real_connect(s, name, namelen);
 }
 
+// my_send 會被遊戲主執行緒（正常封包）跟我們自己另外開的執行緒（例如
+// MimirPowerOverlay 的視窗訊息迴圈按下確認鈕時）同時呼叫。_xorByte/_seed
+// （nextRand 用）是全域共用狀態，client/server 兩邊都靠它按「封包送出的順序」
+// 逐步往前推進金鑰流，兩個執行緒沒有互斥的話：(a) _seed 的讀-改-寫本身不是原子
+// 操作，(b) 就算沒真的資料損毀，兩個 real_send() 呼叫的順序也可能跟兩份資料各自
+// 編碼時採用的金鑰流位置對不上，導致 server 端解密狀態永久對不齊、後面任何一包
+// 都可能解出垃圾資料（實測就是這樣：送出偽裝的確認選擇封包後，下一個完全無關的
+// 聊天封包在 server 端解析直接噴例外、玩家斷線）。用一個全域 critical section
+// 把「編碼＋送出」這整段包成不可切分的單位，不管呼叫端是哪個執行緒都保證順序
+// 正確。
+struct SendLock {
+  CRITICAL_SECTION cs;
+  SendLock() { InitializeCriticalSection(&cs); }
+};
+static SendLock &GetSendLock() {
+  static SendLock lock; // C++11 magic statics：保證只初始化一次、執行緒安全
+  return lock;
+}
+struct SendLockGuard {
+  CRITICAL_SECTION &cs;
+  SendLockGuard(CRITICAL_SECTION &c) : cs(c) { EnterCriticalSection(&cs); }
+  ~SendLockGuard() { LeaveCriticalSection(&cs); }
+};
+
+// 血盟推薦除錯用：讀取一段記憶體到自己的緩衝區，SEH 保護，讀失敗就回傳 false。
+// 沒有需要解構的 C++ 區域變數，符合 __try 不能跟需要堆疊回溯的物件放同一個函式
+// 這條限制（error C2712），跟這次除錯過程其他地方用的手法一致。
+static bool SafeCopyBytesForDbg(const void *src, void *dst, size_t n) {
+  __try {
+    memcpy(dst, src, n);
+    return true;
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return false;
+  }
+}
+
+// 血盟推薦除錯用：從目前堆疊往上掃，把看起來像「落在主程式模組程式碼範圍內」的
+// DWORD 值印出來（很可能是呼叫端的返回位址），藉此找出是哪段 client 程式碼呼叫
+// send() 送出這個封包。用的是密米爾之泉除錯時同一套手法（掃堆疊找 return
+// address），這次不用真的裝硬體中斷點，直接在 my_send 裡順手掃、比較安全。
+// 確認找到目標位址之後可以拿掉。
+static void LogPossibleReturnAddrs() {
+  HMODULE mainMod = GetModuleHandle(NULL);
+  DWORD_PTR base = (DWORD_PTR)mainMod;
+  DWORD stackVals[256];
+  DWORD_PTR approxEsp = (DWORD_PTR)&stackVals; // 用自己的區域變數位址當堆疊掃描起點
+  if (!SafeCopyBytesForDbg((const void *)approxEsp, stackVals, sizeof(stackVals)))
+    return;
+  for (int i = 0; i < 256; i++) {
+    DWORD v = stackVals[i];
+    if (v >= 0x00400000u && v < 0x00800000u) {
+      BYTE around[24];
+      if (SafeCopyBytesForDbg((const void *)((DWORD_PTR)v - 16), around, sizeof(around))) {
+        char hex[64] = {0};
+        char *w = hex;
+        for (int j = 0; j < 24; j++)
+          w += sprintf_s(w, sizeof(hex) - (w - hex), "%02X", around[j]);
+        launcherdll_net_log(
+            "[PledgeRecommendDbg] stack[%d]=0x%08X (module base=0x%p rva=0x%08X) bytes-16..+8: %s",
+            i, v, (void *)base, (unsigned)((DWORD_PTR)v - base), hex);
+      } else {
+        launcherdll_net_log(
+            "[PledgeRecommendDbg] stack[%d]=0x%08X (module base=0x%p rva=0x%08X) bytes: <fault>",
+            i, v, (void *)base, (unsigned)((DWORD_PTR)v - base));
+      }
+    }
+  }
+}
+
 static int my_send(SOCKET s, const char *buf, int len, int flag) {
   if (buf == NULL || len <= 0)
     return real_send(s, buf, len, flag);
+  // 密米爾之泉除錯用（功能已確認穩定，暫時關掉避免跟其他問題的 log 混在一起，
+  // 要恢復就取消註解）：
+  // launcherdll_net_log("[MimirPower] my_send buf=0x%p len=%d", (void *)buf, len);
+  SendLockGuard lockGuard(GetSendLock().cs);
   BYTE stackBuffer[4096];
   BYTE *buffer_ptr = stackBuffer;
   bool useHeap = false;
@@ -536,6 +608,14 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
     launcherdll_net_log(
         "[my_send] socket=%u len=%u opcode=0x%02X bodyOp=0x%02X msg=[%s] hex=[%s]",
         (unsigned)s, (unsigned)len, op0, opBody, preview, hex);
+
+    // 血盟推薦除錯用：opcode 76(0x4C)= C_PledgeRecommendation，抓真的送出這個
+    // opcode 時的呼叫堆疊，找出是哪段 client 程式碼呼叫 send()（比對用自訂文字
+    // 登錄「有」送出封包 vs 用預設訊息「沒有」送出封包這兩種情況，才能定位到
+    // client 端擋住送出的驗證邏輯在哪。確認完可以拿掉，見 LogPossibleReturnAddrs。
+    if (op0 == 0x4C || opBody == 0x4C) {
+      LogPossibleReturnAddrs();
+    }
 
     // Arm after account/password submit.
     // 0x77 = C_OPCODE_AUTHLOGIN / Login77; 0x2E seen on this client pack as login-sized send.
@@ -560,6 +640,44 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
   int ret = real_send(s, (const char *)buffer_ptr, len, flag);
   if (useHeap)
     delete[] buffer_ptr;
+  // 密米爾之泉：這裡呼叫安全，PumpPendingChoice 內部改成呼叫下面的
+  // MimirSendEncoded（直接送、不經過 send()），不會再遞迴繞回 my_send。
+  MimirPowerHook_PumpPendingChoice();
+  return ret;
+}
+
+// 密米爾之泉專用：外層 XOR 編碼＋直接呼叫 real_send，刻意不透過 send()（會被鉤子
+// 導回 my_send）。原本讓 MimirPowerHook_PumpPendingChoice 呼叫 send() 送出偽裝
+// 封包，不管放在 my_recv 還是 my_send 結尾呼叫，都會造成鉤子巢狀呼叫自己（my_send
+// 呼叫 PumpPendingChoice，裡面又呼叫 send() 導回 my_send）。實測跑出兩種不同的
+// 當機（0xC0000005 存取違規、0xC0000409 /GS 堆疊保護觸發），都跟這層巢狀呼叫脫不了
+// 關係，不管加密邏輯怎麼改都一樣會撞上，因為問題根本不在加密。這裡直接複製 my_send
+// 需要的外層編碼邏輯，跳過 send()／my_send 這一整層，從根本避免巢狀呼叫。
+int MimirSendEncoded(SOCKET s, const BYTE *body, int len) {
+  if (body == NULL || len <= 0)
+    return real_send(s, (const char *)body, len, 0);
+  SendLockGuard lockGuard(GetSendLock().cs);
+  BYTE stackBuffer[64];
+  BYTE *buffer_ptr = stackBuffer;
+  bool useHeap = false;
+  if (len > (int)sizeof(stackBuffer)) {
+    buffer_ptr = new BYTE[len];
+    useHeap = true;
+  }
+  memcpy(buffer_ptr, body, len);
+  if (ShareInfo.encrypt && inited) {
+    if (ShareInfo.randenc) {
+      for (int i = 0; i < len; i++)
+        buffer_ptr[i] ^= (unsigned char)nextRand();
+    } else {
+      for (int i = 0; i < len; i++)
+        buffer_ptr[i] ^= (unsigned char)_xorByte;
+    }
+  }
+  int ret = real_send(s, (const char *)buffer_ptr, len, 0);
+  if (useHeap)
+    delete[] buffer_ptr;
+  // launcherdll_net_log("[MimirPower] MimirSendEncoded len=%d ret=%d", len, ret);
   return ret;
 }
 
@@ -606,12 +724,6 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
         (unsigned)s, ret, err);
     DisconnectHook_OnRecvClosed();
     return ret;
-  }
-  if (ret > 0) {
-    // 密米爾之泉：偽裝成 opcode132 (S_OPCODE_HIRESOLDIERLIST) 的封包在這裡被
-    // 整段攔截、拿掉，原生 ProcessPacket 跟下面的 log/DisconnectHook 都看不到
-    // 這段位元組。必須放在其他任何處理 buf 的邏輯之前。
-    MimirPowerHook_OnRecv((unsigned char *)buf, ret);
   }
   if (ret > 0) {
     unsigned char opcode = (unsigned char)buf[0];
@@ -1170,6 +1282,9 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
 
   // S_Disconnect Layered 彈窗：ProcessPacket cave + overlay UI thread
   InstallDisconnectHooks();
+
+  // 密米爾之泉：ProcessPacket 分派 cave（S_PledgeWatch/200 sentinel 攔截）
+  InstallMimirPowerHook();
 
   // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動
   // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);

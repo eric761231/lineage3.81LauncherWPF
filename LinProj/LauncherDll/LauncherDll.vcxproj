@@ -144,6 +144,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="LineageEncryption.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="LauncherDll.def" />
@@ -169,6 +173,7 @@
     <ClInclude Include="OverlayAssets.h" />
     <ClInclude Include="MimirPowerHook.h" />
     <ClInclude Include="MimirPowerOverlay.h" />
+    <ClInclude Include="LineageEncryption.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LauncherDll.rc" />
