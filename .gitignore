@@ -41,3 +41,6 @@ publish_selfcontained/
 /archive/
 /updates/
 /login/
+
+# Inno Setup 編譯產出（單檔安裝包很大，不進倉庫）
+/installer/output/

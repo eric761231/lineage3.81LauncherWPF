@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using System.Threading.Tasks;
 using LinEncoder.Models;
 using LinEncoder.Services;
@@ -86,19 +88,19 @@ namespace LinEncoder.ViewModels
         public int CompressionLevel { get => _compressionLevel; set { _compressionLevel = value; OnPropertyChanged(); } }
 
         private string _ftpHost = "";
-        public string FtpHost { get => _ftpHost; set { _ftpHost = value; OnPropertyChanged(); } }
+        public string FtpHost { get => _ftpHost; set { if (_ftpHost == value) return; _ftpHost = value; OnPropertyChanged(); InvalidateFtpVerification(); } }
 
         private int _ftpPort = 21;
-        public int FtpPort { get => _ftpPort; set { _ftpPort = value; OnPropertyChanged(); } }
+        public int FtpPort { get => _ftpPort; set { if (_ftpPort == value) return; _ftpPort = value; OnPropertyChanged(); InvalidateFtpVerification(); } }
 
         private string _ftpUsername = "";
-        public string FtpUsername { get => _ftpUsername; set { _ftpUsername = value; OnPropertyChanged(); } }
+        public string FtpUsername { get => _ftpUsername; set { if (_ftpUsername == value) return; _ftpUsername = value; OnPropertyChanged(); InvalidateFtpVerification(); } }
 
         private string _ftpPassword = "";
-        public string FtpPassword { get => _ftpPassword; set { _ftpPassword = value; OnPropertyChanged(); } }
+        public string FtpPassword { get => _ftpPassword; set { if (_ftpPassword == value) return; _ftpPassword = value; OnPropertyChanged(); InvalidateFtpVerification(); } }
 
         private string _ftpRemoteDir = "";
-        public string FtpRemoteDir { get => _ftpRemoteDir; set { _ftpRemoteDir = value; OnPropertyChanged(); } }
+        public string FtpRemoteDir { get => _ftpRemoteDir; set { if (_ftpRemoteDir == value) return; _ftpRemoteDir = value; OnPropertyChanged(); InvalidateFtpVerification(); } }
         #endregion
 
         #region BD Maker Properties
@@ -129,8 +131,81 @@ namespace LinEncoder.ViewModels
         private string _currentUploadFile = "";
         public string CurrentUploadFile { get => _currentUploadFile; set { _currentUploadFile = value; OnPropertyChanged(); } }
 
+        /// <summary>「12 / 2266」這種逐檔計數文字。檔案數量一多（例如這批 2266 筆），
+        /// 百分比用 {0:F0} 顯示要等 12 個檔案完成才會從 0% 跳到 1%，光看百分比會
+        /// 誤以為卡住；這個計數每上傳一個檔案就會變，讓畫面確實有在動的感覺。</summary>
+        private string _uploadProgressCountText = "";
+        public string UploadProgressCountText { get => _uploadProgressCountText; set { _uploadProgressCountText = value; OnPropertyChanged(); } }
+
         private string _uploadEstimatedRemaining = "";
         public string UploadEstimatedRemaining { get => _uploadEstimatedRemaining; set { _uploadEstimatedRemaining = value; OnPropertyChanged(); } }
+
+        /// <summary>
+        /// 補丁上傳頁的通訊結果區。設計成「背景執行緒只管塞進佇列、UI 執行緒按自己的
+        /// 步調定時撈取」的生產者/消費者模式，理由：
+        ///
+        /// 第一版直接每則訊息都 Dispatcher.Invoke 回 UI 執行緒同步等待，實測 1446 個
+        /// 檔案下來，UI 端處理一次的耗時隨日誌長度增加，會拖慢整個上傳迴圈本身（FTP
+        /// 本身完全正常，20 個檔案只要 0.7 秒，問題出在這裡）。
+        /// 改成 BeginInvoke（非同步）解決了「UI 拖慢上傳」，但引入新風險：如果背景
+        /// 產生訊息的速度比 UI 端處理快很多，會排一長串待處理的 Dispatcher 工作，
+        /// 佇列悄悄變長、記憶體上升、畫面延遲很久才追上，且不容易被發現。
+        ///
+        /// 這版用 ConcurrentQueue：AppendUploadLog 只負責把格式化好的字串丟進佇列
+        /// （純記憶體操作，不碰 UI，任何執行緒呼叫都安全，不用再判斷要不要切執行緒），
+        /// UI 執行緒自己的 DispatcherTimer 每 150ms 醒來一次，把佇列裡目前累積的全部
+        /// 訊息一次撈出來、合併成一段文字，只呼叫一次 AppendText。上傳跟顯示徹底解耦：
+        /// 背景線程的速度不受 UI 影響，UI 端要處理的「次數」也被明確限制在「每 150ms
+        /// 最多一次」，不會因為背景衝太快而不斷被叫去做事。
+        /// </summary>
+        private readonly ConcurrentQueue<string> _uploadLogQueue = new();
+        private readonly DispatcherTimer _uploadLogFlushTimer = new() { Interval = TimeSpan.FromMilliseconds(150) };
+
+        public event Action<string>? UploadLogBatchReady;
+        public event Action? UploadLogCleared;
+
+        private void AppendUploadLog(string line) =>
+            _uploadLogQueue.Enqueue($"[{DateTime.Now:HH:mm:ss}] {line}");
+
+        /// <summary>把佇列裡目前累積的全部訊息合併成一段文字丟給 UI 端，一次 AppendText。
+        /// 佇列是空的就直接跳過，不用做無意義的空事件呼叫。</summary>
+        private void FlushUploadLogQueue()
+        {
+            if (_uploadLogQueue.IsEmpty) return;
+            var sb = new StringBuilder();
+            while (_uploadLogQueue.TryDequeue(out var line))
+                sb.AppendLine(line);
+            UploadLogBatchReady?.Invoke(sb.ToString());
+        }
+
+        private void ClearUploadLog()
+        {
+            while (_uploadLogQueue.TryDequeue(out _)) { }
+            UploadLogCleared?.Invoke();
+        }
+
+        /// <summary>「測試通訊」成功過一次，「上傳補丁」按鈕才會解鎖。FTP 欄位（主機/
+        /// 埠號/帳號/密碼/遠端目錄）只要改動就要失效，逼使用者針對新設定重新測試，
+        /// 不然改完目錄卻沿用舊的驗證結果，等於沒測。</summary>
+        private bool _ftpVerified;
+        public bool FtpVerified
+        {
+            get => _ftpVerified;
+            private set { _ftpVerified = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+        }
+
+        private bool _ftpTesting;
+
+        private string _ftpTestStatusText = "尚未測試";
+        public string FtpTestStatusText { get => _ftpTestStatusText; private set { _ftpTestStatusText = value; OnPropertyChanged(); } }
+
+        private void InvalidateFtpVerification()
+        {
+            if (!FtpVerified && FtpTestStatusText == "尚未測試")
+                return; // 還沒測過，不用重複觸發
+            FtpVerified = false;
+            FtpTestStatusText = "尚未測試";
+        }
 
         private WorkflowStatus _workflowStatus = new WorkflowStatus();
         /// <summary>右側常駐流程導覽面板的狀態快照，每次相關操作完成後會重新計算一次。</summary>
@@ -144,6 +219,7 @@ namespace LinEncoder.ViewModels
         public ICommand VerifyListKeysCommand { get; }
         public ICommand GeneratePatchCommand { get; }
         public ICommand UploadPatchCommand { get; }
+        public ICommand TestFtpConnectionCommand { get; }
         public ICommand PackagePakCommand { get; }
         public ICommand BrowsePatchSourceDirCommand { get; }
         public ICommand BrowsePatchOutputDirCommand { get; }
@@ -176,7 +252,13 @@ namespace LinEncoder.ViewModels
                 GenerateListCommand = new RelayCommand(_ => DoGenerateList());
                 VerifyListKeysCommand = new RelayCommand(_ => DoVerifyListKeys());
                 GeneratePatchCommand = new RelayCommand(_ => { _ = DoGeneratePatchAsync(); }, _ => !_patchBusy);
-                UploadPatchCommand = new RelayCommand(_ => { _ = DoUploadPatchAsync(); }, _ => !_uploadBusy);
+                UploadPatchCommand = new RelayCommand(_ => { _ = DoUploadPatchAsync(); }, _ => !_uploadBusy && FtpVerified);
+                TestFtpConnectionCommand = new RelayCommand(_ => { _ = DoTestFtpConnectionAsync(); }, _ => !_uploadBusy && !_ftpTesting);
+
+                // 通訊結果顯示區的批次撈取計時器：全生命週期只跑一個，佇列空的時候
+                // Tick 直接跳過（見 FlushUploadLogQueue），閒置時幾乎沒有成本。
+                _uploadLogFlushTimer.Tick += (s, e) => FlushUploadLogQueue();
+                _uploadLogFlushTimer.Start();
                 PackagePakCommand = new RelayCommand(_ => DoPackagePak());
                 BrowsePatchSourceDirCommand = new RelayCommand(_ => BrowsePatchSourceDir());
                 BrowsePatchOutputDirCommand = new RelayCommand(_ => BrowsePatchOutputDir());
@@ -906,6 +988,42 @@ namespace LinEncoder.ViewModels
             }
         }
 
+        /// <summary>
+        /// 只驗證 FTP 連線/帳密/遠端目錄，不搬動任何檔案。成功才會解鎖「上傳補丁」
+        /// 按鈕（見 FtpVerified、UploadPatchCommand 的 CanExecute）。訊息寫進跟上傳
+        /// 共用的 UploadLogText，不清空既有內容，讓測試跟上傳的紀錄接在同一個時間軸上。
+        /// </summary>
+        private async Task DoTestFtpConnectionAsync()
+        {
+            if (_uploadBusy || _ftpTesting)
+                return;
+            _ftpTesting = true;
+            CommandManager.InvalidateRequerySuggested();
+            FtpVerified = false;
+            FtpTestStatusText = "測試中…";
+
+            try
+            {
+                SaveSettings();
+                // AppendUploadLog 現在只是把字串塞進 ConcurrentQueue（純記憶體操作，
+                // 執行緒安全），不用再判斷要不要切回 UI 執行緒——UI 端由
+                // _uploadLogFlushTimer 自己定時撈取，兩邊徹底解耦。
+                string host = FtpHost, username = FtpUsername, password = FtpPassword, remoteDir = FtpRemoteDir;
+                int port = FtpPort;
+                bool ok = await Task.Run(() =>
+                    FtpUploadService.TestConnection(host, port, username, password, remoteDir, AppendUploadLog, out _));
+
+                FtpVerified = ok;
+                FtpTestStatusText = ok ? "✅ 連線正常" : "❌ 連線失敗";
+            }
+            finally
+            {
+                FlushUploadLogQueue(); // 立刻顯示最後這幾行，不用等下一次計時器 tick
+                _ftpTesting = false;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         private async Task DoUploadPatchAsync()
         {
             if (_uploadBusy)
@@ -915,6 +1033,7 @@ namespace LinEncoder.ViewModels
             UploadProgressPercent = 0;
             CurrentUploadFile = "";
             UploadEstimatedRemaining = "…";
+            ClearUploadLog();
             var sw = Stopwatch.StartNew();
 
             try
@@ -940,6 +1059,7 @@ namespace LinEncoder.ViewModels
                     {
                         UploadProgressPercent = p.total <= 0 ? 0 : Math.Min(100.0, Math.Round(100.0 * p.current / p.total, 1));
                         CurrentUploadFile = string.IsNullOrEmpty(p.relativePath) ? "準備中…" : p.relativePath;
+                        UploadProgressCountText = p.total <= 0 ? "" : $"{p.current} / {p.total}";
 
                         double pct = UploadProgressPercent;
                         if (pct > 0.5 && sw.Elapsed.TotalSeconds > 0)
@@ -958,6 +1078,9 @@ namespace LinEncoder.ViewModels
                         Apply();
                 });
 
+                // AppendUploadLog 只是把字串塞進 ConcurrentQueue，執行緒安全、不碰 UI，
+                // 背景執行緒可以直接呼叫，不用再判斷/切執行緒。UI 端由 _uploadLogFlushTimer
+                // 自己定時撈取，上傳迴圈的速度完全不受 UI 顯示快慢影響。
                 FtpUploadResult result = await Task.Run(() =>
                     FtpUploadService.UploadDirectory(
                         PatchOutputDir,
@@ -966,7 +1089,8 @@ namespace LinEncoder.ViewModels
                         FtpUsername,
                         FtpPassword,
                         FtpRemoteDir,
-                        progress));
+                        progress,
+                        AppendUploadLog));
 
                 if (result.Success)
                 {
@@ -993,6 +1117,7 @@ namespace LinEncoder.ViewModels
             }
             finally
             {
+                FlushUploadLogQueue(); // 立刻顯示最後這幾行，不用等下一次計時器 tick
                 _uploadBusy = false;
                 CommandManager.InvalidateRequerySuggested();
             }

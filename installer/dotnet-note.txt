@@ -1,0 +1,5 @@
+若雙擊 Core\LinLauncher.exe 沒有視窗，請先安裝 .NET Desktop Runtime **x86**（.NET 10）：
+
+https://dotnet.microsoft.com/download/dotnet/10.0
+
+本安裝檔不含該執行環境（框架相依）。

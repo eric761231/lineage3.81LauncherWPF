@@ -191,11 +191,16 @@ namespace LinLauncher.Services
                 {
                     if (File.Exists(pendingPath))
                     {
-                        try
-                        {
-                            File.Delete(pendingPath);
-                        }
-                        catch { }
+                        // 實測發現：正確解壓縮路徑要開新的 FileStream 寫 .pending 時，偶爾會遇到
+                        // IOException「being used by another process」——這台機器上沒有殘留的
+                        // LinLauncher/lineage380 行程、也沒有殘留的 .pending 檔案，最可能是防毒
+                        // 軟體即時掃描剛下載/剛寫入的檔案時短暫鎖住。這種鎖通常幾十到幾百毫秒內
+                        // 就會放開，原本這裡刪除失敗就直接吞掉、放行到下面開 FileStream 時撞上
+                        // 同一個鎖直接失敗、一路 fallback 到注定 MD5 對不上的路徑。改成短暫重試
+                        // 幾次，避免因為一次性的短暫鎖定就整個更新失敗；重試完還是失敗就維持
+                        // 原本「best effort，吞掉」的語意（下面 FileMode.Create 本來就會覆蓋掉）。
+                        try { await RetryOnIOExceptionAsync(() => File.Delete(pendingPath)).ConfigureAwait(false); }
+                        catch (IOException) { }
                     }
 
                     byte[] data;
@@ -234,6 +239,12 @@ namespace LinLauncher.Services
                         return (false, $"下載內容異常（過短）：{relativeUrl}.bin", anyDeferred);
                     }
 
+                    // 診斷用：之前三個 fallback 失敗時完全沒有 log，出錯了只看得到最後
+                    // 一句「MD5 不符」，看不出實際下載到多少 bytes、內容跟預期差多少，
+                    // 沒辦法判斷是下載本身不完整、還是伺服器內容真的有問題。這裡先記一行
+                    // 「已下載」的原始資訊，下面每個 fallback 失敗也都補上實際算出來的 MD5。
+                    L($"DownloadUpdates: 已下載 {downloadUrl} rawLen={data.Length} expectedMd5={info.Md5} rawMd5={ComputeMd5Hex(data)}");
+
                     byte[] decrypted = (byte[])data.Clone();
                     byte[] key = Encoding.ASCII.GetBytes(Constants.FileEncryptKey);
                     for (int i = 0; i < 16; i++)
@@ -250,15 +261,25 @@ namespace LinLauncher.Services
                     {
                         using var ms = new MemoryStream(decrypted, 4, decrypted.Length - 4);
                         using var zs = new ZLibStream(ms, CompressionMode.Decompress);
-                        using var fs = new FileStream(pendingPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                        var fs = await OpenFileStreamWithRetryAsync(pendingPath, FileMode.Create, FileAccess.Write, FileShare.None).ConfigureAwait(false);
                         await zs.CopyToAsync(fs).ConfigureAwait(false);
+                        // 這個 fs 是用 FileShare.None（獨占）開的，不能沿用 using var 讓它活到整個
+                        // try 區塊結束才釋放——下面 VerifyPendingMd5Async 馬上要重新開同一個檔案讀取
+                        // 算 MD5，寫入 handle 還沒關就去搶讀取 handle，一定會撞到「being used by
+                        // another process」（不是外部程式鎖住，是自己前一個 handle 還沒放手）。寫完
+                        // 立刻手動關閉，才能讓後面的驗證正常開檔。
+                        await fs.DisposeAsync().ConfigureAwait(false);
                         contentOk = await VerifyPendingMd5Async(pendingPath, info.Md5).ConfigureAwait(false);
                         if (!contentOk)
+                        {
                             lastReason = "zlib 解壓成功但 MD5 不符";
+                            L($"DownloadUpdates: {lastReason}，實際MD5={await CalculateMd5Async(pendingPath).ConfigureAwait(false)} 解壓後長度={new FileInfo(pendingPath).Length}");
+                        }
                     }
                     catch (Exception ex)
                     {
                         lastReason = $"zlib 解壓失敗：{ex.Message}";
+                        L($"DownloadUpdates: {lastReason}");
                     }
 
                     // Fallback 1：部分來源只做了加密，未壓縮。
@@ -266,16 +287,20 @@ namespace LinLauncher.Services
                     {
                         try
                         {
-                            await File.WriteAllBytesAsync(pendingPath, decrypted.AsSpan(4).ToArray()).ConfigureAwait(false);
+                            await RetryOnIOExceptionAsync(() => File.WriteAllBytesAsync(pendingPath, decrypted.AsSpan(4).ToArray())).ConfigureAwait(false);
                             contentOk = await VerifyPendingMd5Async(pendingPath, info.Md5).ConfigureAwait(false);
                             if (contentOk)
                                 L($"DownloadUpdates: fallback(raw decrypted payload) OK {downloadUrl}");
                             else
+                            {
                                 lastReason = "raw decrypted payload MD5 不符";
+                                L($"DownloadUpdates: {lastReason}，實際MD5={await CalculateMd5Async(pendingPath).ConfigureAwait(false)}");
+                            }
                         }
                         catch (Exception ex)
                         {
                             lastReason = $"raw decrypted payload 失敗：{ex.Message}";
+                            L($"DownloadUpdates: {lastReason}");
                         }
                     }
 
@@ -284,16 +309,20 @@ namespace LinLauncher.Services
                     {
                         try
                         {
-                            await File.WriteAllBytesAsync(pendingPath, data).ConfigureAwait(false);
+                            await RetryOnIOExceptionAsync(() => File.WriteAllBytesAsync(pendingPath, data)).ConfigureAwait(false);
                             contentOk = await VerifyPendingMd5Async(pendingPath, info.Md5).ConfigureAwait(false);
                             if (contentOk)
                                 L($"DownloadUpdates: fallback(raw full file) OK {downloadUrl}");
                             else
+                            {
                                 lastReason = "raw full file MD5 不符";
+                                L($"DownloadUpdates: {lastReason}，實際MD5={await CalculateMd5Async(pendingPath).ConfigureAwait(false)}");
+                            }
                         }
                         catch (Exception ex)
                         {
                             lastReason = $"raw full file 失敗：{ex.Message}";
+                            L($"DownloadUpdates: {lastReason}");
                         }
                     }
 
@@ -381,6 +410,57 @@ namespace LinLauncher.Services
             await using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
             byte[] hash = await md5.ComputeHashAsync(stream).ConfigureAwait(false);
             return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+
+        private static string ComputeMd5Hex(byte[] bytes)
+        {
+            using var md5 = MD5.Create();
+            byte[] hash = md5.ComputeHash(bytes);
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// 對 .pending 檔案的動作（刪除／開檔寫入）偶爾會撞上 IOException「being used by
+        /// another process」——這台機器上沒有殘留的 LinLauncher/lineage380 行程、也沒有殘留
+        /// 的 .pending 檔案，最可能是防毒軟體即時掃描剛下載/剛寫入的檔案時短暫鎖住，通常
+        /// 幾十到幾百毫秒內就會放開。重試幾次再放棄，最後一次還是失敗就讓例外照常往外拋
+        /// （呼叫端原本的例外處理邏輯不用跟著改）。
+        /// </summary>
+        private static async Task RetryOnIOExceptionAsync(Action action, int maxAttempts = 4, int delayMs = 100)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try { action(); return; }
+                catch (IOException) when (attempt < maxAttempts)
+                {
+                    await Task.Delay(delayMs).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private static async Task RetryOnIOExceptionAsync(Func<Task> asyncAction, int maxAttempts = 4, int delayMs = 100)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try { await asyncAction().ConfigureAwait(false); return; }
+                catch (IOException) when (attempt < maxAttempts)
+                {
+                    await Task.Delay(delayMs).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private static async Task<FileStream> OpenFileStreamWithRetryAsync(
+            string path, FileMode mode, FileAccess access, FileShare share, int maxAttempts = 4, int delayMs = 100)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try { return new FileStream(path, mode, access, share); }
+                catch (IOException) when (attempt < maxAttempts)
+                {
+                    await Task.Delay(delayMs).ConfigureAwait(false);
+                }
+            }
         }
     }
 }

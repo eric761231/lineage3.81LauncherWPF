@@ -14,7 +14,17 @@ namespace LinEncoder
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             if (DataContext is EncoderViewModel vm)
+            {
                 FtpPasswordBox.Password = vm.FtpPassword;
+
+                // 通訊結果顯示區改用「事件 + 批次 AppendText」，不是綁定一個越長越大的
+                // 字串屬性再整個 Text 換值：ViewModel 端有一個 DispatcherTimer 每 150ms
+                // 把佇列裡累積的訊息合併成一段文字才觸發這個事件，這裡收到就是一次性的
+                // 一整段（可能好幾行），直接 AppendText 一次即可。詳見
+                // EncoderViewModel 裡 _uploadLogQueue/_uploadLogFlushTimer 的說明。
+                vm.UploadLogBatchReady += batch => UploadLogBox.AppendText(batch);
+                vm.UploadLogCleared += () => UploadLogBox.Clear();
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -65,6 +75,13 @@ namespace LinEncoder
         {
             if (DataContext is EncoderViewModel vm && sender is System.Windows.Controls.PasswordBox pb)
                 vm.FtpPassword = pb.Password;
+        }
+
+        // 補丁上傳頁的通訊結果顯示區：新訊息進來就自動捲到最下面，不用手動拉捲軸。
+        private void UploadLogBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.TextBox tb)
+                tb.ScrollToEnd();
         }
     }
 }

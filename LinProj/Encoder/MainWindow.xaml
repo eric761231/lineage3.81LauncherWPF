@@ -312,14 +312,18 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 標題列 -->
-            <Grid Grid.Row="0" Background="#CC1A1A1A" MouseDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
-                <TextBlock Text="LINEAGE 3.81 PROFESSIONAL ENCODER" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Foreground="{StaticResource AccentPurple}" FontSize="14" FontWeight="Bold"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
-                    <Button Content="—" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click" Cursor="Hand"/>
-                    <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="Close_Click" Cursor="Hand"/>
-                </StackPanel>
-            </Grid>
+            <!-- 標題列：外層 Border 用跟主容器一樣的左右上角 CornerRadius，避免這層
+                 直角背景蓋住主容器（CornerRadius=20）圓角邊線在角落露出的灰色描邊
+                 （跟 LinLauncher\MainWindow.xaml 同一個問題、同一種修法）。 -->
+            <Border Grid.Row="0" CornerRadius="20,20,0,0" Background="#CC1A1A1A" MouseDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
+                <Grid>
+                    <TextBlock Text="LINEAGE 3.81 PROFESSIONAL ENCODER" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Foreground="{StaticResource AccentPurple}" FontSize="14" FontWeight="Bold"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
+                        <Button Content="—" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click" Cursor="Hand"/>
+                        <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="Close_Click" Cursor="Hand"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
             <!-- 內容區 -->
             <Grid Grid.Row="1" Margin="6,0,10,10">
@@ -734,25 +738,77 @@
                                 </Grid>
                             </GroupBox>
 
-                            <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,12,0,20">
-                                <TextBlock Text="{Binding PatchOutputDir, StringFormat=將上傳「補丁產生工具」輸出目錄的內容：{0}}"
-                                           Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12" TextWrapping="Wrap"/>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0">
-                                        <ProgressBar Width="361" Height="18" Minimum="0" Maximum="100" Value="{Binding UploadProgressPercent}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="上傳進度：" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                        <TextBlock Text="{Binding UploadProgressPercent, StringFormat={}{0:F0}%}" Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
-                                        <TextBlock Text=" | " Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0"/>
-                                        <TextBlock Text="{Binding CurrentUploadFile}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Width="220" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text=" (" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                        <TextBlock Text="{Binding UploadEstimatedRemaining}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
-                                        <TextBlock Text=")" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
-                                    </StackPanel>
+                            <Grid Grid.Row="1" Margin="0,8,0,20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                    <Button Content="上傳補丁" Command="{Binding UploadPatchCommand}"
-                                            Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" Height="36" Padding="24,0" Width="172"/>
+                                <!-- 通訊結果顯示區：測試通訊跟實際上傳共用同一份逐行紀錄，不管成功或
+                                     失敗都留著完整過程，不用等到整批結束才看到一行籠統的錯誤訊息。
+                                     MinHeight/MinWidth + Stretch + Wrap：巢狀 Grid/ContentPresenter/Border
+                                     疊太多層，量測時某一層沒拿到明確可用尺寸，"*" 高度的列會退化成只跟著
+                                     內容自然大小（縮成一行）；用明確的最小尺寸＋自動換行保底，不管量測
+                                     結果如何都能看到多行內容。 -->
+                                <Border Grid.Row="0" Background="#0D0D0D" BorderBrush="{StaticResource TextSecondary}"
+                                        BorderThickness="1" CornerRadius="4" Margin="0,0,0,12"
+                                        MinHeight="220" MinWidth="400"
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                    <!-- Text 不綁定 UploadLogText：改由 code-behind（Window_Loaded 裡訂閱
+                                         UploadLogLineAdded/UploadLogCleared）用 AppendText 增量附加，
+                                         避免整個 Text 換值在日誌變長後越來越慢。 -->
+                                    <!-- Height="NaN"（WPF 內部代表「不指定固定高度」的值，XAML 裡的合法寫法，
+                                         不能寫 "Auto"——那只在 Grid 的 RowDefinition/ColumnDefinition 有效，
+                                         Height 是 double，會直接編譯錯誤）是關鍵：這個視窗有一個套用到「所有
+                                         TextBox」的全域隱式樣式（本檔案 166 行 <Style TargetType="TextBox">，
+                                         給主機/帳號/密碼那種單行輸入框用），裡面寫死 Height="32"。這裡不蓋掉
+                                         的話，不管外層 Border 多大、這裡的 VerticalAlignment="Stretch" 都沒用
+                                         ——明確的 Height 一定贏，Stretch 在有固定 Height 的情況下只會把這個
+                                         32px 高的方塊置中擺在 Border 正中間，這才是「框很大、文字卻擠成一小塊
+                                         在中間」的真正原因（UI Automation 實測量到 UploadLogBox 的
+                                         BoundingRectangle 高度真的只有 32px，確認過了）。-->
+                                    <TextBox x:Name="UploadLogBox" IsReadOnly="True" Height="NaN"
+                                             Background="Transparent" BorderThickness="0" Foreground="#CCCCCC"
+                                             FontFamily="Consolas" FontSize="12" Padding="8"
+                                             TextWrapping="Wrap" AcceptsReturn="True"
+                                             VerticalContentAlignment="Top"
+                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                             TextChanged="UploadLogBox_TextChanged"/>
+                                </Border>
+
+                                <StackPanel Grid.Row="1">
+                                    <TextBlock Text="{Binding PatchOutputDir, StringFormat=將上傳「補丁產生工具」輸出目錄的內容：{0}}"
+                                               Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                                    <!-- 由左至右：進度條區塊（左邊界對齊上方通訊結果框）→ 測試通訊 → 上傳補丁。
+                                         整排不再靠右，讓進度條貼齊最左邊。 -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                                            <ProgressBar Width="361" Height="18" Minimum="0" Maximum="100" Value="{Binding UploadProgressPercent}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="上傳進度：" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding UploadProgressPercent, StringFormat={}{0:F0}%}" Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                            <!-- 檔案數多時（例如上千筆），百分比要湊到至少 1% 才會跳動，光看百分比
+                                                 容易誤以為卡住；這裡逐檔顯示「已完成/總數」，每上傳一個檔案就會變。 -->
+                                            <TextBlock Text="{Binding UploadProgressCountText, StringFormat=（{0}）}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            <TextBlock Text=" (" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding UploadEstimatedRemaining}" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                            <TextBlock Text=")" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- 「上傳補丁」按鈕要等這裡測試成功過一次才會解鎖，避免像填錯遠端目錄
+                                             （誤填本機磁碟路徑）這種設定問題要等到批次上傳中途才發現。 -->
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                                            <TextBlock Text="{Binding FtpTestStatusText}" Foreground="{StaticResource TextSecondary}"
+                                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <Button Content="測試通訊" Command="{Binding TestFtpConnectionCommand}"
+                                                    Style="{StaticResource ModernButton}" Height="36" Padding="16,0"/>
+                                        </StackPanel>
+
+                                        <Button Content="上傳補丁" Command="{Binding UploadPatchCommand}"
+                                                Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" Height="36" Padding="24,0" Width="172"/>
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
+                            </Grid>
                         </Grid>
                     </TabItem>
                 </TabControl>
