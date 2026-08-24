@@ -80,17 +80,18 @@ DWORD g_mimirConsumedFlag = 0;
 
 // -1 = 沒有待送出的選擇；否則是 0~255 的合法 index（BYTE 全值域都合法，用另一個
 // LONG 存 -1 當「沒有」的哨兵值，避免跟合法 index 撞在一起）。MimirPowerHook_
-// SendChoice（overlay 執行緒）寫入，MimirPowerHook_PumpPendingChoice（my_recv，
-// 遊戲網路執行緒）讀取並清掉，用 InterlockedExchange 保證單一寫入者/讀取者之間
-// 不會撕裂。
+// SendChoice（overlay 執行緒）寫入，MimirPowerHook_PumpPendingChoice 讀取並清
+// 掉——有兩個呼叫點：my_send 尾端、以及 HookProc（WH_GETMESSAGE hook），哪個先
+// 發生就先送，兩者都穩定跑在遊戲主執行緒上，用 InterlockedExchange 保證單一
+// 寫入者/讀取者之間不會撕裂。
 volatile LONG g_pendingChoiceIndex = -1;
 
 void NetLog(const char *fmt, ...) {
-  // 密米爾之泉功能已經確認穩定運作，暫時關掉這個檔案的 log（跟其他問題的除錯過程
-  // 混在一起容易誤判），要恢復就把這行 return 拿掉。
-  return;
+  // 密米爾之泉 UI 顯示異常除錯用：暫時恢復這個檔案的 log（原本已確認穩定所以關
+  // 掉過，現在查中文字串/倒數秒數解析是否對齊，需要看實際內容），查完記得改回
+  // return; 關掉。
   char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./launcherdll_net.log";
+  char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
     for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
       if (exePath[i] == '\\' || exePath[i] == '/') {
@@ -98,7 +99,7 @@ void NetLog(const char *fmt, ...) {
         break;
       }
     }
-    sprintf_s(logPath, "%s\\launcherdll_net.log", exePath);
+    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
   if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
@@ -118,13 +119,24 @@ void NetLog(const char *fmt, ...) {
   fclose(fp);
 }
 
-// 讀一筆 [iconId:4(D)][name:C字串+0x00][desc:C字串+0x00]，pos 由呼叫端傳入/更新。
-// 成功回傳 true 並填好 out；資料不夠/字串沒有結尾 NUL 就回傳 false。
-bool ReadOneEntry(const BYTE *data, int maxLen, int *pos, MimirOption *out) {
+// 讀一筆 MimirOption：基本格式 [iconId:4(D)][iconPngId:4(D)][name:C字串+0x00]
+// [desc:C字串+0x00][pvpText:C字串+0x00]。保留 hasIconPngId 參數是為了向前相容，
+// 目前選項跟詳情卡都會帶 iconPngId。pos 由呼叫端傳入/更新。
+bool ReadOneEntry(const BYTE *data, int maxLen, int *pos, MimirOption *out,
+                  bool hasIconPngId) {
   if (*pos + (int)sizeof(DWORD) > maxLen)
     return false;
   memcpy(&out->iconId, data + *pos, sizeof(DWORD));
   *pos += sizeof(DWORD);
+
+  if (hasIconPngId) {
+    if (*pos + (int)sizeof(DWORD) > maxLen)
+      return false;
+    memcpy(&out->iconPngId, data + *pos, sizeof(DWORD));
+    *pos += sizeof(DWORD);
+  } else {
+    out->iconPngId = 0;
+  }
 
   auto readString = [&](char *dst, size_t dstSize) -> bool {
     int start = *pos;
@@ -145,6 +157,8 @@ bool ReadOneEntry(const BYTE *data, int maxLen, int *pos, MimirOption *out) {
     return false;
   if (!readString(out->desc, sizeof(out->desc)))
     return false;
+  if (!readString(out->pvpText, sizeof(out->pvpText)))
+    return false;
   return true;
 }
 
@@ -163,11 +177,11 @@ extern "C" DWORD __cdecl OnMimirDispatch(const BYTE *pktData) {
     MimirOption options[MIMIR_OPTION_COUNT] = {};
     bool ok = true;
     for (int i = 0; i < MIMIR_OPTION_COUNT && ok; i++)
-      ok = ReadOneEntry(pktData, MAX_SCAN_LEN, &pos, &options[i]);
+      ok = ReadOneEntry(pktData, MAX_SCAN_LEN, &pos, &options[i], true);
 
     MimirOption defaultDetail = {};
     if (ok)
-      ok = ReadOneEntry(pktData, MAX_SCAN_LEN, &pos, &defaultDetail);
+      ok = ReadOneEntry(pktData, MAX_SCAN_LEN, &pos, &defaultDetail, true);
 
     DWORD countdownSeconds = 0;
     if (ok && pos + (int)sizeof(DWORD) <= MAX_SCAN_LEN) {
@@ -181,6 +195,28 @@ extern "C" DWORD __cdecl OnMimirDispatch(const BYTE *pktData) {
       return 1; // 格式異常，還是吃掉避免流入原生解析器造成錯位
     }
 
+    // 密米爾 UI 顯示異常除錯用：把每筆解析出來的 name/desc、以及 countdown 前後
+    // 的原始位元組都印出來，確認是解析階段就錯位、還是資料本身就有問題。
+    for (int i = 0; i < MIMIR_OPTION_COUNT; i++) {
+      NetLog("[mimir-dbg] option[%d] iconId=%u name=[%s] desc=[%s] pvpText=[%s]", i,
+              options[i].iconId, options[i].name, options[i].desc,
+              options[i].pvpText);
+    }
+    NetLog("[mimir-dbg] defaultDetail iconId=%u iconPngId=%u name=[%s] desc=[%s] "
+            "pvpText=[%s]",
+            defaultDetail.iconId, defaultDetail.iconPngId, defaultDetail.name,
+            defaultDetail.desc, defaultDetail.pvpText);
+    {
+      char hexBuf[64] = {0};
+      int dumpStart = (pos - 8 >= 0) ? pos - 8 : 0;
+      int dumpLen = (dumpStart + 16 <= MAX_SCAN_LEN) ? 16 : (MAX_SCAN_LEN - dumpStart);
+      int hp = 0;
+      for (int i = 0; i < dumpLen && hp + 3 < (int)sizeof(hexBuf); i++)
+        hp += sprintf_s(hexBuf + hp, sizeof(hexBuf) - hp, "%02X ",
+                        (unsigned)pktData[dumpStart + i]);
+      NetLog("[mimir-dbg] countdown field at pos=%d, bytes[pos-8..pos+8)=[%s]",
+              pos, hexBuf);
+    }
     NetLog("[mimir] intercepted PacketBox sentinel packet, countdown=%us", countdownSeconds);
     MimirPowerOverlay_Show(options, defaultDetail, countdownSeconds);
     return 1;
@@ -276,7 +312,8 @@ void MimirPowerHook_SendChoice(BYTE index) {
   // 借來的原生加密函式（0x00580640）會卡住整個執行緒（游標沒反應，最後連線逾時
   // 重置），推測是那個函式預期只被遊戲自己的網路執行緒呼叫，換一個執行緒呼叫會
   // 卡在某個只有在原本執行緒才會被滿足的條件上。真正的加密+送出移到
-  // MimirPowerHook_PumpPendingChoice，由 my_recv（穩定跑在遊戲網路執行緒）呼叫。
+  // MimirPowerHook_PumpPendingChoice，由 my_send 尾端和 HookProc（WH_GETMESSAGE
+  // hook）兩個 call site 呼叫，哪個先發生就先送，兩者都穩定跑在遊戲主執行緒上。
   InterlockedExchange(&g_pendingChoiceIndex, (LONG)index);
   NetLog("[mimir] SendChoice queued index=%u (will send from network thread)",
          (unsigned)index);
@@ -322,8 +359,8 @@ void MimirPowerHook_PumpPendingChoice() {
 
   // 除了 my_send 那層外層 XOR，body 在原生流程裡還會先被遊戲自己的 Blowfish
   // 衍生加密處理過（LineageEncryption.cpp 有完整說明，含金鑰推進補done的部分）。
-  // 現在保證跑在遊戲網路執行緒上（my_recv 呼叫），跟原生程式碼呼叫這個函式時
-  // 是同一個執行緒 context。
+  // 現在保證跑在遊戲主執行緒上（my_send 尾端或 HookProc 呼叫），跟原生程式碼
+  // 呼叫這個函式時是同一個執行緒 context。
   LineageEncryption_EncryptBody(&payload[2], 4);
   NetLog("[mimir] PumpPendingChoice step4 encrypted");
 

@@ -39,7 +39,7 @@ std::atomic<int> g_pktIndex{0};
 
 void NetLog(const char *fmt, ...) {
   char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./launcherdll_net.log";
+  char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
     for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
       if (exePath[i] == '\\' || exePath[i] == '/') {
@@ -47,7 +47,7 @@ void NetLog(const char *fmt, ...) {
         break;
       }
     }
-    sprintf_s(logPath, "%s\\launcherdll_net.log", exePath);
+    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
   if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
@@ -86,10 +86,12 @@ void HandleCompletePacket(const BYTE *pkt, int len) {
   unsigned first = pkt[2];
   int st = ReadGameState();
 
-  if (g_pktIndex <= 24 || len == DISCONNECT_WIRE_LEN) {
-    NetLog("[disconnect-probe] s2c #%d wireLen=%d b0=0x%02X state=%d seenInit=%d",
-           g_pktIndex.load(), len, first, st, (int)g_seenInit);
-  }
+  // 抓封包除錯用 log：懷疑遊戲視窗關閉時的長時間卡頓跟 log 寫太多有關（NetLog
+  // 每次呼叫都是 fopen+fwrite+fflush+fclose），先暫時註解掉測試是否為肇因。
+  // if (g_pktIndex <= 24 || len == DISCONNECT_WIRE_LEN) {
+  //   NetLog("[disconnect-probe] s2c #%d wireLen=%d b0=0x%02X state=%d seenInit=%d",
+  //          g_pktIndex.load(), len, first, st, (int)g_seenInit);
+  // }
 
   // INIT is plaintext on wire
   if (!g_seenInit && first == INIT_OPCODE) {
@@ -150,11 +152,12 @@ void FeedRecvByte(BYTE b) {
 }
 
 extern "C" void __cdecl OnHighOpcodePacket(DWORD opcode, BYTE *payload) {
-  static int s_logCount = 0;
-  if (s_logCount < 64 || opcode == DISCONNECT_OPCODE) {
-    s_logCount++;
-    NetLog("[disconnect-probe] high-opcode=%u (0x%02X)", opcode, opcode & 0xFF);
-  }
+  // 抓封包除錯用 log：同上，先暫時註解掉測試是否為關閉遊戲時長時間卡頓的肇因。
+  // static int s_logCount = 0;
+  // if (s_logCount < 64 || opcode == DISCONNECT_OPCODE) {
+  //   s_logCount++;
+  //   NetLog("[disconnect-probe] high-opcode=%u (0x%02X)", opcode, opcode & 0xFF);
+  // }
   if (opcode == DISCONNECT_OPCODE) {
     if (!g_postLogin.load())
       return;

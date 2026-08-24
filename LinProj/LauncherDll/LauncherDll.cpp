@@ -2,6 +2,7 @@
 #include "LauncherDll.h"
 #include "L1Offsets.h"
 #include "DisconnectHook.h"
+#include "DisconnectOverlay.h"
 #include "MimirPowerHook.h"
 #include "LineageEncryption.h"
 
@@ -29,6 +30,7 @@ constexpr int SERVER_LIST_RSA_XOR_D = 32345678;
 // SHARE_INFO struct is now in ShareMemory.h
 HHOOK hhk = NULL;
 HHOOK h_hook = NULL;
+HHOOK h_callWndHook = NULL;
 HINSTANCE hins;
 HANDLE g_hInitEvent = NULL;
 SHARE_INFO ShareInfo;
@@ -105,7 +107,7 @@ void __dbg_print(const char *fmt, ...) {
 
 static void launcherdll_net_log(const char *fmt, ...) {
   char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./launcherdll_net.log";
+  char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
     for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
       if (exePath[i] == '\\' || exePath[i] == '/') {
@@ -113,7 +115,7 @@ static void launcherdll_net_log(const char *fmt, ...) {
         break;
       }
     }
-    sprintf_s(logPath, "%s\\launcherdll_net.log", exePath);
+    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
   if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
@@ -316,14 +318,74 @@ static void HookCode(void *addr, void *func, int len) {
 // =============================================================================
 static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
   if (nCode >= 0) {
+    // 密米爾之泉：這個 WH_GETMESSAGE hook 跟 my_send 一樣穩定跑在遊戲主執行緒
+    // 上，但觸發頻率遠高於 send()（每次 GetMessage/PeekMessage(PM_REMOVE) 取到
+    // 訊息就觸發一次，不用等下一個真封包）。當第二個 flush 點：有待送出的選擇
+    // 就在這裡立刻送，沒有就是免費的 InterlockedExchange+早退（見
+    // MimirPowerHook.cpp）。不依賴 pMsg 內容，故意放在最前面，跟下面的除錯
+    // switch 完全獨立。
+    MimirPowerHook_PumpPendingChoice();
+
     MSG *pMsg = (MSG *)lParam;
     if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_HOME) {
       if (ShareInfo.usehelper) {
         ShowOrHideHelperDialog();
       }
     }
+    // 血盟推薦除錯用 log（WM_LBUTTONDOWN/UP、WM_CHAR、WM_KEYDOWN）：懷疑遊戲
+    // 視窗關閉時的長時間卡頓跟 log 寫太多有關（NetLog 每次呼叫都是
+    // fopen+fwrite+fflush+fclose，頻繁的 UI 操作 log 疊加封包 log，磁碟 I/O
+    // 量不小），先暫時整段註解掉測試是否為肇因。確認完可以整段刪掉或恢復。
+    /*
+    switch (pMsg->message) {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+      launcherdll_net_log(
+          "[MatchMakingDbg] hwnd=0x%p %s pos=(%d,%d)", pMsg->hwnd,
+          pMsg->message == WM_LBUTTONDOWN ? "LBUTTONDOWN" : "LBUTTONUP",
+          (int)(short)LOWORD(pMsg->lParam), (int)(short)HIWORD(pMsg->lParam));
+      break;
+    case WM_CHAR:
+      launcherdll_net_log(
+          "[MatchMakingDbg] hwnd=0x%p WM_CHAR code=0x%04X ('%c')", pMsg->hwnd,
+          (unsigned)pMsg->wParam,
+          (pMsg->wParam >= 0x20 && pMsg->wParam < 0x7F) ? (char)pMsg->wParam
+                                                         : '?');
+      break;
+    case WM_KEYDOWN:
+      if (pMsg->wParam != VK_HOME) // VK_HOME 上面已經記過一次，避免重複
+        launcherdll_net_log("[MatchMakingDbg] hwnd=0x%p WM_KEYDOWN vk=0x%02X",
+                             pMsg->hwnd, (unsigned)pMsg->wParam);
+      break;
+    default:
+      break;
+    }
+    */
   }
   return CallNextHookEx(h_hook ? h_hook : hhk, nCode, wParam, lParam);
+}
+
+// WM_DESTROY/WM_CLOSE 是 DestroyWindow() 直接送給 WndProc 的 sent message，
+// 不會進訊息佇列，所以上面的 WH_GETMESSAGE hook（只看 GetMessage/PeekMessage
+// 取出的 queued message）永遠攔不到。要在遊戲主窗真的開始關閉時盡快知道，得用
+// WH_CALLWNDPROC（在 sent message 送達目的地視窗程序「之前」攔截）。
+//
+// 用途：DestroyWindow(遊戲主窗) 當下立刻關閉斷線疊層的 WH_MOUSE_LL（系統級
+// low-level hook）。不這樣做的話，這個 hook 要等到 ExitProcess 真的把持有它的
+// 執行緒強制中止才會順便解除，但 OS 在那段「執行緒已死但 hook 還註冊著」的空窗
+// 期會偵測到這個 hook 沒有回應，導致整個系統的滑鼠輸入卡住到逾時為止——這就是
+// 遊戲視窗關閉瞬間滑鼠移動延遲、畫面小卡的成因，跟密米爾之泉那次「hook/handler
+// 沒有及時卸載」是類似問題，只是這次是低階滑鼠 hook，影響範圍是全系統而不只是
+// 遊戲本身。
+static LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPARAM lParam) {
+  if (nCode == HC_ACTION) {
+    CWPSTRUCT *pCwp = (CWPSTRUCT *)lParam;
+    if (pCwp->hwnd == g_hGameWnd &&
+        (pCwp->message == WM_DESTROY || pCwp->message == WM_CLOSE)) {
+      DisconnectOverlay_Shutdown();
+    }
+  }
+  return CallNextHookEx(h_callWndHook, nCode, wParam, lParam);
 }
 
 // =============================================================================
@@ -605,9 +667,12 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
     bytes_to_hex_preview((const BYTE *)buffer_ptr, len, hex, sizeof(hex), 32);
     unsigned op0 = (unsigned)buffer_ptr[0];
     unsigned opBody = (len >= 3) ? (unsigned)buffer_ptr[2] : 0;
-    launcherdll_net_log(
-        "[my_send] socket=%u len=%u opcode=0x%02X bodyOp=0x%02X msg=[%s] hex=[%s]",
-        (unsigned)s, (unsigned)len, op0, opBody, preview, hex);
+    // 抓封包除錯用 log：每個 send() 都會觸發，懷疑遊戲視窗關閉時的長時間卡頓跟
+    // log 寫太多有關（NetLog 每次呼叫都是 fopen+fwrite+fflush+fclose），先暫時
+    // 註解掉測試是否為肇因。
+    // launcherdll_net_log(
+    //     "[my_send] socket=%u len=%u opcode=0x%02X bodyOp=0x%02X msg=[%s] hex=[%s]",
+    //     (unsigned)s, (unsigned)len, op0, opBody, preview, hex);
 
     // 血盟推薦除錯用：opcode 76(0x4C)= C_PledgeRecommendation，抓真的送出這個
     // opcode 時的呼叫堆疊，找出是哪段 client 程式碼呼叫 send()（比對用自訂文字
@@ -749,18 +814,21 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
       bytes_to_hex_preview(decoded, decodeCount, decodedHex, sizeof(decodedHex), 64);
     }
 
-    if (opcode == 0x0A && ret > 10) {
-      launcherdll_net_log(
-          "[my_recv] *** SERVER MSG 0x0A (len=%d) hex=[%s] ascii=[%s]", ret,
-          hex, ascii);
-    } else {
-      launcherdll_net_log(
-          "[my_recv] socket=%u ret=%d opcode=0x%02X inited=%d encrypt=%d randenc=%d "
-          "xorByte=0x%02X decodedLen=%u %s decodedHex=[%s] rawHex=[%s]",
-          (unsigned)s, ret, (unsigned)opcode, (int)inited,
-          (int)ShareInfo.encrypt, (int)ShareInfo.randenc, (unsigned)_xorByte, decodedLen,
-          lenMismatch ? "*** MISMATCH ***" : "(match)", decodedHex, hex);
-    }
+    // 抓封包除錯用 log：每個 recv() 都會觸發，懷疑遊戲視窗關閉時的長時間卡頓跟
+    // log 寫太多有關（NetLog 每次呼叫都是 fopen+fwrite+fflush+fclose），先暫時
+    // 註解掉測試是否為肇因。
+    // if (opcode == 0x0A && ret > 10) {
+    //   launcherdll_net_log(
+    //       "[my_recv] *** SERVER MSG 0x0A (len=%d) hex=[%s] ascii=[%s]", ret,
+    //       hex, ascii);
+    // } else {
+    //   launcherdll_net_log(
+    //       "[my_recv] socket=%u ret=%d opcode=0x%02X inited=%d encrypt=%d randenc=%d "
+    //       "xorByte=0x%02X decodedLen=%u %s decodedHex=[%s] rawHex=[%s]",
+    //       (unsigned)s, ret, (unsigned)opcode, (int)inited,
+    //       (int)ShareInfo.encrypt, (int)ShareInfo.randenc, (unsigned)_xorByte, decodedLen,
+    //       lenMismatch ? "*** MISMATCH ***" : "(match)", decodedHex, hex);
+    // }
   }
   return ret;
 }
@@ -781,22 +849,43 @@ HWND(WINAPI *real_CreateWindowExW)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int,
                                    int, int, HWND, HMENU, HINSTANCE,
                                    LPVOID) = CreateWindowExW;
 
+// 血盟推薦除錯用：LUnicodeEdit（Intro_Edit 用的原生 Win32 edit control）到底
+// 有沒有被讀到、讀到什麼內容。見 GetWindowTextA/W 的 hook。
+int(WINAPI *real_GetWindowTextA)(HWND, LPSTR, int) = GetWindowTextA;
+int(WINAPI *real_GetWindowTextW)(HWND, LPWSTR, int) = GetWindowTextW;
+
+// 血盟推薦除錯用：反過來查「預設文字有沒有被寫進 LUnicodeEdit」。
+// ChangeLabel（點介紹欄位＝選擇預設訊息）理論上應該要把畫面上顯示的預設文字
+// 填進這個 edit control，玩家不用打字就能直接送出——如果這裡完全沒被呼叫過，
+// 就代表 ChangeLabel 只是把 UI 換成可編輯狀態，但沒有真的把預設文字寫進去，
+// 緩衝區還是空的，這樣按登錄當然送不出東西。
+BOOL(WINAPI *real_SetWindowTextA)(HWND, LPCSTR) = SetWindowTextA;
+BOOL(WINAPI *real_SetWindowTextW)(HWND, LPCWSTR) = SetWindowTextW;
+
 // 遊戲主窗 class "Lineage" 首次建立：只裝 UI 側（登入／PATCHCODE1 已移出）。
 static void OnLineageWindowCreating() {
   if (g_hooked)
     return;
   g_hooked = true;
   launcherdll_net_log(
-      "[Hook] CreateWindowEx(Lineage): title/helper/GetFileData only");
-
-  if (buffer != NULL) {
-    HookCode((void *)0x0058788B, (void *)GetFileData, 5);
-    launcherdll_net_log("[Hook] Core Pak loading (GetFileData) RESTORED.");
-  }
+      "[Hook] CreateWindowEx(Lineage): title/helper only (GetFileData moved "
+      "to DelayedDetourThread, must wait for code decryption first)");
 
   if (!h_hook) {
     h_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)HookProc, hins,
                               GetCurrentThreadId());
+  }
+  // WH_CALLWNDPROC 攔截遊戲主窗 WM_DESTROY 呼叫 DisconnectOverlay_Shutdown()，
+  // 主動卸載 DisconnectOverlay 裝的 WH_MOUSE_LL（全系統低階滑鼠鉤子）。這個鉤子
+  // 從殼解密完成、InstallDisconnectHooks() 呼叫 DisconnectOverlay_Start() 那一刻
+  // 就已經裝上，跟玩家有沒有登入、有沒有送封包無關——不主動卸載的話，只能等
+  // ExitProcess 強殺 overlay 執行緒後由 OS 逾時偵測清除，這段空窗期會讓全系統
+  // 滑鼠輸入卡住，就是關閉遊戲視窗卡頓/滑鼠延遲的根因（實測驗證：停用這段
+  // 期間，即使停在帳密登入畫面、零封包流量，關閉一樣卡頓；此為必要修法，不是
+  // log 量問題）。
+  if (!h_callWndHook) {
+    h_callWndHook = SetWindowsHookEx(WH_CALLWNDPROC, CallWndProc, hins,
+                                     GetCurrentThreadId());
   }
 }
 
@@ -861,6 +950,50 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
   return hWnd;
 }
 
+// 血盟推薦除錯用：MatchRegister_Window 的 Intro_Edit 點開後，engine 實際上會
+// CreateWindowEx 一個 class="LUnicodeEdit" 的原生 Win32 edit control（已經在
+// [CreateWindowExA] log 裡看到過），猜測按登錄的時候是透過 GetWindowText 去讀
+// 這個 control 目前的內容。這裡兩個都 hook，直接記每次呼叫讀到什麼，藉此確認
+// 「用預設內容失敗」的案例，究竟有沒有呼叫到、讀到的是空字串還是別的東西。
+// 確認完可以拿掉。
+static int WINAPI my_GetWindowTextA(HWND hWnd, LPSTR lpString, int nMaxCount) {
+  int ret = real_GetWindowTextA(hWnd, lpString, nMaxCount);
+  launcherdll_net_log(
+      "[MatchMakingDbg] GetWindowTextA hwnd=0x%p ret=%d text=[%s]", hWnd, ret,
+      (ret > 0 && lpString) ? lpString : "");
+  return ret;
+}
+
+static int WINAPI my_GetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount) {
+  int ret = real_GetWindowTextW(hWnd, lpString, nMaxCount);
+  char narrow[256] = {0};
+  if (ret > 0 && lpString) {
+    WideCharToMultiByte(CP_UTF8, 0, lpString, ret, narrow, sizeof(narrow) - 1,
+                         NULL, NULL);
+  }
+  launcherdll_net_log(
+      "[MatchMakingDbg] GetWindowTextW hwnd=0x%p ret=%d text=[%s]", hWnd, ret,
+      narrow);
+  return ret;
+}
+
+static BOOL WINAPI my_SetWindowTextA(HWND hWnd, LPCSTR lpString) {
+  launcherdll_net_log("[MatchMakingDbg] SetWindowTextA hwnd=0x%p text=[%s]",
+                       hWnd, lpString ? lpString : "");
+  return real_SetWindowTextA(hWnd, lpString);
+}
+
+static BOOL WINAPI my_SetWindowTextW(HWND hWnd, LPCWSTR lpString) {
+  char narrow[256] = {0};
+  if (lpString) {
+    WideCharToMultiByte(CP_UTF8, 0, lpString, -1, narrow, sizeof(narrow) - 1,
+                         NULL, NULL);
+  }
+  launcherdll_net_log("[MatchMakingDbg] SetWindowTextW hwnd=0x%p text=[%s]",
+                       hWnd, narrow);
+  return real_SetWindowTextW(hWnd, lpString);
+}
+
 // MessageBox Detour 實作見 DisconnectHook.cpp（斷線 Layered 彈窗）
 
 // 設定檔解密 / 檔案讀取（純 XOR 還原 + 虛擬編譯模式）
@@ -896,6 +1029,16 @@ void __declspec(naked) NakedLoaderHook() {
 }
 */
 
+// 這是「變身檔」（ShareInfo.bdfile/usebd）的讀取邏輯，最終會透過 GetFileData()
+// 那段 naked function shellcode（見下方 0x0058788B 那個 HookCode）直接把
+// buffer/buffer_len 寫進遊戲原生的變身檔資料結構裡，完全略過遊戲自己讀
+// TW13081901.pak 用的那個未知加密演算法——不需要、也不去猜那個演算法。
+// 這裡的檔案格式是我們自己的 Encoder 產生的（跟遊戲原生的 TW13081901.pak
+// 檔案格式無關，也不用一致）：[orig_len:4 LE][key:16][zlib 壓縮 +
+// AES-128-ECB+XOR table 加密過的內容]，對齊 L1J3.8Launcher(RUST)參考
+// inject.rs::load_inject_file 的格式（只是我們這邊 GetFileData 用的是
+// buffer 本身、不像 Rust 版還要 +1 跳過 'S' 前綴，所以這裡解出來的內容
+// 不能加那個前綴 byte，否則會整個位移一個 byte）。
 static BYTE *GetFileBuffer() {
   FILE *fp = NULL;
   unsigned int len = 0;
@@ -908,7 +1051,7 @@ static BYTE *GetFileBuffer() {
     fseek(fp, 0, SEEK_SET);
     launcherdll_net_log("[GetFileBuffer] file opened, len=%u", len);
 
-    if (len < 4) { fclose(fp); return NULL; }
+    if (len < 20) { fclose(fp); return NULL; }
 
     BYTE *file_data = new BYTE[len];
     fread(file_data, 1, len, fp);
@@ -916,27 +1059,26 @@ static BYTE *GetFileBuffer() {
 
     VMProtectBegin;
 
-    const char *fixedKey = "PAt82IqEvNBmERYl";
-    launcherdll_net_log("[GetFileBuffer] Decrypting %u bytes with fixed XOR key...", len);
-    for (unsigned int i = 0; i < len; i++) {
-      file_data[i] ^= (BYTE)fixedKey[i % 16];
-    }
+    launcherdll_net_log("[GetFileBuffer] Decrypting %u bytes with embedded key (AES-128-ECB+XOR)...", len);
+    config_decrypt(&file_data[4], &file_data[20], len - 20);
 
-    /* [暫時停用轉譯] 修正 C3861 錯誤：目前不使用 ConvertTxtToBinary，回歸純 XOR 模式
-    if (len > 4 && (file_data[0] == '#' || (file_data[0] == '2' && file_data[1] == '0'))) {
-        launcherdll_net_log("[GetFileBuffer] Detected Text Configuration. Invoking Virtual Packer...");
-        DWORD binLen = 0;
-        BYTE* binData = ConvertTxtToBinary(file_data, len, binLen);
-        delete[] file_data;
-        buffer_len = binLen;
-        VMProtectEnd;
-        return binData;
-    }
-    */
-
-    buffer_len = len;
+    DWORD un_len = *(DWORD *)file_data;
+    uLongf destLen = un_len;
+    BYTE *un_buffer = new BYTE[un_len + 1];
+    int ret = uncompress(un_buffer, &destLen, &file_data[20], len - 20);
+    un_buffer[destLen] = 0;
+    delete[] file_data;
     VMProtectEnd;
-    return file_data;
+
+    launcherdll_net_log("[GetFileBuffer] uncompress ret=%d un_len=%u actual=%lu", ret,
+                        un_len, destLen);
+
+    if (ret == Z_OK) {
+      buffer_len = destLen;
+      return un_buffer;
+    }
+
+    delete[] un_buffer;
   }
   return NULL;
 }
@@ -1251,6 +1393,19 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
       "[DelayedDetour] code decrypted (waited %d ms), installing ALL hooks...",
       waitCount * 10);
 
+  // 「變身檔」FileHook：對齊 L1J3.8Launcher(RUST)參考 inject.rs 的時序——一定要
+  // 等 0x0058788B 那段程式碼真的解密完成（也就是這裡，IsCodeDecrypt() 已經為
+  // true）才能 patch，之前放在 OnLineageWindowCreating()（視窗建立當下，遠早於
+  // 解密完成）會被遊戲自己的解殼流程蓋掉/覆寫，這正是先前不管 pak 內容對不對
+  // 都照樣在同一個位址當機的原因。buffer/buffer_len 在更早的 init() 階段就已經
+  // 由 GetFileBuffer() 決定好了，這裡只是延後安裝時機。
+  if (buffer != NULL) {
+    HookCode((void *)0x0058788B, (void *)GetFileData, 5);
+    launcherdll_net_log(
+        "[DelayedDetour] Core Pak loading (GetFileData) hook installed "
+        "post-decrypt, buffer_len=%u", (unsigned)buffer_len);
+  }
+
   // 解殼完成：安裝所有 Detours hook（API，不再含時間 hook——見上方稽核註記）
   DetourRestoreAfterWith();
   DetourTransactionBegin();
@@ -1263,6 +1418,14 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
                reinterpret_cast<PVOID>(my_CreateWindowEx));
   DetourAttach(&(PVOID &)real_CreateWindowExW,
                reinterpret_cast<PVOID>(my_CreateWindowExW));
+  DetourAttach(&(PVOID &)real_GetWindowTextA,
+               reinterpret_cast<PVOID>(my_GetWindowTextA));
+  DetourAttach(&(PVOID &)real_GetWindowTextW,
+               reinterpret_cast<PVOID>(my_GetWindowTextW));
+  DetourAttach(&(PVOID &)real_SetWindowTextA,
+               reinterpret_cast<PVOID>(my_SetWindowTextA));
+  DetourAttach(&(PVOID &)real_SetWindowTextW,
+               reinterpret_cast<PVOID>(my_SetWindowTextW));
   // 斷線：條件吞掉原生 MessageBox 白窗（見 DisconnectHook）
   DetourAttach(&(PVOID &)real_MessageBoxA,
                reinterpret_cast<PVOID>(my_MessageBoxA));

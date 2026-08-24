@@ -142,6 +142,11 @@ namespace LinLauncher.ViewModels
 
             _updateService.ProgressChanged += OnUpdateProgressChanged;
             _launchService.GameExited += (s, e) => { IsBusy = false; StatusText = "Ready"; };
+            // 遊戲進程建起來到主視窗真的出現，殼解密＋掛勾流程實測要 10~20 秒不等，
+            // 這段期間畫面完全沒變化，使用者容易誤以為卡住了。這裡借用原本下載更新
+            // 用的 OverallProgress/StatusText 顯示一個「模擬」進度條，實際完成時機
+            // 還是以視窗真的出現為準（見 LaunchService.WaitForGameWindowAsync）。
+            _launchService.GameProcessStarted += async (s, pid) => await WatchGameStartupProgressAsync(pid);
             
             try
             {
@@ -209,40 +214,143 @@ namespace LinLauncher.ViewModels
         }
 
         /// <summary>
-        /// 下載完成後執行 eat.exe。預期位置為 Core 的上一層（遊戲根目錄），
-        /// 與 <see cref="GamePathHelper.GetGameRootDirectory"/> 相同；不在 Core 資料夾內尋找。
+        /// 遊戲根目錄標記：上次更新已下載、但因遊戲在跑而尚未吃檔。
+        /// 僅在更新流程補吃，開始遊戲不會讀這個旗標。
         /// </summary>
-        private static void TryRunEatExe()
-        {
-            string gameRoot = GamePathHelper.GetGameRootDirectory().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            string eatPath = Path.Combine(gameRoot, "eat.exe");
+        private const string EatPendingFlagName = ".eat_pending";
 
-            if (!File.Exists(eatPath))
+        private static string GetEatPendingFlagPath(string gameRoot) =>
+            Path.Combine(gameRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), EatPendingFlagName);
+
+        private static bool HasEatPendingFlag(string gameRoot) =>
+            File.Exists(GetEatPendingFlagPath(gameRoot));
+
+        private static void MarkEatPending(string gameRoot)
+        {
+            try
             {
-                StartupLog.Append(
-                    $"TryRunEatExe: 未找到 eat.exe。預期路徑（Core 上一層）：{eatPath}");
+                File.WriteAllText(GetEatPendingFlagPath(gameRoot), DateTime.UtcNow.ToString("o"));
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("MarkEatPending: 寫入旗標失敗", ex);
+            }
+        }
+
+        private static void ClearEatPending(string gameRoot)
+        {
+            try
+            {
+                string path = GetEatPendingFlagPath(gameRoot);
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("ClearEatPending: 刪除旗標失敗", ex);
+            }
+        }
+
+        /// <summary>
+        /// 把遊戲根目錄的 icon/sprite/Surf/text/Tile 散檔寫入 idx/pak。
+        /// 失敗只提示，不擋開始遊戲或後續流程。
+        /// </summary>
+        private void TryEatClientPacks(string gameRoot)
+        {
+            gameRoot = gameRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (!EatService.HasPendingFiles(gameRoot))
+            {
+                StartupLog.Append($"TryEatClientPacks: 無散檔 ({gameRoot})");
+                ClearEatPending(gameRoot);
+                return;
+            }
+
+            if (IsGameProcessRunning())
+            {
+                StartupLog.Append("[吃檔] 遊戲執行中，跳過並標記 .eat_pending");
+                MarkEatPending(gameRoot);
                 return;
             }
 
             try
             {
-                StartupLog.Append($"TryRunEatExe: 啟動 {eatPath}");
-                var psi = new ProcessStartInfo(eatPath)
+                StartupLog.Append($"TryEatClientPacks: 開始 {gameRoot}");
+                var progress = new Progress<EatProgress>(p =>
                 {
-                    WorkingDirectory = gameRoot,
-                    UseShellExecute = true
-                };
-                using Process? p = Process.Start(psi);
-                if (p != null)
+                    void Apply()
+                    {
+                        StatusText = p.Message;
+                        if (p.Total > 0)
+                            OverallProgress = Math.Clamp(p.Current * 100 / p.Total, 0, 100);
+                    }
+
+                    if (Application.Current?.Dispatcher.CheckAccess() == true)
+                        Apply();
+                    else
+                        Application.Current?.Dispatcher.Invoke(Apply);
+                });
+
+                var result = EatService.Run(gameRoot, keepLooseFiles: false, progress: progress);
+                StartupLog.Append($"TryEatClientPacks: {result.Summary}");
+                StatusText = result.Summary;
+
+                if (result.Ok)
                 {
-                    p.WaitForExit(600000);
-                    StartupLog.Append($"TryRunEatExe: 結束代碼={p.ExitCode}");
+                    ClearEatPending(gameRoot);
+                    return;
                 }
+
+                MarkEatPending(gameRoot);
+                MessageBox.Show(result.Summary, "吃檔未完全成功", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {
-                StartupLog.Append($"TryRunEatExe: 執行失敗 {eatPath}", ex);
+                StartupLog.Append("TryEatClientPacks: 執行失敗", ex);
+                MarkEatPending(gameRoot);
+                MessageBox.Show($"吃檔失敗：{ex.Message}", "吃檔錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        /// <summary>更新下載成功後才吃檔；遊戲在跑則寫 .eat_pending，下次更新檢查無下載時補吃。</summary>
+        private void ApplyEatAfterSuccessfulDownload(string gameRoot, bool anyDeferred)
+        {
+            if (IsGameProcessRunning())
+            {
+                StartupLog.Append("[更新] 偵測到遊戲仍在執行中，跳過吃檔並寫入 .eat_pending");
+                MarkEatPending(gameRoot);
+                MessageBox.Show(
+                    "更新檔案已下載完成，但偵測到遊戲目前仍在執行中，暫時跳過套用資源封裝（吃檔）步驟。\n\n" +
+                    "請先關閉遊戲，再重新開啟登入器一次以完成套用。",
+                    "更新提示",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            TryEatClientPacks(gameRoot);
+            string extra = anyDeferred
+                ? "\n\n部分登入器自身檔案目前使用中，已保留待更新，將於下次啟動登入器時自動完成。"
+                : "";
+            MessageBox.Show(
+                "更新下載完成，已套用吃檔（若有 icon／sprite／Surf／text／Tile 散檔）。請重新啟動登入器以套用變更。" + extra,
+                "更新提示",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        /// <summary>更新檢查無需下載時，只在有 .eat_pending 才補吃，不會因為資料夾剛好有散檔就吃。</summary>
+        private void TryEatIfPendingAfterUpdate(string gameRoot)
+        {
+            if (!HasEatPendingFlag(gameRoot))
+                return;
+            if (IsGameProcessRunning())
+            {
+                StartupLog.Append("[吃檔] 有 .eat_pending 但遊戲仍在執行中，下次再試");
+                return;
+            }
+
+            StartupLog.Append("[吃檔] 更新無需下載，補做上次未完成的吃檔");
+            TryEatClientPacks(gameRoot);
         }
 
         /// <summary>依 SelectedServer 目前的維護狀態，更新「開始遊戲」按鈕文字（每秒由計時器呼叫一次）。</summary>
@@ -655,6 +763,7 @@ namespace LinLauncher.ViewModels
                 if (allFiles.Count == 0)
                 {
                     StartupLog.Append("[更新] 清單為 0 筆（請檢查 update.txt 與 [main] count）");
+                    TryEatIfPendingAfterUpdate(GamePathHelper.GetGameRootDirectory());
                     return;
                 }
 
@@ -663,11 +772,13 @@ namespace LinLauncher.ViewModels
                 // AppDomain.CurrentDomain.BaseDirectory（= Core）會把檔案解到 Core\sprite\
                 // 這個不存在、遊戲也不會讀的地方。
                 string updateRoot = GamePathHelper.GetGameRootDirectory();
-                var needUpdate = await _updateService.CheckFilesAsync(allFiles, updateRoot);
+                var needUpdate = await _updateService.CheckFilesAsync(
+                    allFiles, updateRoot, msg => StartupLog.Append($"UpdateCheck: {msg}"));
                 StartupLog.Append($"[更新] 需更新檔案數={needUpdate.Count}");
                 if (needUpdate.Count == 0)
                 {
                     StartupLog.Append("[更新] 本機檔案已是最新，無需下載");
+                    TryEatIfPendingAfterUpdate(updateRoot);
                     return;
                 }
 
@@ -681,31 +792,7 @@ namespace LinLauncher.ViewModels
 
                 if (ok)
                 {
-                    // Sprite.pak 等資源檔案是 eat.exe 寫入的目標；若遊戲本體目前正在執行中，
-                    // 這些檔案可能被遊戲行程開著讀取，eat.exe 這時候去寫可能會失敗或寫壞。
-                    // 偵測到遊戲還在跑就跳過這次 eat.exe，提示使用者關閉遊戲後重開登入器再套用。
-                    if (IsGameProcessRunning())
-                    {
-                        StartupLog.Append("[更新] 偵測到遊戲仍在執行中，跳過 eat.exe，避免寫入衝突");
-                        MessageBox.Show(
-                            "更新檔案已下載完成，但偵測到遊戲目前仍在執行中，暫時跳過套用資源封裝（eat.exe）步驟。\n\n" +
-                            "請先關閉遊戲，再重新開啟登入器一次以完成套用。",
-                            "更新提示",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
-                    }
-                    else
-                    {
-                        TryRunEatExe();
-                        string extra = anyDeferred
-                            ? "\n\n部分登入器自身檔案目前使用中，已保留待更新，將於下次啟動登入器時自動完成。"
-                            : "";
-                        MessageBox.Show(
-                            "更新下載完成，已執行 eat.exe（若存在）。請重新啟動登入器以套用變更。" + extra,
-                            "更新提示",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
-                    }
+                    ApplyEatAfterSuccessfulDownload(updateRoot, anyDeferred);
                 }
                 else if (!string.IsNullOrEmpty(err))
                 {
@@ -827,10 +914,31 @@ namespace LinLauncher.ViewModels
                 StatusText = "Ready";
                 return;
             }
+
             bool launched = await _launchService.LaunchGameAsync(
                 SelectedServer, gameExe, dllPath, "", "", Windowed, WindowMode);
-            if (launched) StatusText = "Game Running...";
-            else { StatusText = "Launch failed!"; IsBusy = false; }
+            // launched==true 之後的狀態文字交給 WatchGameStartupProgressAsync
+            // （由 LaunchService.GameProcessStarted 事件觸發）接手顯示啟動進度，
+            // 這裡不要覆蓋掉，不然模擬進度條剛開始跑就被蓋成「Game Running...」。
+            if (!launched) { StatusText = "Launch failed!"; IsBusy = false; }
+        }
+
+        /// <summary>
+        /// 遊戲進程建立後、主視窗出現前，顯示一個模擬進度條讓使用者知道還在跑，
+        /// 不是卡住了。借用下載更新用的 OverallProgress/StatusText。
+        /// </summary>
+        private async Task WatchGameStartupProgressAsync(int pid)
+        {
+            var progress = new Progress<int>(pct =>
+            {
+                OverallProgress = pct;
+                StatusText = "遊戲啟動中…"; // % 數已經由進度條本身顯示，不重複寫在文字裡
+            });
+            bool windowAppeared = await _launchService.WaitForGameWindowAsync(pid, progress);
+            OverallProgress = 0;
+            StatusText = windowAppeared
+                ? "遊戲啟動中..."
+                : "遊戲仍在啟動中，若持續無回應請檢查防毒/防火牆是否擋住了 LauncherDll 注入";
         }
 
         private void PersistDisplayPrefs()

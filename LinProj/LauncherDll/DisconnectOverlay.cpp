@@ -60,7 +60,7 @@ wchar_t g_liveText[512] = {0};
 
 void NetLog(const char *fmt, ...) {
   char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./launcherdll_net.log";
+  char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
     for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
       if (exePath[i] == '\\' || exePath[i] == '/') {
@@ -68,7 +68,7 @@ void NetLog(const char *fmt, ...) {
         break;
       }
     }
-    sprintf_s(logPath, "%s\\launcherdll_net.log", exePath);
+    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
   if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
@@ -105,10 +105,16 @@ const wchar_t *ReasonToText(unsigned short reason) {
   }
 }
 
+// 斷線畫面「整片變白」除錯用：確認素材到底有沒有真的載入成功、格式是不是
+// 預期的。查完可以拿掉。
 Gdiplus::Bitmap *CurrentBackgroundBitmap() {
   Gdiplus::Bitmap *bmp = OverlayAssets_GetBitmap(g_assets, kBgPng);
-  if (bmp && bmp->GetWidth() > 0 && bmp->GetHeight() > 0)
+  if (bmp && bmp->GetWidth() > 0 && bmp->GetHeight() > 0) {
+    NetLog("[disconnect-ui-dbg] GetBitmap OK w=%u h=%u pixelFormat=0x%08X",
+           bmp->GetWidth(), bmp->GetHeight(), (unsigned)bmp->GetPixelFormat());
     return bmp;
+  }
+  NetLog("[disconnect-ui-dbg] GetBitmap FAILED bmp=0x%p", bmp);
   return nullptr;
 }
 
@@ -156,6 +162,11 @@ void ComputeWinSize(int *outW, int *outH) {
 
   *outW = (int)(baseW * g_scaleX + 0.5);
   *outH = (int)(baseH * g_scaleY + 0.5);
+  // 斷線畫面「整片變白」除錯用：確認縮放邏輯算出來的視窗尺寸合理。查完可以
+  // 拿掉。
+  NetLog("[disconnect-ui-dbg] ComputeWinSize baseW=%d baseH=%d haveBase=%d "
+         "scaleX=%.3f scaleY=%.3f outW=%d outH=%d",
+         baseW, baseH, (int)haveBase, g_scaleX, g_scaleY, *outW, *outH);
 }
 
 const wchar_t *TitleText() {
@@ -227,7 +238,11 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
                          (BYTE *)bits);
     Gdiplus::Graphics g(&dest);
     g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-    g.DrawImage(bg, 0, 0, winW, winH);
+    Gdiplus::Status st = g.DrawImage(bg, 0, 0, winW, winH);
+    // 斷線畫面「整片變白」除錯用：DrawImage 回傳值原本完全沒檢查，非
+    // Gdiplus::Ok（0）就是真的畫失敗了。查完可以拿掉。
+    NetLog("[disconnect-ui-dbg] DrawImage status=%d winW=%d winH=%d", (int)st,
+           winW, winH);
   } else {
     HBRUSH bgBrush = CreateSolidBrush(BG_COLOR);
     RECT full = {0, 0, winW, winH};
@@ -393,8 +408,14 @@ void PaintLayered(HWND hwnd) {
   SIZE sz = {winW, winH};
   POINT ptSrc = {0, 0};
   BLENDFUNCTION blend = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-  UpdateLayeredWindow(hwnd, screenDc, &ptDst, &sz, memDc, &ptSrc, 0, &blend,
-                      ULW_ALPHA);
+  BOOL ulwOk = UpdateLayeredWindow(hwnd, screenDc, &ptDst, &sz, memDc, &ptSrc,
+                                   0, &blend, ULW_ALPHA);
+  // 斷線畫面「整片變白」除錯用：回傳值原本完全沒檢查，失敗的話畫面會維持
+  // 上一次的內容或呈現未定義狀態。查完可以拿掉。
+  if (!ulwOk)
+    NetLog("[disconnect-ui-dbg] UpdateLayeredWindow FAILED err=%u posX=%d "
+           "posY=%d winW=%d winH=%d",
+           (unsigned)GetLastError(), posX, posY, winW, winH);
 
   SelectObject(memDc, oldBmp);
   DeleteObject(bmp);
@@ -402,11 +423,35 @@ void PaintLayered(HWND hwnd) {
   ReleaseDC(NULL, screenDc);
 }
 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam);
+
+// WH_MOUSE_LL 只在斷線對話框真的顯示的這段期間才裝上/卸載，見上面
+// OverlayThreadProc 裡的說明。必須在 overlay 執行緒自己身上呼叫（安裝時的
+// 慣例，雖然 dwThreadId=0 是系統範圍，回呼還是固定跑在安裝它的執行緒），這裡
+// 兩個呼叫點（WM_SHOW_DISCONNECT / HideDialog）本來就都在 OverlayWndProc
+// 裡，天生就是這個執行緒。
+void EnsureMouseHookInstalled() {
+  if (g_mouseHook)
+    return;
+  g_mouseHook = SetWindowsHookExW(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
+  if (!g_mouseHook)
+    NetLog("[disconnect-ui] SetWindowsHookEx(WH_MOUSE_LL) failed err=%u",
+           GetLastError());
+}
+
+void RemoveMouseHookIfInstalled() {
+  if (!g_mouseHook)
+    return;
+  UnhookWindowsHookEx(g_mouseHook);
+  g_mouseHook = NULL;
+}
+
 void HideDialog(HWND hwnd) {
   g_visible.store(false);
   ShowWindow(hwnd, SW_HIDE);
   KillTimer(hwnd, 2);
   SetTimer(hwnd, 1, 3000, NULL);
+  RemoveMouseHookIfInstalled();
 }
 
 // Toggle topmost dynamically instead of leaving it off entirely: this is a
@@ -462,6 +507,7 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     g_reason.store((unsigned short)wp);
     g_swallow.store(true);
     g_visible.store(true);
+    EnsureMouseHookInstalled();
     ShowWindow(hwnd, SW_SHOW);
     ReassertZOrder(hwnd);
     PaintLayered(hwnd);
@@ -533,13 +579,12 @@ DWORD WINAPI OverlayThreadProc(void *) {
   }
   NetLog("[disconnect-ui] overlay thread ready hwnd=0x%p", hwnd);
 
-  // WH_MOUSE_LL must be installed with dwThreadId=0 (Windows doesn't allow
-  // thread-specific low-level hooks), but the callback still only ever runs
-  // on this thread since this thread pumps the message loop below.
-  g_mouseHook = SetWindowsHookExW(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
-  if (!g_mouseHook)
-    NetLog("[disconnect-ui] SetWindowsHookEx(WH_MOUSE_LL) failed err=%u",
-           GetLastError());
+  // WH_MOUSE_LL 不在這裡預先裝：它是系統範圍的低階滑鼠鉤子，只要裝著，全系統
+  // 每一次滑鼠移動都要多繞去這個 hook chain 一趟。這個 overlay 執行緒從殼解密
+  // 完成就啟動、活到整個 session 結束，但斷線對話框平常根本沒顯示（只有真的
+  // 斷線那幾秒才用得到這個 hook 去偵測原生確認鈕的點擊），所以改成只在對話框
+  // 真的顯示的時候才裝（見 WM_SHOW_DISCONNECT），隱藏/關閉就立刻卸載（見
+  // HideDialog），避免整個遊戲過程中平白多一個系統級 hook 拖慢滑鼠。
 
   MSG msg;
   while (GetMessageW(&msg, NULL, 0, 0) > 0) {
@@ -556,9 +601,13 @@ DWORD WINAPI OverlayThreadProc(void *) {
 bool DisconnectOverlay_Start() {
   if (g_thread)
     return true;
-  g_assets = OverlayAssets_Load("disconnect_ui", "disconnect_ui");
+  // 自製 UI 統一放同一組 ui.pak/idx（跟 MimirPowerOverlay.cpp 共用同一個
+  // folderName/pakBaseName："ui"），OverlayAssets_Load 內部用
+  // folderName+"|"+pakBaseName 當 cache key，兩邊傳一樣的字串會命中同一份已
+  // 解密好的 pak，不會重複載入/解密兩次。
+  g_assets = OverlayAssets_Load("ui", "ui");
   if (g_assets)
-    NetLog("[disconnect-ui] external assets loaded (disconnect_ui.pak)");
+    NetLog("[disconnect-ui] external assets loaded (ui.pak)");
   else
     NetLog("[disconnect-ui] no external assets, using built-in appearance");
   g_thread = CreateThread(NULL, 0, OverlayThreadProc, NULL, 0, NULL);
@@ -611,6 +660,23 @@ void DisconnectOverlay_Hide() {
 }
 
 void DisconnectOverlay_ArmSwallow() { g_swallow.store(true); }
+
+void DisconnectOverlay_Shutdown() {
+  HWND hwnd = NULL;
+  {
+    std::lock_guard<std::mutex> lock(g_lock);
+    hwnd = g_threadHwnd;
+  }
+  if (hwnd) {
+    NetLog("[disconnect-ui] shutdown: closing overlay window (game exiting)");
+    // WM_CLOSE has no explicit case in OverlayWndProc, so DefWindowProcW's
+    // default handling runs: DestroyWindow -> WM_DESTROY -> PostQuitMessage,
+    // which ends OverlayThreadProc's message loop and runs
+    // UnhookWindowsHookEx(g_mouseHook) right after, on the same thread that
+    // installed it.
+    PostMessageW(hwnd, WM_CLOSE, 0, 0);
+  }
+}
 
 void DisconnectOverlay_SetLiveText(const wchar_t *text) {
   if (!text || !text[0])

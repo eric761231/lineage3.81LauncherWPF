@@ -45,6 +45,22 @@ struct TripleImage {
   std::string normal, hover, pressed;
 };
 
+// 新版 3 張並排完整卡片（取代舊的「緊湊列表 + 1 個共用詳情面板」）。3 張卡共用
+// 同一張卡片底圖（option.png），不用各自準備不同主題色的圖——主題色差異來自
+// 各自的圖示（icon）本身顏色不同，卡片外框圖是共用的。選取中/hover 效果不用另外
+// 準備一張光暈疊圖，直接把同一張底圖調亮畫一次（見 DrawCards 的 ColorMatrix）。
+// rect：整張卡的範圍（背景圖跟命中測試都用這個）。content：圖示+名稱+描述那塊
+// （給既有的 DrawDetailContent 用，比 rect 小、只佔卡片上半部，不然描述文字會
+// 一路撐到卡片底部蓋掉下面的統計區）。statsRect：這張卡自己的 6 行統計區塊，
+// 三者都是視窗座標系裡的絕對座標，不是相對卡片的偏移量（跟既有的 detailRect/
+// detailStatsRect 同一種寫法）。
+struct CardCfg {
+  RectCfg rect;
+  RectCfg contentRect;
+  RectCfg statsRect;
+  std::string bg;
+};
+
 struct MimirUiConfig {
   bool loaded = false;
   int windowW = 380, windowH = 600;
@@ -76,14 +92,25 @@ struct MimirUiConfig {
   COLORREF detailColor = RGB(0xFF, 0xFF, 0xFF);
   std::string detailBg;
 
-  // 詳情卡下方的 2 欄「效果類型/來源/持續時間...」統計格：純版面佔位，目前封包
-  // 沒有帶這些資料，所以是靜態文字（xml 直接寫死 label+value），不是每個選項各
-  // 自不同的動態資料。mimir_ui.xml 沒設定任何 <DetailStat> 就完全不畫，之後有
-  // 真的欄位/資料來源要顯示，再回頭把這裡改成從封包帶資料。
-  RectCfg detailStatsRect;
+  // 詳情卡下方的 2 欄「效果類型/來源/持續時間...」統計格。每一行 label 都是 XML
+  // 寫死的靜態文字；value 預設也是 XML 寫死，但 dynamicPvp==true 的那一行（目前
+  // 只有 PVP 那行）render 時會改用封包送來的 MimirOption.pvpText 蓋掉 value。
+  // cardIndex：-1 代表舊版單一共用區塊（沒有 <Card>/card="" 屬性時的相容路徑，
+  // 通通畫在 g_cfg.detailStatsRect）；0~2 代表新版 3 張卡各自的統計區塊（card
+  // 屬性指定），畫在對應 g_cfg.cards[cardIndex].statsRect。
+  RectCfg detailStatsRect; // 舊版共用路徑用的位置，新版路徑用各卡自己的 statsRect
   int detailStatsFontSize = 12;
   COLORREF detailStatsColor = RGB(0x99, 0x99, 0x99);
-  std::vector<std::pair<std::wstring, std::wstring>> detailStats; // (label, value)，最多 6 筆、2 欄 3 列
+  struct DetailStatEntry {
+    std::wstring label, value;
+    int cardIndex = -1;
+    bool dynamicPvp = false;
+  };
+  std::vector<DetailStatEntry> detailStats; // 舊版最多 6 筆；新版最多 18 筆（6*3卡）
+
+  CardCfg cards[MIMIR_OPTION_COUNT]; // 新版 3 張並排完整卡片；cards[0].rect.has
+                                      // 為 false 時整個新版路徑不啟用，退回舊版
+                                      // 「列表+共用詳情面板」畫法。
 
   // 「選擇將於 hh:mm:ss 後更新」：起始秒數是伺服器送的（見
   // g_countdownTotalSeconds），這裡只是畫面上的排版設定，不是時間來源。
@@ -105,6 +132,8 @@ struct MimirUiConfig {
 
   std::string defaultIconFile;
   std::map<DWORD, std::string> iconById;
+  std::string diamondImage; // 詳情卡統計條目前的菱形小圖，繪製邊長跟著統計文字
+                            // 字級走（見 DrawDetailStats），不是固定值。
 };
 
 std::mutex g_lock;
@@ -139,7 +168,7 @@ void NetLog(const char *fmt, ...) {
   // 拿掉。
   return;
   char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./launcherdll_net.log";
+  char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
     for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
       if (exePath[i] == '\\' || exePath[i] == '/') {
@@ -147,7 +176,7 @@ void NetLog(const char *fmt, ...) {
         break;
       }
     }
-    sprintf_s(logPath, "%s\\launcherdll_net.log", exePath);
+    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
   if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
@@ -320,11 +349,32 @@ void ParseMimirXml(const BYTE *data, size_t len, MimirUiConfig *cfg) {
         cfg->detailStatsFontSize = atoi(buf);
       cfg->detailStatsColor = ExtractColor(line, "color", cfg->detailStatsColor);
     } else if (strstr(line, "<DetailStat ") || strstr(line, "<DetailStat/")) {
-      char label[128], value[128];
-      if (ExtractAttr(line, "label", label, sizeof(label)) &&
-          ExtractAttr(line, "value", value, sizeof(value)) &&
-          cfg->detailStats.size() < 6) {
-        cfg->detailStats.push_back({Utf8ToWide(label), Utf8ToWide(value)});
+      char label[128], value[128] = {0};
+      if (ExtractAttr(line, "label", label, sizeof(label))) {
+        MimirUiConfig::DetailStatEntry entry;
+        entry.label = Utf8ToWide(label);
+        if (ExtractAttr(line, "value", value, sizeof(value)))
+          entry.value = Utf8ToWide(value);
+        char cardBuf[8];
+        if (ExtractAttr(line, "card", cardBuf, sizeof(cardBuf)))
+          entry.cardIndex = atoi(cardBuf);
+        char dynBuf[16];
+        if (ExtractAttr(line, "dynamic", dynBuf, sizeof(dynBuf)) &&
+            _stricmp(dynBuf, "pvp") == 0)
+          entry.dynamicPvp = true;
+        cfg->detailStats.push_back(entry);
+      }
+    } else if (strstr(line, "<Card")) {
+      char idxBuf[8];
+      if (ExtractAttr(line, "index", idxBuf, sizeof(idxBuf))) {
+        int idx = atoi(idxBuf);
+        if (idx >= 0 && idx < MIMIR_OPTION_COUNT) {
+          ExtractRect(line, "rect", &cfg->cards[idx].rect);
+          ExtractRect(line, "content", &cfg->cards[idx].contentRect);
+          ExtractRect(line, "statsRect", &cfg->cards[idx].statsRect);
+          if (ExtractAttr(line, "bg", buf, sizeof(buf)))
+            cfg->cards[idx].bg = buf;
+        }
       }
     } else if (strstr(line, "<Detail")) {
       ExtractRect(line, "rect", &cfg->detailRect);
@@ -372,6 +422,14 @@ void ParseMimirXml(const BYTE *data, size_t len, MimirUiConfig *cfg) {
     } else if (strstr(line, "<DefaultIcon")) {
       if (ExtractAttr(line, "file", buf, sizeof(buf)))
         cfg->defaultIconFile = buf;
+    } else if (strstr(line, "<Image")) {
+      char idBuf[32];
+      char file[256];
+      if (ExtractAttr(line, "id", idBuf, sizeof(idBuf)) &&
+          ExtractAttr(line, "file", file, sizeof(file))) {
+        if (strcmp(idBuf, "diamond") == 0)
+          cfg->diamondImage = file;
+      }
     } else if (strstr(line, "<Icon")) {
       char idBuf[32];
       char file[256];
@@ -387,9 +445,13 @@ void ParseMimirXml(const BYTE *data, size_t len, MimirUiConfig *cfg) {
 void EnsureAssetsLoaded() {
   if (g_assets)
     return;
-  g_assets = OverlayAssets_Load("mimir_ui", "mimir_ui");
+  // 自製 UI 統一放同一組 ui.pak/idx（跟 DisconnectOverlay.cpp 共用同一個
+  // folderName/pakBaseName："ui"），OverlayAssets_Load 內部用
+  // folderName+"|"+pakBaseName 當 cache key，兩邊傳一樣的字串會命中同一份已
+  // 解密好的 pak，不會重複載入/解密兩次。
+  g_assets = OverlayAssets_Load("ui", "ui");
   if (!g_assets) {
-    NetLog("[mimir-ui] no external assets (mimir_ui.pak not deployed?), using built-in layout");
+    NetLog("[mimir-ui] no external assets (ui.pak not deployed?), using built-in layout");
     g_cfg.loaded = true; // fall back to the hardcoded defaults above
     return;
   }
@@ -411,10 +473,20 @@ Gdiplus::Bitmap *GetImg(const std::string &name) {
   return OverlayAssets_GetBitmap(g_assets, name.c_str());
 }
 
-const char *IconFileFor(DWORD iconId) {
-  auto it = g_cfg.iconById.find(iconId);
+const char *IconFileFor(DWORD iconId, DWORD iconPngId) {
+  // 後端可能把真正的圖片編號放在 iconPngId；若沒有就退回用 iconId。
+  DWORD imgId = (iconPngId != 0) ? iconPngId : iconId;
+  auto it = g_cfg.iconById.find(imgId);
   if (it != g_cfg.iconById.end())
     return it->second.c_str();
+  // 若 XML 沒有對照，先嘗試直接用 <imgId>.png（例如 imgId=1234 就載入 1234.png）。
+  // 找不到才退回 defaultIconFile。
+  if (imgId != 0) {
+    static char buf[32];
+    sprintf_s(buf, "%u.png", (unsigned)imgId);
+    if (GetImg(buf))
+      return buf;
+  }
   return g_cfg.defaultIconFile.c_str();
 }
 
@@ -448,6 +520,12 @@ RECT RowRectScaled(int index) {
   return out;
 }
 
+// 新版 3 張並排卡片用：每張卡的 rect 都是 XML 直接給的獨立座標，不用像
+// RowRectRaw 那樣疊加運算。
+bool UsingCardLayout() { return g_cfg.cards[0].rect.has; }
+
+RECT CardRectScaled(int index) { return ScaledRect(g_cfg.cards[index].rect); }
+
 HFONT MakeFont(int ptSize, const std::wstring &family, bool bold) {
   return CreateFontW(ptSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, 0, 0, 0,
                      DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -476,21 +554,25 @@ void DrawOutlinedText(HDC memDc, const RECT &rc, const std::wstring &text,
 // 卡片列表用：圖示 + 單行名稱（不換行、不顯示 desc）。
 void DrawRowContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const MimirOption &opt) {
   int iconSize = (int)(g_cfg.rowIconSize * g_scaleY + 0.5);
-  Gdiplus::Bitmap *icon = GetImg(IconFileFor(opt.iconId));
+  Gdiplus::Bitmap *icon = GetImg(IconFileFor(opt.iconId, opt.iconPngId));
   // 文字至少要離列左邊界 g_cfg.rowTextLeftMin px（xml <RowLayout textLeftMin="..">
   // 可調，不用重編 DLL），不管圖示有沒有載入成功都一樣（圖示本身較寬時用圖示
-  // 實際寬度往右推，避免壓到圖示）。
-  int minTextLeft = rc.left + g_cfg.rowTextLeftMin;
+  // 實際寬度往右推，避免壓到圖示）。rowTextLeftMin 是基準值，要乘上水平縮放。
+  int minTextLeft = rc.left + (int)(g_cfg.rowTextLeftMin * g_scaleX + 0.5);
   int textLeft = minTextLeft;
   if (icon) {
-    int iy = rc.top + ((rc.bottom - rc.top) - iconSize) / 2;
+    int iy = rc.top + ((rc.bottom - rc.top) - iconSize) / 2 + 3;
+    if (iy + iconSize > rc.bottom)
+      iy = rc.bottom - iconSize;
+    g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
     g.DrawImage(icon, rc.left + 8, iy, iconSize, iconSize);
+    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     textLeft = max(rc.left + 8 + iconSize + 10, minTextLeft);
   }
   HFONT font = MakeFont((int)(g_cfg.rowFontSize * g_scaleY + 0.5), g_cfg.titleFontFamily, false);
   HGDIOBJ old = SelectObject(memDc, font);
   SetBkMode(memDc, TRANSPARENT);
-  RECT textRc = {textLeft, rc.top, rc.right - 8, rc.bottom};
+  RECT textRc = {textLeft, rc.top + 3, rc.right - 8, rc.bottom};
   DrawOutlinedText(memDc, textRc, Big5ToWide(opt.name), g_cfg.rowColor, RGB(0, 0, 0),
                    DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_NOPREFIX);
   SelectObject(memDc, old);
@@ -500,11 +582,13 @@ void DrawRowContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const Mimir
 // 詳情卡用：圖示 + 粗體名稱（標題）+ 換行敘述文字（本文）。
 void DrawDetailContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const MimirOption &opt) {
   int iconSize = (int)(g_cfg.detailIconSize * g_scaleY + 0.5);
-  Gdiplus::Bitmap *icon = GetImg(IconFileFor(opt.iconId));
+  Gdiplus::Bitmap *icon = GetImg(IconFileFor(opt.iconId, opt.iconPngId));
   int textLeft = rc.left + 12;
   int iconTop = rc.top + 12;
   if (icon) {
+    g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
     g.DrawImage(icon, rc.left + 12, iconTop, iconSize, iconSize);
+    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     textLeft = rc.left + 12 + iconSize + 12;
   }
 
@@ -528,14 +612,53 @@ void DrawDetailContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const Mi
   DeleteObject(descFont);
 }
 
-// 詳情卡下方的 2 欄「◇label：value」統計格，純靜態文字（xml 設定，不是每個選項
-//各自不同的動態資料——目前封包沒有帶這些欄位）。mimir_ui.xml 沒設定任何
-// <DetailStat> 就完全不畫。
-void DrawDetailStats(Gdiplus::Graphics &g, HDC memDc) {
-  if (g_cfg.detailStats.empty())
-    return;
-  RECT rc = ScaledRect(g_cfg.detailStatsRect);
-  if (rc.right <= rc.left)
+// 新版卡片用：圖示置中 + 粗體名稱（置中，在圖示下方）+ 換行敘述文字（置中）。
+// 跟舊版 DrawDetailContent（圖示靠左、名稱在圖示右邊）排版不同，但共用同一組
+// g_cfg.detailIconSize/detailNameFontSize/detailDescFontSize/detailColor 設定值
+// （<Detail> XML 標籤），只有新版卡片會呼叫這個函式，不影響舊版 fallback 路徑。
+void DrawCardContent(Gdiplus::Graphics &g, HDC memDc, const RECT &rc, const MimirOption &opt) {
+  int iconSize = (int)(g_cfg.detailIconSize * g_scaleY + 0.5);
+  Gdiplus::Bitmap *icon = GetImg(IconFileFor(opt.iconId, opt.iconPngId));
+  int centerX = (rc.left + rc.right) / 2;
+  int iconTop = rc.top + 12;
+  int afterIcon = iconTop;
+  if (icon) {
+    g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+    g.DrawImage(icon, centerX - iconSize / 2, iconTop, iconSize, iconSize);
+    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+    afterIcon = iconTop + iconSize;
+  }
+
+  // 名稱（mimir_name，粗體、置中，在圖示下方）+ 下面一行敘述（opt.desc，後端
+  // 現在直接讀 mimirwell.note 欄位，例如「支撐命中+2」，見 S_PacketBoxMimir.java
+  // 的 buildEffectDesc()）。
+  int nameFontSize = (int)(g_cfg.detailNameFontSize * g_scaleY + 0.5);
+  HFONT nameFont = MakeFont(nameFontSize, g_cfg.titleFontFamily, true);
+  HGDIOBJ oldName = SelectObject(memDc, nameFont);
+  SetBkMode(memDc, TRANSPARENT);
+  RECT nameRc = {rc.left + 8, afterIcon + 8, rc.right - 8, afterIcon + 8 + nameFontSize + 8};
+  DrawOutlinedText(memDc, nameRc, Big5ToWide(opt.name), g_cfg.detailColor, RGB(0, 0, 0),
+                   DT_SINGLELINE | DT_CENTER | DT_NOPREFIX);
+  SelectObject(memDc, oldName);
+  DeleteObject(nameFont);
+
+  int descFontSize = (int)(g_cfg.detailDescFontSize * g_scaleY + 0.5);
+  HFONT descFont = MakeFont(descFontSize, g_cfg.titleFontFamily, false);
+  HGDIOBJ oldDesc = SelectObject(memDc, descFont);
+  RECT descRc = {rc.left + 12, nameRc.bottom + 4, rc.right - 12, rc.bottom - 8};
+  DrawOutlinedText(memDc, descRc, Big5ToWide(opt.desc), g_cfg.detailColor, RGB(0, 0, 0),
+                   DT_WORDBREAK | DT_CENTER | DT_NOPREFIX);
+  SelectObject(memDc, oldDesc);
+  DeleteObject(descFont);
+}
+
+// 詳情卡下方的統計條列：顯示 xml 裡的 <DetailStat>（單欄，由上至下逐行）。
+// cardIndex：-1 只畫舊版沒設 card 屬性的那些（共用區塊，g_usingDefaultDetail
+// 邏輯決定要用哪個 MimirOption）；0~2 只畫該張卡設了 card="N" 的那些，dynamicPvp
+// 的那一行用 opt.pvpText 蓋掉 XML 寫死的 value。
+void DrawDetailStats(Gdiplus::Graphics &g, HDC memDc, const RECT &rc,
+                     const MimirOption &opt, int cardIndex) {
+  if (g_cfg.detailStats.empty() || rc.right <= rc.left)
     return;
 
   int fontSize = (int)(g_cfg.detailStatsFontSize * g_scaleY + 0.5);
@@ -543,20 +666,74 @@ void DrawDetailStats(Gdiplus::Graphics &g, HDC memDc) {
   HGDIOBJ old = SelectObject(memDc, font);
   SetBkMode(memDc, TRANSPARENT);
 
-  int colW = (rc.right - rc.left) / 2;
   int rowH = (fontSize + 8);
-  for (size_t i = 0; i < g_cfg.detailStats.size(); i++) {
-    int col = (int)(i % 2);
-    int row = (int)(i / 2);
-    RECT cellRc = {rc.left + col * colW, rc.top + row * rowH,
-                   rc.left + (col + 1) * colW, rc.top + (row + 1) * rowH};
-    std::wstring line = L"◇" + g_cfg.detailStats[i].first + L"：" +
-                        g_cfg.detailStats[i].second; // ◇label：value
-    DrawOutlinedText(memDc, cellRc, line, g_cfg.detailStatsColor, RGB(0, 0, 0),
+  int shown = 0;
+  for (size_t i = 0; i < g_cfg.detailStats.size() && shown < 6; i++) {
+    const auto &entry = g_cfg.detailStats[i];
+    if (entry.cardIndex != cardIndex)
+      continue;
+    RECT cellRc = {rc.left, rc.top + shown * rowH, rc.right, rc.top + (shown + 1) * rowH};
+    // 文字前面的「◇」符號換成 diamond.png 圖片；載入失敗才退回原本的文字符號，
+    // 不然沒素材時整行統計會消失看不到。
+    Gdiplus::Bitmap *diamond = GetImg(g_cfg.diamondImage);
+    RECT textRc = cellRc;
+    if (diamond) {
+      int dSize = fontSize; // 跟著統計文字字級走，不用固定值
+      int dTop = cellRc.top + ((cellRc.bottom - cellRc.top) - dSize) / 2;
+      g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+      g.DrawImage(diamond, cellRc.left, dTop, dSize, dSize);
+      g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+      textRc.left = cellRc.left + dSize + 4;
+    }
+    std::wstring line = (diamond ? L"" : L"◇") + entry.label + L"：" +
+                        (entry.dynamicPvp ? Big5ToWide(opt.pvpText) : entry.value);
+    DrawOutlinedText(memDc, textRc, line, g_cfg.detailStatsColor, RGB(0, 0, 0),
                      DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_NOPREFIX);
+    shown++;
   }
+
   SelectObject(memDc, old);
   DeleteObject(font);
+}
+
+// 選取中/hover 時把卡片底圖直接調亮畫一次，不用另外準備一張光暈疊圖——3 張卡
+// 共用同一張 option.png，主題色差異來自圖示本身，卡片外框圖不用做 3 種顏色。
+// RGB 各乘 1.35 倍（GDI+ ColorMatrix 會自動夾在 0~1 範圍內，不會過曝出界）。
+void DrawImageBrightened(Gdiplus::Graphics &g, Gdiplus::Bitmap *img, const RECT &rc) {
+  Gdiplus::ImageAttributes attr;
+  Gdiplus::ColorMatrix cm = {
+      1.35f, 0, 0, 0, 0, 0, 1.35f, 0, 0, 0, 0, 0, 1.35f, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1};
+  attr.SetColorMatrix(&cm);
+  g.DrawImage(img, Gdiplus::Rect(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top),
+              0, 0, (INT)img->GetWidth(), (INT)img->GetHeight(), Gdiplus::UnitPixel, &attr);
+}
+
+// 新版 3 張並排完整卡片：每張卡各自畫卡片底圖（選取中/hover 調亮）、圖示/名稱/
+// 描述（直接重用既有的 DrawDetailContent，不用另外寫，只是改傳 contentRect 而
+// 不是整張卡的 rect，不然描述文字會撐到卡片底部蓋掉統計區）、跟這張卡自己的
+// 6 行統計。取代舊版的「Rows 迴圈 + 1 個共用 Detail + 1 次 DrawDetailStats」。
+void DrawCards(Gdiplus::Graphics &g, HDC memDc) {
+  for (int i = 0; i < MIMIR_OPTION_COUNT; i++) {
+    RECT rc = CardRectScaled(i);
+    if (rc.right <= rc.left)
+      continue;
+    Gdiplus::Bitmap *bg = GetImg(g_cfg.cards[i].bg);
+    bool lit = (i == g_hoverRow || i == g_selectedIndex);
+    if (bg) {
+      if (lit)
+        DrawImageBrightened(g, bg, rc);
+      else
+        g.DrawImage(bg, (INT)rc.left, (INT)rc.top, (INT)(rc.right - rc.left),
+                    (INT)(rc.bottom - rc.top));
+    } else {
+      HBRUSH b = CreateSolidBrush(lit ? RGB(0x3A, 0x2C, 0x4A) : RGB(0x24, 0x1E, 0x2E));
+      FillRect(memDc, &rc, b);
+      DeleteObject(b);
+    }
+    RECT contentRc = g_cfg.cards[i].contentRect.has ? ScaledRect(g_cfg.cards[i].contentRect) : rc;
+    DrawCardContent(g, memDc, contentRc, g_options[i]);
+    DrawDetailStats(g, memDc, ScaledRect(g_cfg.cards[i].statsRect), g_options[i], i);
+  }
 }
 
 std::wstring CountdownText() {
@@ -603,49 +780,59 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
     DeleteObject(titleFont);
   }
 
-  // Rows: base card always drawn first, then (if hovered OR the pending
-  // selection) the glow-border image is overlaid on top of it -- not a full
-  // swap, so the glow reads as "lit up", not a different card. The same
-  // glow asset serves both hover and pending-selection; there's no separate
-  // "selected" art (confirming happens via the bottom button, not per-row).
-  for (int i = 0; i < MIMIR_OPTION_COUNT; i++) {
-    RECT rc = RowRectScaled(i);
-    Gdiplus::Bitmap *rowBg = GetImg(g_cfg.rowImages.normal);
-    if (rowBg) {
-      g.DrawImage(rowBg, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
-    }
-    bool lit = (i == g_hoverRow || i == g_selectedIndex);
-    if (lit) {
-      Gdiplus::Bitmap *glow = GetImg(g_cfg.rowImages.hover);
-      if (glow)
-        g.DrawImage(glow, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
-      else if (!rowBg) {
-        HBRUSH hl = CreateSolidBrush(RGB(0x3A, 0x2C, 0x4A));
+  if (UsingCardLayout()) {
+    // 新版：3 張並排完整卡片，各自同時顯示圖示/名稱/描述/6 行統計。
+    DrawCards(g, memDc);
+  } else {
+    // 舊版 fallback：mimir_ui.xml 沒有 <Card> 標籤時維持原本畫法，確保新 DLL
+    // 可以先部署、畫面不會壞，等新版 XML/圖片備妥再一起換過去。
+    // Rows: base card always drawn first, then (if hovered OR the pending
+    // selection) the glow-border image is overlaid on top of it -- not a full
+    // swap, so the glow reads as "lit up", not a different card. The same
+    // glow asset serves both hover and pending-selection; there's no separate
+    // "selected" art (confirming happens via the bottom button, not per-row).
+    for (int i = 0; i < MIMIR_OPTION_COUNT; i++) {
+      RECT rc = RowRectScaled(i);
+      Gdiplus::Bitmap *rowBg = GetImg(g_cfg.rowImages.normal);
+      if (rowBg) {
+        g.DrawImage(rowBg, (INT)rc.left, (INT)rc.top, (INT)(rc.right - rc.left),
+                    (INT)(rc.bottom - rc.top));
+      }
+      bool lit = (i == g_hoverRow || i == g_selectedIndex);
+      if (lit) {
+        Gdiplus::Bitmap *glow = GetImg(g_cfg.rowImages.hover);
+        if (glow)
+          g.DrawImage(glow, (INT)rc.left, (INT)rc.top, (INT)(rc.right - rc.left),
+                      (INT)(rc.bottom - rc.top));
+        else if (!rowBg) {
+          HBRUSH hl = CreateSolidBrush(RGB(0x3A, 0x2C, 0x4A));
+          FillRect(memDc, &rc, hl);
+          DeleteObject(hl);
+        }
+      } else if (!rowBg) {
+        HBRUSH hl = CreateSolidBrush(RGB(0x24, 0x1E, 0x2E));
         FillRect(memDc, &rc, hl);
         DeleteObject(hl);
       }
-    } else if (!rowBg) {
-      HBRUSH hl = CreateSolidBrush(RGB(0x24, 0x1E, 0x2E));
-      FillRect(memDc, &rc, hl);
-      DeleteObject(hl);
+      DrawRowContent(g, memDc, rc, g_options[i]);
     }
-    DrawRowContent(g, memDc, rc, g_options[i]);
-  }
 
-  // Detail: g_usingDefaultDetail 時顯示伺服器送的 defaultDetail（視窗一開就有，
-  // 不用等玩家點），玩家點了某一筆卡片後改顯示那筆 options[] 的資料。
-  {
-    RECT rc = ScaledRect(g_cfg.detailRect);
-    if (rc.right > rc.left) {
-      Gdiplus::Bitmap *detailBg = GetImg(g_cfg.detailBg);
-      if (detailBg)
-        g.DrawImage(detailBg, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
-      const MimirOption &shown =
-          g_usingDefaultDetail ? g_defaultDetail : g_options[g_selectedIndex];
-      DrawDetailContent(g, memDc, rc, shown);
+    // Detail: g_usingDefaultDetail 時顯示伺服器送的 defaultDetail（視窗一開就有，
+    // 不用等玩家點），玩家點了某一筆卡片後改顯示那筆 options[] 的資料。
+    const MimirOption &shownDetail =
+        g_usingDefaultDetail ? g_defaultDetail : g_options[g_selectedIndex];
+    {
+      RECT rc = ScaledRect(g_cfg.detailRect);
+      if (rc.right > rc.left) {
+        Gdiplus::Bitmap *detailBg = GetImg(g_cfg.detailBg);
+        if (detailBg)
+          g.DrawImage(detailBg, (INT)rc.left, (INT)rc.top, (INT)(rc.right - rc.left),
+                      (INT)(rc.bottom - rc.top));
+        DrawDetailContent(g, memDc, rc, shownDetail);
+      }
     }
+    DrawDetailStats(g, memDc, ScaledRect(g_cfg.detailStatsRect), shownDetail, -1);
   }
-  DrawDetailStats(g, memDc);
 
   // Countdown（起始秒數是伺服器送的，見 g_countdownTotalSeconds，client 只負責
   // 每秒往下扣顯示）
@@ -665,17 +852,24 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
   if (btnRc.right > btnRc.left) {
     // hover/pressed 沒對應圖（例如只準備了 normal+pressed 兩張，沒有另外做 hover
     // 圖）就退回 normal 圖，不要直接跳去下面純色方塊 fallback——純色方塊只在連
-    // normal 圖都沒載入成功時才該出現。
+    // normal 圖都沒載入成功時才該出現。沒有專門的 hover 圖時，改用跟卡片一樣的
+    // 調亮效果當 hover 回饋（DrawImageBrightened），不用另外準備素材。
     Gdiplus::Bitmap *normalImg = GetImg(g_cfg.confirmImages.normal);
+    Gdiplus::Bitmap *hoverImg = GetImg(g_cfg.confirmImages.hover);
     Gdiplus::Bitmap *btnImg =
         g_pressedConfirm
             ? (GetImg(g_cfg.confirmImages.pressed) ? GetImg(g_cfg.confirmImages.pressed) : normalImg)
-        : g_hoverConfirm ? (GetImg(g_cfg.confirmImages.hover) ? GetImg(g_cfg.confirmImages.hover) : normalImg)
+        : g_hoverConfirm ? (hoverImg ? hoverImg : normalImg)
                          : normalImg;
+    bool brightenConfirm = g_hoverConfirm && !g_pressedConfirm && !hoverImg && btnImg;
     if (btnImg) {
       // 素材圖本身已經把「選擇此能力」畫進去了，圖有載入成功就不用再疊一次文字
       // 上去，不然會變成兩份字疊在一起。
-      g.DrawImage(btnImg, btnRc.left, btnRc.top, btnRc.right - btnRc.left, btnRc.bottom - btnRc.top);
+      if (brightenConfirm)
+        DrawImageBrightened(g, btnImg, btnRc);
+      else
+        g.DrawImage(btnImg, (INT)btnRc.left, (INT)btnRc.top, (INT)(btnRc.right - btnRc.left),
+                    (INT)(btnRc.bottom - btnRc.top));
     } else {
       HBRUSH b = CreateSolidBrush(g_pressedConfirm ? RGB(0x4A, 0x2C, 0x72) : RGB(0x6A, 0x3C, 0x9A));
       FillRect(memDc, &btnRc, b);
@@ -691,20 +885,26 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
 
   // Close button (top-right X): dismisses the window, sends nothing. 只有一張
   // 素材圖（沒有另外的 hover/pressed 圖），按下時直接把同一張圖往下移 1-2px 當
-  // 互動回饋，不需要額外素材。
+  // 互動回饋；hover（沒按下）時改用調亮效果，不需要額外素材。
   RECT closeRc = ScaledRect(g_cfg.closeRect);
   if (closeRc.right > closeRc.left) {
     Gdiplus::Bitmap *closeImg = GetImg(g_cfg.closeImages.normal);
     if (closeImg) {
       int pressOffset = g_pressedClose ? max(1, (int)(2 * g_scaleY + 0.5)) : 0;
-      // 素材圖只有 33x32，跟顯示的方框幾乎 1:1，但整體 UI 又會依遊戲視窗大小再
-      // 縮放一次（g_scaleX/Y），縮放比例不是整數倍時，全域設定的
-      // HighQualityBicubic 對這種小圖示還是會糊。小圖示邊緣（X 字、金色外框）都
-      // 是硬邊，改用最近鄰內插比較銳利，畫完再切回原本的內插模式，不影響背景圖
-      // 等其他元素。
+      // 以素材原始像素尺寸為基準，在 XML 設定的 rect 範圍內置中繪製，不強制縮放到
+      // rect 寬高；搭配最近鄰內插避免小圖示放大後變模糊。XML 應把 CloseButton rect
+      // 設成跟素材一樣 33x32，讓縮放後的圖片自然貼齊區域。
+      int imgW = closeImg->GetWidth();
+      int imgH = closeImg->GetHeight();
+      int dstW = (int)(imgW * g_scaleX + 0.5);
+      int dstH = (int)(imgH * g_scaleY + 0.5);
+      int dstX = closeRc.left + ((closeRc.right - closeRc.left) - dstW) / 2;
+      int dstY = closeRc.top + ((closeRc.bottom - closeRc.top) - dstH) / 2 + pressOffset;
       g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
-      g.DrawImage(closeImg, closeRc.left, closeRc.top + pressOffset, closeRc.right - closeRc.left,
-                  closeRc.bottom - closeRc.top);
+      if (g_hoverClose && !g_pressedClose)
+        DrawImageBrightened(g, closeImg, RECT{dstX, dstY, dstX + dstW, dstY + dstH});
+      else
+        g.DrawImage(closeImg, dstX, dstY, dstW, dstH);
       g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     } else {
       HBRUSH b = CreateSolidBrush(g_pressedClose ? RGB(0x5A, 0x1A, 0x1A)
@@ -816,9 +1016,13 @@ void PaintLayered(HWND hwnd) {
   ReleaseDC(NULL, screenDc);
 }
 
+// 新版（3 張並排卡片）用卡片自己的 rect 做命中測試；舊版 fallback 用列表列的
+// RowRectScaled。點卡片/列本身只是設定「待確認選取」狀態，要按下面的確認鈕才
+// 會真的送出，這個函式跟送出邏輯無關，兩版共用同一套呼叫端（WM_MOUSEMOVE/
+// WM_LBUTTONUP）不用另外分流。
 int HitTestRow(int x, int y) {
   for (int i = 0; i < MIMIR_OPTION_COUNT; i++) {
-    RECT rc = RowRectScaled(i);
+    RECT rc = UsingCardLayout() ? CardRectScaled(i) : RowRectScaled(i);
     if (x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom)
       return i;
   }

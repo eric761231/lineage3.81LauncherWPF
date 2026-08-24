@@ -134,6 +134,19 @@ namespace LinLauncher.Services
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
 
+        public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        // 啟動進度輪詢用：找出遊戲主視窗（class="Lineage"）是否已經出現，藉此判斷
+        // 「殼解密＋掛勾流程」是否跑完，DLL 本身沒有跨行程主動通知機制。
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder lpClassName, int nMaxCount);
+
         public const uint MEM_COMMIT = 0x00001000;
         public const uint PAGE_READWRITE = 0x04;
         public const uint FILE_MAP_ALL_ACCESS = 0xF001F;

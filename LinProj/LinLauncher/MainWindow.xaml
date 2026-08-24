@@ -138,14 +138,17 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- 標題列 -->
-            <Grid Grid.Row="0" Background="#CC1A1A1A" MouseDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
-                <TextBlock Text="LINEAGE 3.81 PREMIUM LAUNCHER" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Foreground="#AAA" FontSize="14" FontWeight="Bold"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
-                    <Button Content="—" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click" Cursor="Hand"/>
-                    <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="Close_Click" Cursor="Hand"/>
-                </StackPanel>
-            </Grid>
+            <!-- 標題列：外層 Border 用跟主容器一樣的左右上角 CornerRadius，避免這層
+                 直角背景蓋住主容器（CornerRadius=20）圓角邊線在角落露出的灰色描邊。 -->
+            <Border Grid.Row="0" CornerRadius="20,20,0,0" Background="#CC1A1A1A" MouseDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
+                <Grid>
+                    <TextBlock Text="LINEAGE 3.81 PREMIUM LAUNCHER" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Foreground="#AAA" FontSize="14" FontWeight="Bold"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
+                        <Button Content="—" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click" Cursor="Hand"/>
+                        <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="Close_Click" Cursor="Hand"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
             <!-- 內容區 -->
             <Grid Grid.Row="1">
@@ -235,20 +238,23 @@
                 </Grid>
             </Grid>
 
-            <!-- 狀態列：下載更新時顯示進度條與百分比 -->
-            <Grid Grid.Row="2" MinHeight="42" Background="#1a1a1a">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="10"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <ProgressBar Grid.Row="0" Value="{Binding OverallProgress}" Maximum="100" Height="10" VerticalAlignment="Stretch"
-                             Background="#222" BorderThickness="0" Foreground="#7232f2"/>
-                <DockPanel Grid.Row="1" LastChildFill="True" Margin="14,6,14,8">
-                    <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0"
-                               Text="{Binding OverallProgress, StringFormat={}{0}%}" Foreground="#888" FontSize="11" MinWidth="36" TextAlignment="Right"/>
-                    <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Foreground="#AAA" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                </DockPanel>
-            </Grid>
+            <!-- 狀態列：下載更新時顯示進度條與百分比。外層 Border 用跟主容器一樣的
+                 左右下角 CornerRadius，理由同標題列。 -->
+            <Border Grid.Row="2" MinHeight="42" CornerRadius="0,0,20,20" Background="#1a1a1a">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <ProgressBar Grid.Row="0" Value="{Binding OverallProgress}" Maximum="100" Height="10" VerticalAlignment="Stretch"
+                                 Background="#222" BorderThickness="0" Foreground="#7232f2"/>
+                    <DockPanel Grid.Row="1" LastChildFill="True" Margin="14,6,14,8">
+                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   Text="{Binding OverallProgress, StringFormat={}{0}%}" Foreground="#888" FontSize="11" MinWidth="36" TextAlignment="Right"/>
+                        <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Foreground="#AAA" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                </Grid>
+            </Border>
         </Grid>
     </Border>
 </Window>

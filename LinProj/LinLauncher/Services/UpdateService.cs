@@ -102,22 +102,37 @@ namespace LinLauncher.Services
 
         /// <summary>
         /// 比對本地檔案與遠端 MD5，篩選出需要更新的檔案列表。
+        /// 根因（2026-08-24 查出）：清單裡若混進執行時才會產生、且會被其他行程鎖住
+        /// 的檔案（例如 WebView2 執行時使用者資料目錄下的 CrashpadMetrics-active.pma——
+        /// 這類檔案不該出現在 update.txt 裡，已經在 Encoder 端的
+        /// GetPatchSourceWorkList 加上排除規則），單一檔案 MD5 計算失敗會讓整批檢查
+        /// 直接丟例外中止，導致清單裡「這個問題檔案之後」的所有檔案永遠沒機會被
+        /// 檢查到，每次啟動都在同一個地方失敗、看起來像更新完全跑不動。這裡改成
+        /// 逐檔案吃例外、記 log 後跳過，不讓單一檔案拖垮整批檢查。
         /// </summary>
-        public async Task<List<UpdateInfo>> CheckFilesAsync(List<UpdateInfo> allFiles, string baseDir)
+        public async Task<List<UpdateInfo>> CheckFilesAsync(List<UpdateInfo> allFiles, string baseDir, Action<string>? log = null)
         {
             var needUpdate = new List<UpdateInfo>();
             foreach (var info in allFiles)
             {
                 string fullPath = Path.IsPathRooted(info.Filename) ? info.Filename : Path.Combine(baseDir, info.Filename);
-                if (!File.Exists(fullPath))
+                try
                 {
-                    needUpdate.Add(info);
-                    continue;
-                }
+                    if (!File.Exists(fullPath))
+                    {
+                        needUpdate.Add(info);
+                        continue;
+                    }
 
-                string localMd5 = await CalculateMd5Async(fullPath).ConfigureAwait(false);
-                if (!string.Equals(localMd5, info.Md5, StringComparison.OrdinalIgnoreCase))
-                    needUpdate.Add(info);
+                    string localMd5 = await CalculateMd5Async(fullPath).ConfigureAwait(false);
+                    if (!string.Equals(localMd5, info.Md5, StringComparison.OrdinalIgnoreCase))
+                        needUpdate.Add(info);
+                }
+                catch (Exception ex)
+                {
+                    try { log?.Invoke($"CheckFiles: 略過 {info.Filename}（{ex.GetType().Name}: {ex.Message}）"); }
+                    catch { }
+                }
             }
 
             return needUpdate;

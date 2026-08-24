@@ -73,7 +73,7 @@ internal static class Program
         }
         catch { /* best effort */ }
 
-        // --- 選用前置程式（例如清理工具）；無檔案則略過 ---
+        // --- 選用舊版 eat.exe（內建吃檔已改由 Core\LinLauncher 執行）；無檔案則略過 ---
         try
         {
             string eatExe = Path.Combine(d, "eat.exe");
@@ -133,7 +133,21 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Proxy Launch Error: " + ex.Message);
+            // 常見：UAC／防毒取消啟動（Win32「操作被使用者取消」）。不彈窗，只寫 Core\launcher.log。
+            AppendLog(e, "Proxy Launch Error: " + ex.Message);
+        }
+    }
+
+    private static void AppendLog(string coreDir, string message)
+    {
+        try
+        {
+            string path = Path.Combine(coreDir, "launcher.log");
+            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Proxy] {message}{Environment.NewLine}");
+        }
+        catch
+        {
+            /* 寫 log 失敗也不要再彈窗 */
         }
     }
 }

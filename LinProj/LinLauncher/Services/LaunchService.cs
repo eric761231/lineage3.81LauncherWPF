@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using LinLauncher.Models;
 using LinLauncher;
@@ -38,6 +39,10 @@ namespace LinLauncher.Services
         private IntPtr _hShm = IntPtr.Zero;
         private IntPtr _pShm = IntPtr.Zero;
         public event EventHandler? GameExited;
+
+        /// <summary>遊戲進程已建立、DLL 已注入、ResumeThread 已呼叫（引數是遊戲進程 PID）。
+        /// 給 UI 用來啟動「等遊戲視窗出現」的進度模擬，跟 GameExited 是對稱的一對事件。</summary>
+        public event EventHandler<int>? GameProcessStarted;
 
         /// <summary>
         /// 啟動遊戲核心流程：1. 顯示模式／相容性旗標 2. 掛起建立進程 3. 設定共享記憶體 4. 注入 DLL 5. 恢復執行。
@@ -132,6 +137,7 @@ namespace LinLauncher.Services
                 NativeMethods.ResumeThread(pi.hThread);
                 _ = MonitorProcessAsync((int)pi.dwProcessId);
                 _ = GamePatchService.ApplyGapFillPatchesAsync(pi.dwProcessId);
+                GameProcessStarted?.Invoke(this, (int)pi.dwProcessId);
                 return true;
             }
             finally
@@ -158,6 +164,7 @@ namespace LinLauncher.Services
             Marshal.Copy(new byte[shmSize], 0, _pShm, shmSize);
 
             string bdPath = GamePathHelper.TruncateForBdFileBuffer(GamePathHelper.ResolveBdFilePath(server.BdFile));
+            StartupLog.Append($"LaunchGame: server.UseBd={server.UseBd} server.BdFile='{server.BdFile}' resolved bdPath='{bdPath}' exists={(string.IsNullOrEmpty(bdPath) ? "n/a" : File.Exists(bdPath).ToString())}");
             var payload = new byte[ShareInfoSize];
 
             // ip[32] (ASCII)
@@ -285,6 +292,70 @@ namespace LinLauncher.Services
                 return true;
             }
             finally { NativeMethods.CloseHandle(hProcess); }
+        }
+
+        /// <summary>遊戲主視窗 class 名稱（跟 LauncherDll.cpp 判斷"Lineage"視窗的字串一致）。</summary>
+        private const string GameWindowClassName = "Lineage";
+
+        /// <summary>
+        /// 從建立進程到遊戲主視窗（class="Lineage"）出現，實測要等保護殼解密＋
+        /// LauncherDll 掛勾流程跑完，通常一台機器上要 10~20 秒不等，使用者在這段
+        /// 空窗期看不到任何畫面變化，容易誤以為卡住了。DLL 端目前沒有跨行程主動
+        /// 通知機制（只有寫 log），所以這裡改用輪詢 EnumWindows 找屬於這個 pid 的
+        /// Lineage 視窗，配合 <paramref name="progress"/> 回報一個「模擬」進度百分比
+        /// 讓 UI 有東西可以動，不是精確量測；<paramref name="estimatedSeconds"/> 只影響
+        /// 模擬進度條跑的速度，實際完成時機還是以視窗真的出現為準。
+        /// 逾時（預設 60 秒）還沒看到視窗不代表啟動失敗——保護殼在較慢的機器上可能
+        /// 真的需要更久，這裡只是停止模擬進度、把主控權交還給 UI，不會踢掉遊戲進程。
+        /// </summary>
+        public async Task<bool> WaitForGameWindowAsync(
+            int pid,
+            IProgress<int>? progress,
+            double estimatedSeconds = 14.5, // 實測視窗通常在 15 秒前後就出現，故意抓得比實測平均值略短，讓曲線在視窗真的出現時已經接近 99% 而不是 95~97%
+            int timeoutSeconds = 60,
+            CancellationToken ct = default)
+        {
+            var sw = Stopwatch.StartNew();
+            var timeout = TimeSpan.FromSeconds(timeoutSeconds);
+            double estimatedMs = Math.Max(1, estimatedSeconds) * 1000.0;
+            while (sw.Elapsed < timeout && !ct.IsCancellationRequested)
+            {
+                if (FindWindowByClassAndPid(GameWindowClassName, pid) != IntPtr.Zero)
+                {
+                    progress?.Report(100);
+                    return true;
+                }
+                // 實測視窗通常在模擬進度跑到 95% 前後那個時間點就出現了（見
+                // estimatedSeconds 的說明），所以直接讓模擬曲線在 estimatedSeconds
+                // 這個時間點跑到 100%（比原本「跑到 95% 封頂」快一點點），體感上
+                // 跟視窗真的出現的時機更吻合。
+                int pct = (int)Math.Min(100, sw.Elapsed.TotalMilliseconds / estimatedMs * 100);
+                progress?.Report(pct);
+                try { await Task.Delay(200, ct).ConfigureAwait(false); }
+                catch (OperationCanceledException) { break; }
+            }
+            return false;
+        }
+
+        private static IntPtr FindWindowByClassAndPid(string className, int pid)
+        {
+            IntPtr found = IntPtr.Zero;
+            NativeMethods.EnumWindows((hWnd, _) =>
+            {
+                NativeMethods.GetWindowThreadProcessId(hWnd, out uint windowPid);
+                if (windowPid == (uint)pid)
+                {
+                    var sb = new StringBuilder(256);
+                    NativeMethods.GetClassName(hWnd, sb, sb.Capacity);
+                    if (sb.ToString() == className)
+                    {
+                        found = hWnd;
+                        return false; // 找到了，停止列舉
+                    }
+                }
+                return true;
+            }, IntPtr.Zero);
+            return found;
         }
 
         private async Task MonitorProcessAsync(int pid)

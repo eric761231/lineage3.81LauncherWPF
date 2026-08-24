@@ -1015,6 +1015,14 @@ namespace LinEncoder.ViewModels
             }
 
             string input = SelectedBdSourceFile + ".txt";
+            // 檔名維持跟遊戲主程式讀變身檔用的同一個檔名（例如 TW13081901.pak，
+            // 版本綁定、不能改）——GetFileData 那段 shellcode hook（見
+            // LauncherDll.cpp 的 0x0058788B）如果在遊戲自己讀取這個檔案之前就
+            // 裝上，會直接整段接管、完全略過原生讀取路徑，所以檔案格式用我們
+            // 自己的（AES+zlib）沒問題；一旦 hook 沒能即時裝上，遊戲才會退回用
+            // 原生方式解析這個檔案，這時候格式對不上才會斷線——重點是確保 hook
+            // 時機正確（DelayedDetourThread 裡、code 解密完成之後才 patch），
+            // 不是把輸出檔名跟原生檔名分開。
             string? fileName = SelectedServer?.BdFile;
             if (string.IsNullOrEmpty(fileName))
             {
@@ -1024,7 +1032,12 @@ namespace LinEncoder.ViewModels
 
             if (_encoderService.PackagePak(input, output))
             {
-                MessageBox.Show($"加密完成！\n輸出檔案：{output}", "完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (SelectedServer != null)
+                    SelectedServer.BdFile = fileName;
+                MessageBox.Show(
+                    $"加密完成！\n輸出檔案：{output}\n\n提醒：這個檔案要手動複製到遊戲根目錄" +
+                    "（跟 TW13081901.bin 同一層，不是 Core\\），登入器才讀得到。",
+                    "完成", MessageBoxButton.OK, MessageBoxImage.Information);
                 SearchBdPaks();
                 RefreshWorkflowStatus();
             }

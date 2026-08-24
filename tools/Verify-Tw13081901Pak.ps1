@@ -2,7 +2,7 @@
 # UTF-8
 # Verify TW13081901.pak: path == GamePathHelper.ResolveBdFilePath, file exists,
 # whole-file XOR with PAt82IqEvNBmERYl (same as Encoder + LauncherDll).
-# Also optional: scan launcherdll_net.log for [GetFileBuffer] lines.
+# Also optional: scan Core\launcher.log for [GetFileBuffer] lines.
 param(
     [Parameter(Mandatory = $true)]
     [string] $GameRoot,
@@ -13,7 +13,7 @@ param(
 
     [switch] $CheckLog,
 
-    [string] $LogFileName = "launcherdll_net.log",
+    [string] $LogFileName = "Core\launcher.log",
 
     [switch] $SaveDecryptedTo,
 
@@ -83,7 +83,7 @@ if ($SaveDecryptedTo -or $DecryptedOutPath) {
     Write-Host "  Wrote decrypted bytes to: $outPath" -ForegroundColor Green
 }
 
-Write-Host "`n=== [4] launcherdll_net.log (optional) ===" -ForegroundColor Cyan
+Write-Host "`n=== [4] Core\launcher.log (optional) ===" -ForegroundColor Cyan
 Write-Host "  Expected lines contain: [GetFileBuffer] bdfile= , file opened, len= , GetFileBuffer result:"
 $logPath = [System.IO.Path]::Combine($root, $LogFileName)
 if ($CheckLog) {

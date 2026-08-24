@@ -14,9 +14,13 @@
 constexpr int MIMIR_OPTION_COUNT = 3;
 
 struct MimirOption {
-  DWORD iconId;   // 選項圖示編號，client 用這個查 mimir_ui.xml 的 <Icon iconId="..."/>
-  char name[64];  // 選項名稱（短標題，卡片列表跟詳情卡都會顯示）
-  char desc[192]; // 能力敘述（只有詳情卡顯示，卡片列表不顯示）
+  DWORD iconId;      // 選項編號（資料表 L1MimirWell.id）
+  DWORD iconPngId;   // 圖片編號（資料表 L1MimirWell.icon_pngid），client 用這個查圖示
+  char name[64];     // 選項名稱（短標題，卡片列表跟詳情卡都會顯示）
+  char desc[192];    // 能力敘述（只有詳情卡顯示，卡片列表不顯示）
+  char pvpText[16];  // PVP 適用範圍（"適用"/"專屬"），後端算好直接送字串，client 端
+                      // 不用自己判斷規則；其餘統計欄位（效果類型/來源/持續時間/是否
+                      // 可疊加/冷卻時間）改成 mimir_ui.xml 每張卡各自寫死，不走封包。
 };
 
 // 在 code 解密完成、DetourTransactionCommit 之後呼叫一次（比照
@@ -35,9 +39,14 @@ void MimirPowerHook_SendChoice(BYTE index);
 
 // 真正執行加密＋送出的地方。原生加密函式借用的那個記憶體位址只被遊戲自己的網路
 // 執行緒動過，從我們另外開的 overlay 執行緒直接處理過金鑰會有問題，所以改成
-// my_send（穩定跑在遊戲網路執行緒上）每次送完真封包後呼叫這個函式，有待送出的
+// my_send（穩定跑在遊戲主執行緒上）每次送完真封包後呼叫這個函式，有待送出的
 // 選擇才在這裡真正處理。內部呼叫 MimirSendEncoded（見 LauncherDll.cpp）而不是
 // send()，避免鉤子巢狀呼叫自己（實測撞過兩種不同的當機，都是巢狀呼叫造成的）。
+// 第二個呼叫點：HookProc（LauncherDll.cpp 的 WH_GETMESSAGE hook）也會呼叫這個
+// 函式——觸發頻率遠高於 send()（每次遊戲主迴圈收到訊息就觸發一次，不用等下一
+// 個真封包送出），但一樣穩定跑在同一條遊戲主執行緒上，不需要新的同步機制，加了
+// 這個呼叫點是為了讓玩家按確認後幾乎立即送出，不用等到下一次心跳封包（可能要
+// 等幾十秒）。
 void MimirPowerHook_PumpPendingChoice();
 
 // 密米爾之泉專用送出函式：外層 XOR 編碼＋直接呼叫 real_send，不經過 send()（不會

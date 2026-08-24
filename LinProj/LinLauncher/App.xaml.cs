@@ -64,7 +64,7 @@ namespace LinLauncher
                 try
                 {
                     string msg =
-                        "無法啟動登入器主視窗。詳情已寫入日誌（LinLauncher_boot.log、LinLauncher_errors.log、%TEMP%\\LinLauncher_startup.log 等）。\n\n"
+                        "無法啟動登入器主視窗。詳情已寫入日誌（launcher.log，或 %TEMP%\\LinLauncher_startup.log 等緊急備援位置）。\n\n"
                         + "若完全沒有任何日誌檔，請改以同目錄的 diag_host_trace.cmd 啟動以取得 host 追蹤。\n\n"
                         + ex.Message;
                     ErrorLog.LogMessageBox("LinLauncher", msg, "OnStartup.MainWindow");
