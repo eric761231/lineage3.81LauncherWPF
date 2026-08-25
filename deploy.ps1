@@ -49,6 +49,26 @@ if (!(Test-Path $EncoderToolDir)) {
 Copy-Item "$Root\LinProj\Encoder\publish\*" "$EncoderToolDir" -Recurse -Force
 Copy-Item "$Root\LinProj\LinLauncher\publish\*" "$EnvDir" -Recurse -Force
 
+# LauncherDll.dll／LineageIme.dll 是 C++ vcxproj，dotnet publish 管不到，建置維持手動
+# 用 Visual Studio／MSBuild（見 DeployTool/Program.cs 的說明）——這裡只負責把「已經建好」
+# 的 Release 版本複製進 Core\，避免每次部署都要手動記得補這一步、或忘記複製到舊版本。
+$NativeDlls = @(
+    @{ Name = 'LauncherDll.dll'; Source = "$Root\LinProj\LauncherDll\Release\LauncherDll.dll" },
+    @{ Name = 'LineageIme.dll';  Source = "$Root\LinProj\LineageIme\Release\LineageIme.dll" }
+)
+$NativeDllStatus = @()
+foreach ($dll in $NativeDlls) {
+    if (Test-Path $dll.Source) {
+        Copy-Item $dll.Source "$EnvDir\$($dll.Name)" -Force
+        $srcTime = (Get-Item $dll.Source).LastWriteTime
+        Write-Host "    - Copied $($dll.Name) (native, built manually; last built $srcTime)"
+        $NativeDllStatus += "$($dll.Name)：已複製（來源建置時間 $srcTime）"
+    } else {
+        Write-Host "    [!] Skipped $($dll.Name): not built yet at $($dll.Source)" -ForegroundColor Yellow
+        $NativeDllStatus += "$($dll.Name)：略過（尚未建置，找不到 $($dll.Source)）"
+    }
+}
+
 # 清掉 Core\ 裡可能殘留的開發期診斷/紀錄檔，避免夾帶本機路徑等資訊被交給客戶端
 foreach ($devLog in $DevOnlyLogFiles) {
     $devLogPath = "$EnvDir\$devLog"
@@ -99,6 +119,7 @@ $ReportEntry = @"
 - Encoder 已重新建置並複製到 ``EncoderTool\``
 - LinLauncher 已重新建置（自封裝）並複製到 ``Core\``（已清除開發期診斷/紀錄檔）
 - config.dat：$ConfigDatStatus
+$(($NativeDllStatus | ForEach-Object { "- $_" }) -join "`n")
 
 ### 接下來要做什麼
 

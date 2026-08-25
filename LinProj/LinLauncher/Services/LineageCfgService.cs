@@ -16,7 +16,7 @@ namespace LinLauncher.Services
         private const uint KeyFullscreen = 0x12;
         private const uint KeyWindowMode = 0x1A;
         private const uint KeyPrevWindowMode = 0x1B;
-        private const uint DefaultWindowMode = 5;
+        private const uint DefaultWindowMode = 6;
 
         /// <summary>套用顯示模式（失敗只記 log，不拋出）。</summary>
         public static void ApplyDisplayMode(string gameDir, bool windowed, uint windowMode)

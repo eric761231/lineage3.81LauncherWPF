@@ -89,7 +89,15 @@ void HandleEvent(DWORD id, EventKind kind) {
           count, selection, (size_t)pageStart, visible, focus);
   if (!focus) return;
 
-  if (kind == EventKind::Begin) {
+  // 實測發現：這台機器上的輸入法（TSF-based，例如新注音/新酷音）從頭到尾只送
+  // UpdateUIElement，從沒送過 BeginUIElement——原本邏輯假設 Begin 一定先到，
+  // 只有 Begin 才會呼叫 ShowOverlayFor（負責 ShowWindow + PositionNear），
+  // Update 只呼叫 UpdateOverlay（只重繪內容，不顯示、也不定位，定位靠
+  // g_attachedTo 這個只有 ShowOverlayFor 會設的全域變數）。結果視窗從來沒被
+  // 顯示過、位置也卡在寫死的 (0,0) 預設值，UpdateLayeredWindow 回報成功但畫面
+  // 上完全看不到東西。改成：只要目前還沒顯示，不管收到的是 Begin 還是
+  // Update，都當第一次顯示處理；已經顯示中才走原本 Update 只重繪的路徑。
+  if (kind == EventKind::Begin || !IsOverlayVisible()) {
     ShowOverlayFor(focus, state);
   } else {
     UpdateOverlay(state);

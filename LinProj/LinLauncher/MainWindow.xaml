@@ -13,11 +13,11 @@
         WindowStartupLocation="CenterScreen">
     
     <WindowChrome.WindowChrome>
-        <WindowChrome GlassFrameThickness="0" CornerRadius="20" CaptionHeight="40" NonClientFrameEdges="None" ResizeBorderThickness="8" />
+        <WindowChrome GlassFrameThickness="0" CornerRadius="5" CaptionHeight="40" NonClientFrameEdges="None" ResizeBorderThickness="8" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <!-- 開始按鈕樣式 -->
+        <!-- 開始按鈕樣式：hover 時箭頭由左至右滑入淡入＋背景流動紫色光暈 -->
         <Style x:Key="StartButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Foreground" Value="White" />
             <Setter Property="FontWeight" Value="Bold" />
@@ -30,7 +30,7 @@
                             <Grid.RenderTransform>
                                 <ScaleTransform x:Name="BtTransform" ScaleX="1" ScaleY="1"/>
                             </Grid.RenderTransform>
-                            <Border x:Name="Bd" CornerRadius="15">
+                            <Border x:Name="Bd" CornerRadius="2" ClipToBounds="True">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                         <GradientStop Color="#8A2BE2" Offset="0"/>
@@ -39,6 +39,112 @@
                                 </Border.Background>
                                 <Border.Effect>
                                     <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="10" Direction="270" ShadowDepth="3"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <!-- 流動光暈：斜向白色半透明光帶，hover 時左右來回移動 -->
+                                    <Rectangle x:Name="Glow" Width="70" Opacity="0" HorizontalAlignment="Left"
+                                               Margin="-100,0,0,0" Fill="#55FFFFFF">
+                                        <Rectangle.RenderTransform>
+                                            <TransformGroup>
+                                                <SkewTransform AngleX="-20"/>
+                                                <TranslateTransform x:Name="GlowTransform" X="0"/>
+                                            </TransformGroup>
+                                        </Rectangle.RenderTransform>
+                                        <Rectangle.Effect>
+                                            <BlurEffect Radius="18"/>
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <ContentPresenter VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="Arrow" Text=" →" Opacity="0" VerticalAlignment="Center"
+                                                   FontWeight="Bold">
+                                            <TextBlock.RenderTransform>
+                                                <TranslateTransform x:Name="ArrowTransform" X="-10"/>
+                                            </TextBlock.RenderTransform>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard x:Name="HoverInStoryboard">
+                                        <Storyboard>
+                                            <!-- 箭頭持續由左至右飛入飛出：位移＋透明度用同一個週期循環，
+                                                 淡入時從左側「飛進來」、淡出時往右側「飛出去」，不是原地閃爍 -->
+                                            <DoubleAnimation Storyboard.TargetName="ArrowTransform" Storyboard.TargetProperty="X"
+                                                              From="-15" To="40" Duration="0:0:1.2" RepeatBehavior="Forever"/>
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Arrow" Storyboard.TargetProperty="Opacity"
+                                                                            RepeatBehavior="Forever">
+                                                <LinearDoubleKeyFrame KeyTime="0:0:0" Value="0"/>
+                                                <LinearDoubleKeyFrame KeyTime="0:0:0.2" Value="1"/>
+                                                <LinearDoubleKeyFrame KeyTime="0:0:0.9" Value="1"/>
+                                                <LinearDoubleKeyFrame KeyTime="0:0:1.2" Value="0"/>
+                                            </DoubleAnimationUsingKeyFrames>
+                                            <DoubleAnimation Storyboard.TargetName="Glow" Storyboard.TargetProperty="Opacity"
+                                                              To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="GlowTransform" Storyboard.TargetProperty="X"
+                                                              From="0" To="360" Duration="0:0:1.4" RepeatBehavior="Forever"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="HoverInStoryboard"/>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Arrow" Storyboard.TargetProperty="Opacity"
+                                                              To="0" Duration="0:0:0.15"/>
+                                            <DoubleAnimation Storyboard.TargetName="ArrowTransform" Storyboard.TargetProperty="X"
+                                                              To="-10" Duration="0:0:0.15"/>
+                                            <DoubleAnimation Storyboard.TargetName="Glow" Storyboard.TargetProperty="Opacity"
+                                                              To="0" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.95"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Background" Value="#444"/>
+                                <Setter Property="Foreground" Value="#888"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 次要按鈕樣式（PATCH／SYNC 手動觸發按鈕）：跟開始遊戲按鈕統一，同一組漸層紫色，尺寸縮小 -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontFamily" Value="Microsoft JhengHei" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <ScaleTransform x:Name="BtTransform" ScaleX="1" ScaleY="1"/>
+                            </Grid.RenderTransform>
+                            <Border x:Name="Bd" CornerRadius="2">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#8A2BE2" Offset="0"/>
+                                        <GradientStop Color="#5A18C8" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="6" Direction="270" ShadowDepth="2"/>
                                 </Border.Effect>
                             </Border>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -64,6 +170,120 @@
             </Setter>
         </Style>
 
+        <!-- 深色圓角膠囊勾選框樣式（視窗模式） -->
+        <Style x:Key="DarkPillCheckBoxStyle" TargetType="{x:Type CheckBox}">
+            <Setter Property="Foreground" Value="#EEEEEE"/>
+            <Setter Property="FontFamily" Value="Microsoft JhengHei"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="Box" Width="14" Height="14" CornerRadius="2" BorderThickness="1.5"
+                                    BorderBrush="#888" Background="Transparent" VerticalAlignment="Center">
+                                <Path x:Name="Check" Data="M1,5 L4.5,8.5 L11,1.5" Stroke="White" StrokeThickness="2"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#888888"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#888888"/>
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#AAAAAA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 深色圓角膠囊下拉選單樣式（解析度選擇） -->
+        <Style x:Key="DarkPillComboBoxStyle" TargetType="{x:Type ComboBox}">
+            <Setter Property="Foreground" Value="#EEEEEE"/>
+            <Setter Property="FontFamily" Value="Microsoft JhengHei"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <ToggleButton x:Name="Toggle" Focusable="False" ClickMode="Press"
+                                          TextElement.Foreground="#EEEEEE"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Border x:Name="Bd" CornerRadius="2" Background="#1A1A1A" BorderBrush="#3A3A3A" BorderThickness="1">
+                                            <Grid Margin="12,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Grid.Column="0" Content="{TemplateBinding Content}"
+                                                                   VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                                <Path Grid.Column="1" Data="M0,0 L4,4 L8,0" Stroke="#EEEEEE" StrokeThickness="1.5"
+                                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                      Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderBrush" Value="#8A2BE2"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <TextBlock Text="{Binding SelectedItem.Label, RelativeSource={RelativeSource TemplatedParent}}"/>
+                            </ToggleButton>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                                <Border Background="#1A1A1A" BorderBrush="#3A3A3A" BorderThickness="1" CornerRadius="2"
+                                        MinWidth="{TemplateBinding ActualWidth}" Margin="0,4,0,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="Black" Opacity="0.4" BlurRadius="2" ShadowDepth="2"/>
+                                    </Border.Effect>
+                                    <ScrollViewer Margin="4" SnapsToDevicePixels="True">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type ComboBoxItem}">
+                        <Setter Property="Foreground" Value="#EEEEEE"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                                    <Border x:Name="Bd" CornerRadius="2" Padding="10,6" Background="Transparent">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#8A2BE2"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- 伺服器列表項目樣式 -->
         <Style x:Key="ServerListItemStyle" TargetType="{x:Type ListBoxItem}">
             <Setter Property="Margin" Value="2"/>
@@ -71,7 +291,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                        <Border x:Name="Bd" CornerRadius="5" Background="Transparent" SnapsToDevicePixels="True">
+                        <Border x:Name="Bd" CornerRadius="2" Background="Transparent" SnapsToDevicePixels="True">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -102,7 +322,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}">
+                        <Border x:Name="Bd" CornerRadius="2" Background="{TemplateBinding Background}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -127,7 +347,7 @@
     </Window.Resources>
 
     <!-- DataContext will be set in code-behind to avoid XAML designer resolution issues -->
-    <Border CornerRadius="20" Background="#121212" BorderBrush="#333" BorderThickness="1" Margin="10">
+    <Border CornerRadius="5" Background="#121212" BorderBrush="#333" BorderThickness="1" Margin="10">
         <Border.Effect>
             <DropShadowEffect Color="Black" BlurRadius="20" Opacity="0.6" Direction="270" ShadowDepth="0"/>
         </Border.Effect>
@@ -140,7 +360,7 @@
 
             <!-- 標題列：外層 Border 用跟主容器一樣的左右上角 CornerRadius，避免這層
                  直角背景蓋住主容器（CornerRadius=20）圓角邊線在角落露出的灰色描邊。 -->
-            <Border Grid.Row="0" CornerRadius="20,20,0,0" Background="#CC1A1A1A" MouseDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
+            <Border Grid.Row="0" CornerRadius="5,5,0,0" Background="#CC1A1A1A" MouseDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
                 <Grid>
                     <TextBlock Text="LINEAGE 3.81 PREMIUM LAUNCHER" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Foreground="#AAA" FontSize="14" FontWeight="Bold"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
@@ -177,12 +397,12 @@
                                 Width="26" Height="26" Padding="0">
                             <Button.Resources>
                                 <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="4"/>
+                                    <Setter Property="CornerRadius" Value="2"/>
                                 </Style>
                             </Button.Resources>
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border x:Name="Bg" Background="#000000" CornerRadius="4">
+                                    <Border x:Name="Bg" Background="#000000" CornerRadius="2">
                                         <TextBlock x:Name="Icon" Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="15"
                                                    Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
@@ -225,13 +445,20 @@
                     <StackPanel Grid.Row="2" Margin="0,20,0,5">
                         <DockPanel Margin="0,0,0,10" LastChildFill="False">
                             <CheckBox DockPanel.Dock="Left" Content="視窗模式" IsChecked="{Binding Windowed}"
-                                      Foreground="#CCCCCC" FontSize="12" VerticalAlignment="Center"/>
-                            <ComboBox DockPanel.Dock="Right" Width="120" VerticalAlignment="Center"
+                                      Style="{StaticResource DarkPillCheckBoxStyle}" VerticalAlignment="Center"/>
+                            <ComboBox DockPanel.Dock="Right" Width="140" VerticalAlignment="Center"
+                                      Style="{StaticResource DarkPillComboBoxStyle}"
                                       ItemsSource="{Binding WindowModeOptions}"
                                       SelectedValue="{Binding WindowMode}"
                                       SelectedValuePath="Value"
                                       DisplayMemberPath="Label"
                                       IsEnabled="{Binding Windowed}"/>
+                        </DockPanel>
+                        <DockPanel Margin="0,0,0,10" LastChildFill="False">
+                            <Button DockPanel.Dock="Right" Content="SYNC" Command="{Binding SyncCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}" Width="80" Margin="16,0,0,0"/>
+                            <Button DockPanel.Dock="Right" Content="PATCH" Command="{Binding PatchCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}" Width="80"/>
                         </DockPanel>
                         <Button Command="{Binding StartCommand}" Style="{StaticResource StartButtonStyle}" Height="60" Content="{Binding StartButtonCaption}" FontSize="22" FontWeight="Bold"/>
                     </StackPanel>
@@ -240,7 +467,7 @@
 
             <!-- 狀態列：下載更新時顯示進度條與百分比。外層 Border 用跟主容器一樣的
                  左右下角 CornerRadius，理由同標題列。 -->
-            <Border Grid.Row="2" MinHeight="42" CornerRadius="0,0,20,20" Background="#1a1a1a">
+            <Border Grid.Row="2" MinHeight="42" CornerRadius="0,0,5,5" Background="#1a1a1a">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="10"/>

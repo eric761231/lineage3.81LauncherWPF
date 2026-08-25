@@ -110,7 +110,18 @@ namespace LinLauncher.Services
         /// 檢查到，每次啟動都在同一個地方失敗、看起來像更新完全跑不動。這裡改成
         /// 逐檔案吃例外、記 log 後跳過，不讓單一檔案拖垮整批檢查。
         /// </summary>
-        public async Task<List<UpdateInfo>> CheckFilesAsync(List<UpdateInfo> allFiles, string baseDir, Action<string>? log = null)
+        /// <summary>
+        /// <paramref name="alreadyEatenLookup"/>（檔名→MD5，不分大小寫）：解決「吃檔會把散檔
+        /// 刪掉，下次檢查找不到散檔就誤判成需要重新下載」的迴圈（2026-08-25 查出）——
+        /// EatService 吃檔成功後會把 icon/sprite/Surf/text/Tile 散檔併入 pak 並刪除散檔本身，
+        /// 這裡原本只看「散檔存不存在」判斷要不要更新，散檔一旦被正常吃掉就會永遠被誤判成
+        /// 遺失，導致幾乎每次啟動都要重新下載＋重新吃檔幾乎全部的檔案。加這個參數讓呼叫端
+        /// （MainViewModel）可以傳入「上次成功同步時的清單」，散檔缺席但檔名+MD5 對得上
+        /// 這份清單的，就代表是正常被吃掉的，不是真的遺失，不用再標記為需要更新。
+        /// </summary>
+        public async Task<List<UpdateInfo>> CheckFilesAsync(
+            List<UpdateInfo> allFiles, string baseDir, Action<string>? log = null,
+            IReadOnlyDictionary<string, string>? alreadyEatenLookup = null)
         {
             var needUpdate = new List<UpdateInfo>();
             foreach (var info in allFiles)
@@ -120,6 +131,12 @@ namespace LinLauncher.Services
                 {
                     if (!File.Exists(fullPath))
                     {
+                        if (alreadyEatenLookup != null &&
+                            alreadyEatenLookup.TryGetValue(info.Filename, out string? eatenMd5) &&
+                            string.Equals(eatenMd5, info.Md5, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue; // 已經正常吃進 pak，不是遺失，不用重新下載
+                        }
                         needUpdate.Add(info);
                         continue;
                     }

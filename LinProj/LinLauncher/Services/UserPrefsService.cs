@@ -7,7 +7,7 @@ namespace LinLauncher.Services
     public sealed class UserDisplayPrefs
     {
         public bool Windowed { get; set; } = true;
-        public uint WindowMode { get; set; } = 5;
+        public uint WindowMode { get; set; } = 6;
     }
 
     public static class UserPrefsService
@@ -53,7 +53,7 @@ namespace LinLauncher.Services
         {
             try
             {
-                uint mode = prefs.WindowMode is >= 4 and <= 7 ? prefs.WindowMode : 5u;
+                uint mode = prefs.WindowMode is >= 4 and <= 7 ? prefs.WindowMode : 6u;
                 string content =
                     "[Settings]\n" +
                     $"windowed={(prefs.Windowed ? "true" : "false")}\n" +

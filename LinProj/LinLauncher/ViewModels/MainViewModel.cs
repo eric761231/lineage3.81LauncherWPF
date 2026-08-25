@@ -35,7 +35,7 @@ namespace LinLauncher.ViewModels
         private bool _canRefreshServers = true;
         private readonly DispatcherTimer _maintenanceCountdownTimer;
         private bool _windowed = true;
-        private uint _windowMode = 5;
+        private uint _windowMode = 6;
         private bool _prefsReady;
 
         public ObservableCollection<ServerInfo> Servers { get => _servers; set { _servers = value; OnPropertyChanged(); } }
@@ -59,7 +59,7 @@ namespace LinLauncher.ViewModels
             get => _windowMode;
             set
             {
-                uint mode = value is >= 4 and <= 7 ? value : 5u;
+                uint mode = value is >= 4 and <= 7 ? value : 6u;
                 if (_windowMode == mode) return;
                 _windowMode = mode;
                 OnPropertyChanged();
@@ -116,6 +116,8 @@ namespace LinLauncher.ViewModels
             }
         }
         public ICommand StartCommand { get; }
+        public ICommand SyncCommand { get; }
+        public ICommand PatchCommand { get; }
         private readonly LauncherConfig _config = new LauncherConfig();
         public LauncherConfig Config => _config;
 
@@ -132,6 +134,8 @@ namespace LinLauncher.ViewModels
             RefreshServersCommand = new RelayCommand(
                 async _ => await RefreshAllServerStatusAsync(isManualRefresh: true),
                 _ => CanRefreshServers);
+            SyncCommand = new RelayCommand(async _ => await RunManualSyncAsync(), _ => !IsBusy);
+            PatchCommand = new RelayCommand(async _ => await RunManualPatchAsync(), _ => !IsBusy);
 
             // 選取的伺服器維護中時，「開始遊戲」按鈕文字顯示即時倒數；每秒重新計算一次
             // （MaintenanceEndAtUtc 是查詢當下算好的固定時間點，這裡只是每秒重新算「還剩多少」，
@@ -166,7 +170,7 @@ namespace LinLauncher.ViewModels
             {
                 UserDisplayPrefs prefs = UserPrefsService.Load();
                 _windowed = prefs.Windowed;
-                _windowMode = prefs.WindowMode is >= 4 and <= 7 ? prefs.WindowMode : 5u;
+                _windowMode = prefs.WindowMode is >= 4 and <= 7 ? prefs.WindowMode : 6u;
                 _prefsReady = true;
                 OnPropertyChanged(nameof(Windowed));
                 OnPropertyChanged(nameof(WindowMode));
@@ -252,24 +256,56 @@ namespace LinLauncher.ViewModels
         }
 
         /// <summary>
+        /// 記錄「上次成功吃檔時套用的 update.txt 原始內容」，供下次
+        /// UpdateService.CheckFilesAsync 的 alreadyEatenLookup 參數比對——散檔被
+        /// 吃掉刪除後，靠這份紀錄分辨「正常吃掉」跟「真的遺失」，見
+        /// UpdateService.CheckFilesAsync 的說明。只在吃檔真的完全成功時才覆寫，
+        /// 跳過／失敗時保留舊紀錄不動。
+        /// </summary>
+        private const string LastSyncedManifestFileName = ".last_synced_update.txt";
+
+        private static string GetLastSyncedManifestPath(string gameRoot) =>
+            Path.Combine(gameRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), LastSyncedManifestFileName);
+
+        private static async Task SaveLastSyncedManifestAsync(string gameRoot, byte[] manifestBytes)
+        {
+            try
+            {
+                await File.WriteAllBytesAsync(GetLastSyncedManifestPath(gameRoot), manifestBytes).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("SaveLastSyncedManifest: 寫入失敗", ex);
+            }
+        }
+
+        /// <summary>
         /// 把遊戲根目錄的 icon/sprite/Surf/text/Tile 散檔寫入 idx/pak。
         /// 失敗只提示，不擋開始遊戲或後續流程。
+        /// 實際檔案 I/O（EatService.Run）包在 Task.Run 裡跑在背景執行緒——原本直接在 UI
+        /// 執行緒同步呼叫，實測 1444 個檔案要花 47 秒~1 分 40 秒，整段時間 UI 執行緒被佔用，
+        /// Progress&lt;EatProgress&gt; 排回 UI 執行緒的更新只能排隊、畫面完全沒機會重繪，
+        /// 使用者看到的是整個視窗凍結，不是「沒進度可看」。改成背景執行緒後，UI 執行緒才有
+        /// 機會處理 Progress 回報、讓進度真的能動。
+        /// 回傳值代表「這次呼叫完之後，本機狀態是否已經跟 update.txt 完全同步」——true 時
+        /// 呼叫端會更新 .last_synced_update.txt（見 ProcessUpdateManifestFromBytesAsync），
+        /// 讓下次檢查不會把剛被正常吃掉、刪除的散檔誤判成遺失、重新下載一輪。
         /// </summary>
-        private void TryEatClientPacks(string gameRoot)
+        private async Task<bool> TryEatClientPacksAsync(string gameRoot)
         {
             gameRoot = gameRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             if (!EatService.HasPendingFiles(gameRoot))
             {
                 StartupLog.Append($"TryEatClientPacks: 無散檔 ({gameRoot})");
                 ClearEatPending(gameRoot);
-                return;
+                return true; // 沒有散檔要吃，代表本機已經跟目前的 update.txt 一致
             }
 
             if (IsGameProcessRunning())
             {
                 StartupLog.Append("[吃檔] 遊戲執行中，跳過並標記 .eat_pending");
                 MarkEatPending(gameRoot);
-                return;
+                return false; // 還沒真正吃檔，狀態還沒同步，不能當作已同步處理
             }
 
             try
@@ -290,29 +326,31 @@ namespace LinLauncher.ViewModels
                         Application.Current?.Dispatcher.Invoke(Apply);
                 });
 
-                var result = EatService.Run(gameRoot, keepLooseFiles: false, progress: progress);
+                var result = await Task.Run(() => EatService.Run(gameRoot, keepLooseFiles: false, progress: progress));
                 StartupLog.Append($"TryEatClientPacks: {result.Summary}");
                 StatusText = result.Summary;
 
                 if (result.Ok)
                 {
                     ClearEatPending(gameRoot);
-                    return;
+                    return true;
                 }
 
                 MarkEatPending(gameRoot);
                 MessageBox.Show(result.Summary, "吃檔未完全成功", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
             }
             catch (Exception ex)
             {
                 StartupLog.Append("TryEatClientPacks: 執行失敗", ex);
                 MarkEatPending(gameRoot);
                 MessageBox.Show($"吃檔失敗：{ex.Message}", "吃檔錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
             }
         }
 
         /// <summary>更新下載成功後才吃檔；遊戲在跑則寫 .eat_pending，下次更新檢查無下載時補吃。</summary>
-        private void ApplyEatAfterSuccessfulDownload(string gameRoot, bool anyDeferred)
+        private async Task<bool> ApplyEatAfterSuccessfulDownloadAsync(string gameRoot, bool anyDeferred)
         {
             if (IsGameProcessRunning())
             {
@@ -324,10 +362,10 @@ namespace LinLauncher.ViewModels
                     "更新提示",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
-                return;
+                return false;
             }
 
-            TryEatClientPacks(gameRoot);
+            bool eaten = await TryEatClientPacksAsync(gameRoot);
             string extra = anyDeferred
                 ? "\n\n部分登入器自身檔案目前使用中，已保留待更新，將於下次啟動登入器時自動完成。"
                 : "";
@@ -336,21 +374,22 @@ namespace LinLauncher.ViewModels
                 "更新提示",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+            return eaten;
         }
 
         /// <summary>更新檢查無需下載時，只在有 .eat_pending 才補吃，不會因為資料夾剛好有散檔就吃。</summary>
-        private void TryEatIfPendingAfterUpdate(string gameRoot)
+        private async Task<bool> TryEatIfPendingAfterUpdateAsync(string gameRoot)
         {
             if (!HasEatPendingFlag(gameRoot))
-                return;
+                return true; // 沒有待補吃的旗標，代表本機早就跟當時的 update.txt 一致
             if (IsGameProcessRunning())
             {
                 StartupLog.Append("[吃檔] 有 .eat_pending 但遊戲仍在執行中，下次再試");
-                return;
+                return false;
             }
 
             StartupLog.Append("[吃檔] 更新無需下載，補做上次未完成的吃檔");
-            TryEatClientPacks(gameRoot);
+            return await TryEatClientPacksAsync(gameRoot);
         }
 
         /// <summary>依 SelectedServer 目前的維護狀態，更新「開始遊戲」按鈕文字（每秒由計時器呼叫一次）。</summary>
@@ -751,6 +790,66 @@ namespace LinLauncher.ViewModels
                 StartupLog.Append("[更新] 無法取得更新清單");
         }
 
+        /// <summary>「sync」按鈕：手動重新跑一次完整更新檢查（下載+自動吃檔），
+        /// 直接重用啟動時 InitializeAsync 用的同一段更新階段邏輯。</summary>
+        private async Task RunManualSyncAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+            try
+            {
+                StartupLog.Append("[手動 sync] 開始");
+                await RunUpdatePhaseAsync(prefetchedManifest: null, manifestFetchAlreadyDone: false);
+                StartupLog.Append("[手動 sync] 結束");
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("[手動 sync] 未預期錯誤", ex);
+            }
+            finally
+            {
+                IsBusy = false;
+                OverallProgress = 0;
+                StatusText = "Ready";
+            }
+        }
+
+        /// <summary>「patch」按鈕：只手動觸發吃檔，不檢查、不下載更新檔。</summary>
+        private async Task RunManualPatchAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+            try
+            {
+                string gameRoot = GamePathHelper.GetGameRootDirectory();
+                if (IsGameProcessRunning())
+                {
+                    MessageBox.Show(
+                        "遊戲目前仍在執行中，請先關閉遊戲再執行吃檔。",
+                        "吃檔提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                bool hadPending = EatService.HasPendingFiles(gameRoot);
+                bool ok = await TryEatClientPacksAsync(gameRoot);
+                if (ok)
+                {
+                    MessageBox.Show(
+                        hadPending ? "吃檔完成。" : "目前沒有待處理的散檔，不需要吃檔。",
+                        "吃檔提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                // ok == false：TryEatClientPacksAsync 內部已經跳過對應的失敗/警告 MessageBox，這裡不重複顯示
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("[手動 patch] 未預期錯誤", ex);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         private async Task ProcessUpdateManifestFromBytesAsync(byte[] bytes)
         {
             string tempFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.tmp");
@@ -763,7 +862,7 @@ namespace LinLauncher.ViewModels
                 if (allFiles.Count == 0)
                 {
                     StartupLog.Append("[更新] 清單為 0 筆（請檢查 update.txt 與 [main] count）");
-                    TryEatIfPendingAfterUpdate(GamePathHelper.GetGameRootDirectory());
+                    await TryEatIfPendingAfterUpdateAsync(GamePathHelper.GetGameRootDirectory());
                     return;
                 }
 
@@ -772,13 +871,25 @@ namespace LinLauncher.ViewModels
                 // AppDomain.CurrentDomain.BaseDirectory（= Core）會把檔案解到 Core\sprite\
                 // 這個不存在、遊戲也不會讀的地方。
                 string updateRoot = GamePathHelper.GetGameRootDirectory();
+
+                // 上次成功吃檔時套用的清單：散檔被正常吃掉刪除後，靠這份紀錄分辨
+                // 「正常吃掉」跟「真的遺失」，見 CheckFilesAsync 的 alreadyEatenLookup 說明。
+                Dictionary<string, string>? alreadyEatenLookup = null;
+                string lastSyncedPath = GetLastSyncedManifestPath(updateRoot);
+                if (File.Exists(lastSyncedPath))
+                {
+                    var (lastSyncedFiles, _) = await _updateService.LoadUpdateListAsync(lastSyncedPath);
+                    alreadyEatenLookup = lastSyncedFiles.ToDictionary(f => f.Filename, f => f.Md5, StringComparer.OrdinalIgnoreCase);
+                }
+
                 var needUpdate = await _updateService.CheckFilesAsync(
-                    allFiles, updateRoot, msg => StartupLog.Append($"UpdateCheck: {msg}"));
+                    allFiles, updateRoot, msg => StartupLog.Append($"UpdateCheck: {msg}"), alreadyEatenLookup);
                 StartupLog.Append($"[更新] 需更新檔案數={needUpdate.Count}");
                 if (needUpdate.Count == 0)
                 {
                     StartupLog.Append("[更新] 本機檔案已是最新，無需下載");
-                    TryEatIfPendingAfterUpdate(updateRoot);
+                    if (await TryEatIfPendingAfterUpdateAsync(updateRoot))
+                        await SaveLastSyncedManifestAsync(updateRoot, bytes);
                     return;
                 }
 
@@ -792,7 +903,8 @@ namespace LinLauncher.ViewModels
 
                 if (ok)
                 {
-                    ApplyEatAfterSuccessfulDownload(updateRoot, anyDeferred);
+                    if (await ApplyEatAfterSuccessfulDownloadAsync(updateRoot, anyDeferred))
+                        await SaveLastSyncedManifestAsync(updateRoot, bytes);
                 }
                 else if (!string.IsNullOrEmpty(err))
                 {
