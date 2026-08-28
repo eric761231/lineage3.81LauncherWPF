@@ -119,6 +119,19 @@ namespace LinLauncher.Services
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
+        public const uint SPI_GETSCREENSAVEACTIVE = 0x0010;
+        public const uint SPI_SETSCREENSAVEACTIVE = 0x0011;
+        public const uint SPIF_SENDCHANGE = 0x0002;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, ref bool pvParam, uint fWinIni);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr GetModuleHandle(string lpModuleName);
 

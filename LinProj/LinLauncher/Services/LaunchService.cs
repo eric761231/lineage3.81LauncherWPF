@@ -38,6 +38,13 @@ namespace LinLauncher.Services
         private const string ShmGuid = "{385FC524-96E3-4839-9909-1F2135D4F928}";
         private IntPtr _hShm = IntPtr.Zero;
         private IntPtr _pShm = IntPtr.Zero;
+        // 記住啟動遊戲當下螢幕保護程式的原始設定，遊戲結束時（不論正常關閉還是當機/
+        // 被強制關閉）用來恢復——這是防呆機制，跟 ScreenSaverGuard.dll 自己的還原邏輯
+        // 是兩層保護：那支 DLL 注入在遊戲行程裡，行程一旦異常終止，DLL 裡的執行緒也
+        // 跟著一起消失，來不及跑到「還原設定」那段程式碼（實測發生過，螢幕保護程式
+        // 設定卡在關閉狀態）。這裡在登入器自己的行程裡監看遊戲行程是否結束，不受遊戲
+        // 行程本身死活影響，一定能還原。
+        private bool _originalScreenSaverActive = true;
         public event EventHandler? GameExited;
 
         /// <summary>遊戲進程已建立、DLL 已注入、ResumeThread 已呼叫（引數是遊戲進程 PID）。
@@ -59,6 +66,8 @@ namespace LinLauncher.Services
             uint windowMode = 5)
         {
             if (!File.Exists(gameExePath) || !File.Exists(dllPath)) return false;
+
+            NativeMethods.SystemParametersInfo(NativeMethods.SPI_GETSCREENSAVEACTIVE, 0, ref _originalScreenSaverActive, 0);
 
             string? dir = Path.GetDirectoryName(gameExePath);
             if (!string.IsNullOrEmpty(dir))
@@ -133,7 +142,10 @@ namespace LinLauncher.Services
                     Process.GetProcessById((int)pi.dwProcessId).Kill();
                     return false;
                 }
+                StartupLog.Append("LaunchGame: 主要 DLL 注入完成，開始選配注入");
                 InjectOptionalImeDll(pi.dwProcessId, dllPath);
+                InjectOptionalScreenSaverGuardDll(pi.dwProcessId, dllPath);
+                StartupLog.Append("LaunchGame: 選配注入呼叫完成，即將 ResumeThread");
                 NativeMethods.ResumeThread(pi.hThread);
                 _ = MonitorProcessAsync((int)pi.dwProcessId);
                 _ = GamePatchService.ApplyGapFillPatchesAsync(pi.dwProcessId);
@@ -214,6 +226,7 @@ namespace LinLauncher.Services
         /// </summary>
         private void InjectOptionalImeDll(uint pid, string mainDllPath)
         {
+            StartupLog.Append("LaunchGame: InjectOptionalImeDll 進入");
             try
             {
                 string? dir = Path.GetDirectoryName(Path.GetFullPath(mainDllPath));
@@ -254,6 +267,11 @@ namespace LinLauncher.Services
                         StartupLog.Append($"LaunchGame: [WARN] LineageIme.dll CreateRemoteThread 失敗，Win32={Marshal.GetLastWin32Error()}");
                         return;
                     }
+                    // 等這條 LoadLibraryW 遠端執行緒真的跑完（DllMain 回傳）再繼續，
+                    // 避免緊接著注入下一支 DLL 時，兩邊的 LoadLibrary 在同一個行程的
+                    // loader lock 上互搶，導致其中一支靜默失敗（C# 這邊看不出來，
+                    // 只看得到 CreateRemoteThread 有成功建立執行緒）。
+                    NativeMethods.WaitForSingleObject(hThread, 10000);
                     NativeMethods.CloseHandle(hThread);
                     StartupLog.Append($"LaunchGame: LineageIme.dll 已注入 ({imeDllPath})");
                 }
@@ -262,6 +280,70 @@ namespace LinLauncher.Services
             catch (Exception ex)
             {
                 StartupLog.Append("LaunchGame: LineageIme.dll 注入發生例外（不影響遊戲繼續啟動）", ex);
+            }
+        }
+
+        /// <summary>
+        /// 選擇性注入螢幕保護程式抑制 DLL（獨立 DLL、跟核心 LauncherDll 注入分開，
+        /// 不碰 DirectDraw/ddraw.dll）——遊戲視窗開啟期間直接關閉螢幕保護程式設定、
+        /// 視窗關閉後恢復原設定，避免縮小/還原視窗觸發 DirectDraw Restore() 而撞上
+        /// DDrawCompat 既有的鎖死結。跟主要 DLL 放同一目錄；找不到檔案或注入失敗
+        /// 都只記 log、不彈窗、不影響遊戲繼續啟動 —— 這是可選的輔助功能，不是核心流程。
+        /// </summary>
+        private void InjectOptionalScreenSaverGuardDll(uint pid, string mainDllPath)
+        {
+            StartupLog.Append("LaunchGame: InjectOptionalScreenSaverGuardDll 進入");
+            try
+            {
+                string? dir = Path.GetDirectoryName(Path.GetFullPath(mainDllPath));
+                if (string.IsNullOrEmpty(dir)) return;
+                string guardDllPath = Path.Combine(dir, "ScreenSaverGuard.dll");
+                if (!File.Exists(guardDllPath))
+                {
+                    StartupLog.Append($"LaunchGame: ScreenSaverGuard.dll 不存在，跳過螢幕保護程式偵測注入 ({guardDllPath})");
+                    return;
+                }
+
+                IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.ProcessAccessFlags.All, false, pid);
+                if (hProcess == IntPtr.Zero)
+                {
+                    StartupLog.Append("LaunchGame: [WARN] OpenProcess 失敗，跳過 ScreenSaverGuard.dll 注入");
+                    return;
+                }
+                try
+                {
+                    byte[] pathBytes = Encoding.Unicode.GetBytes(guardDllPath + "\0");
+                    uint size = (uint)pathBytes.Length;
+                    IntPtr pLibPath = NativeMethods.VirtualAllocEx(hProcess, IntPtr.Zero, size, NativeMethods.MEM_COMMIT, NativeMethods.PAGE_READWRITE);
+                    if (pLibPath == IntPtr.Zero)
+                    {
+                        StartupLog.Append("LaunchGame: [WARN] VirtualAllocEx 失敗，跳過 ScreenSaverGuard.dll 注入");
+                        return;
+                    }
+                    if (!NativeMethods.WriteProcessMemory(hProcess, pLibPath, pathBytes, size, out _))
+                    {
+                        StartupLog.Append("LaunchGame: [WARN] WriteProcessMemory 失敗，跳過 ScreenSaverGuard.dll 注入");
+                        return;
+                    }
+                    IntPtr hKernel32 = NativeMethods.GetModuleHandle("kernel32.dll");
+                    IntPtr pLoadLibraryW = NativeMethods.GetProcAddress(hKernel32, "LoadLibraryW");
+                    IntPtr hThread = NativeMethods.CreateRemoteThread(hProcess, IntPtr.Zero, 0, pLoadLibraryW, pLibPath, 0, out _);
+                    if (hThread == IntPtr.Zero)
+                    {
+                        StartupLog.Append($"LaunchGame: [WARN] ScreenSaverGuard.dll CreateRemoteThread 失敗，Win32={Marshal.GetLastWin32Error()}");
+                        return;
+                    }
+                    // 等 LoadLibraryW 真的跑完再結束，避免跟其他注入互搶 loader lock
+                    // 而靜默失敗（見 InjectOptionalImeDll 同樣的註解）。
+                    NativeMethods.WaitForSingleObject(hThread, 10000);
+                    NativeMethods.CloseHandle(hThread);
+                    StartupLog.Append($"LaunchGame: ScreenSaverGuard.dll 已注入 ({guardDllPath})");
+                }
+                finally { NativeMethods.CloseHandle(hProcess); }
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("LaunchGame: ScreenSaverGuard.dll 注入發生例外（不影響遊戲繼續啟動）", ex);
             }
         }
 
@@ -283,11 +365,14 @@ namespace LinLauncher.Services
                 IntPtr hKernel32 = NativeMethods.GetModuleHandle("kernel32.dll");
                 IntPtr pLoadLibraryW = NativeMethods.GetProcAddress(hKernel32, "LoadLibraryW");
                 IntPtr hThread = NativeMethods.CreateRemoteThread(hProcess, IntPtr.Zero, 0, pLoadLibraryW, pLibPath, 0, out _);
-                if (hThread == IntPtr.Zero) 
+                if (hThread == IntPtr.Zero)
                 {
                     System.Windows.MessageBox.Show($"CreateRemoteThread failed with error: {Marshal.GetLastWin32Error()}");
                     return false;
                 }
+                // 等這支主要 DLL 真的載入完成再繼續注入其他選配 DLL，避免多支 DLL
+                // 的 LoadLibraryW 在同一個行程的 loader lock 上互搶。
+                NativeMethods.WaitForSingleObject(hThread, 10000);
                 NativeMethods.CloseHandle(hThread);
                 return true;
             }
@@ -368,6 +453,15 @@ namespace LinLauncher.Services
             catch { }
             finally
             {
+                // 保證還原螢幕保護程式設定（見 _originalScreenSaverActive 欄位註解）——
+                // 這裡在登入器自己的行程跑，不管遊戲行程是正常關閉還是當機/被強制關閉
+                // 都會執行到。
+                NativeMethods.SystemParametersInfo(
+                    NativeMethods.SPI_SETSCREENSAVEACTIVE,
+                    _originalScreenSaverActive ? 1u : 0u,
+                    IntPtr.Zero,
+                    NativeMethods.SPIF_SENDCHANGE);
+                StartupLog.Append($"LaunchGame: 遊戲行程結束，螢幕保護程式設定已還原為原始值 ({_originalScreenSaverActive})");
                 GameExited?.Invoke(this, EventArgs.Empty);
                 CleanupSharedMemory();
             }

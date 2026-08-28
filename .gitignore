@@ -4,8 +4,18 @@ obj/
 publish/
 Debug/
 Release/
+Build/
 x64/
 x86/
+
+# C++ intermediate/build files
+*.ilk
+*.pch
+*.tlog
+*.idb
+*.iobj
+*.ipdb
+*.obj
 
 # Webview2 cache
 EBWebView/

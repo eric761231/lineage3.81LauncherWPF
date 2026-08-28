@@ -11,6 +11,7 @@
 #include "Candidates.h"
 #include "TsfSink.h"
 #include "Dbg.h"
+#include "ImGuiHook.h"
 #include <imm.h>
 #include <unordered_map>
 #include <mutex>
@@ -269,6 +270,11 @@ void SubclassWindow(HWND hwnd) {
 }
 
 LRESULT CALLBACK GameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+  // ImGui 疊層想要吃掉這個輸入時，直接吞掉、不轉發給遊戲本體。
+  LRESULT imguiResult = 0;
+  if (ImGuiHook_HandleWndProc(hwnd, msg, wParam, lParam, &imguiResult)) {
+    return imguiResult;
+  }
   if (msg == WM_TSF_INIT_ON_UI_THREAD) {
     DWORD tid = GetCurrentThreadId();
     HRESULT hr = TsfInit();

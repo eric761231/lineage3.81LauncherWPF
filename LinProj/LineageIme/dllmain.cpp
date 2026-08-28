@@ -14,6 +14,7 @@
 #include "CreateHook.h"
 #include "Overlay.h"
 #include "Subclass.h"
+#include "ImGuiHook.h"
 
 namespace {
 
@@ -67,6 +68,15 @@ DWORD WINAPI Worker(LPVOID) {
   SubclassGameWindow(hwnd);
   PostMessageW(hwnd, WM_TSF_INIT_ON_UI_THREAD, 0, 0);
   IME_LOG("[ime] posted WM_TSF_INIT to game UI thread");
+
+  // Dear ImGui 測試疊層：先停用。ImGuiHook.cpp 用「暫時 dummy device 讀
+  // vtable」的手法在 dgvoodoo2 底下實測沒有真的攔到遊戲的渲染呼叫（log
+  // 顯示 hook 安裝回報成功，但 Hooked_EndScene 從沒被叫過），而啟動時多
+  // 建立一個 CreateDevice 仍是有風險的動作（候選字視窗這次測試也回報不會
+  // 出現，兩者順序上是巧合還是真的有關聯還沒排除）。之後要改用 hook
+  // Direct3DCreate9/IDirect3D9::CreateDevice 拿到遊戲真正的 device，而不是
+  // 另外自己造一個，才有機會真的行得通。
+  // InstallImGuiHook(hwnd);
 
   // (5) thread message loop —— SetWinEventHook OUTOFCONTEXT callback 派發，
   //     同時 pump TSF ThreadMgr 需要的 STA COM 訊息（tsf_sink 未在這條 thread

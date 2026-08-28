@@ -52,6 +52,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>..\ThirdParty\imgui;..\ThirdParty\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LINEAGEIME_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -64,13 +65,15 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>user32.lib;gdi32.lib;imm32.lib;dwmapi.lib;ole32.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;gdi32.lib;imm32.lib;dwmapi.lib;ole32.lib;oleaut32.lib;d3d9.lib;detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>..\ThirdParty\imgui;..\ThirdParty\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LINEAGEIME_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -86,7 +89,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>user32.lib;gdi32.lib;imm32.lib;dwmapi.lib;ole32.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;gdi32.lib;imm32.lib;dwmapi.lib;ole32.lib;oleaut32.lib;d3d9.lib;detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -97,6 +101,14 @@
     <ClCompile Include="CreateHook.cpp" />
     <ClCompile Include="Subclass.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ImGuiHook.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\imgui.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\ThirdParty\imgui\backends\imgui_impl_dx9.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -106,6 +118,15 @@
     <ClInclude Include="TsfSink.h" />
     <ClInclude Include="CreateHook.h" />
     <ClInclude Include="Subclass.h" />
+    <ClInclude Include="ImGuiHook.h" />
+    <ClInclude Include="..\ThirdParty\imgui\imgui.h" />
+    <ClInclude Include="..\ThirdParty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\ThirdParty\imgui\imconfig.h" />
+    <ClInclude Include="..\ThirdParty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\ThirdParty\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\ThirdParty\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\ThirdParty\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\ThirdParty\imgui\backends\imgui_impl_dx9.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

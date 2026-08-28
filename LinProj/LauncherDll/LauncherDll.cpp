@@ -5,6 +5,9 @@
 #include "DisconnectOverlay.h"
 #include "MimirPowerHook.h"
 #include "LineageEncryption.h"
+#include "ImGuiHook.h"
+#include "MatchMakingHook.h"
+#include "WebNavigateHook.h"
 
 #include "VMProtectSDK.h"
 #include <map>
@@ -922,8 +925,9 @@ static HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
   HWND hWndRet = real_CreateWindowEx(dwExStyle, lpClassName, lpWindowName,
                                      dwStyle, x, y, nWidth, nHeight, hWndParent,
                                      hMenu, hInstance, lpParam);
-  if (isLineage && hWndRet != NULL)
+  if (isLineage && hWndRet != NULL) {
     g_hGameWnd = hWndRet;
+  }
   return hWndRet;
 }
 
@@ -945,8 +949,9 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
   HWND hWnd = real_CreateWindowExW(dwExStyle, lpClassName, lpWindowName,
                                    dwStyle, x, y, nWidth, nHeight, hWndParent,
                                    hMenu, hInstance, lpParam);
-  if (isLineage && hWnd != NULL)
+  if (isLineage && hWnd != NULL) {
     g_hGameWnd = hWnd;
+  }
   return hWnd;
 }
 
@@ -1443,11 +1448,29 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   // 對齊 Rust login.rs：解殼後立刻裝 USER/PASS/Login77（不綁 CreateWindowEx）
   InstallLogin77Hooks();
 
-  // S_Disconnect Layered 彈窗：ProcessPacket cave + overlay UI thread
-  InstallDisconnectHooks();
+  // S_Disconnect Layered 彈窗：DISABLED（使用者確認這個方法對這次的白色
+  // 方塊問題沒用，先維持停用）。
+  // InstallDisconnectHooks();
 
   // 密米爾之泉：ProcessPacket 分派 cave（S_PledgeWatch/200 sentinel 攔截）
   InstallMimirPowerHook();
+
+  // 血盟推薦登錄：選類別後把說明文字也寫進 Intro_Edit，不然介紹欄位是空的、
+  // 登錄一律靜默失敗
+  InstallMatchMakingHook();
+
+  // 內建瀏覽器導向自訂網址，取代原廠客服頁
+  InstallWebNavigateHook();
+
+  // Dear ImGui test overlay: DISABLED for now. The dummy-device vtable
+  // capture technique in ImGuiHook.cpp doesn't actually intercept the
+  // game's real rendering calls under dgvoodoo2 (confirmed via log: hook
+  // install reports success but Hooked_EndScene is never invoked), and the
+  // throwaway CreateDevice call during startup is a plausible destabilizer
+  // even though the hook itself is inert. Needs a different approach
+  // (hook Direct3DCreate9/IDirect3D9::CreateDevice to capture the real
+  // device instead of a throwaway one) before re-enabling.
+  // InstallImGuiHook();
 
   // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動
   // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
