@@ -24,5 +24,9 @@
 
 extern HINSTANCE hins;
 
+// 與 LauncherDll.cpp 的 launcherdll_net_log 同一檔、同一格式；給其他 cpp 用
+// （net_log 本身是 static，跨檔連不到）。
+void launcherdll_hook_log(const char *fmt, ...);
+
 // 初始化 DLL 內部狀態：讀共享記憶體、載入資源、註冊 Detours Hook。
 void init();

@@ -1,11 +1,10 @@
 #Requires -Version 5.1
 # UTF-8
 # Packs ALL of this project's self-made overlay assets (Mimir Power UI +
-# DisconnectOverlay UI) into ONE shared ui.pak + ui.idx, since
-# MimirPowerOverlay.cpp and DisconnectOverlay.cpp both call
-# OverlayAssets_Load("ui", "ui") — same folderName/pakBaseName, so they hit
-# the same cache entry and share one decrypted pak in memory instead of each
-# loading/decrypting its own separate .pak.
+# HitFlinchPatch's NpcFlinch.xml) into ONE shared ui.pak + ui.idx, since every
+# caller uses OverlayAssets_Load("ui", "ui") — same folderName/pakBaseName, so
+# they hit the same cache entry and share one decrypted pak in memory instead
+# of each loading/decrypting its own separate .pak.
 # Whole-file XOR with the same fixed key used by LauncherDll's GetFileBuffer()
 # / TW13081901.pak (PAt82IqEvNBmERYl), so the C++ loader can reuse identical
 # decrypt logic. Re-run this after editing any .xml or swapping any image —
@@ -69,9 +68,8 @@ param(
         "7831.png",
         "diamond.png",
         "mimir_ui.xml",
-        # DisconnectOverlay UI (DisconnectOverlay.cpp / strings.xml)
-        "bg_disconnect.png",
-        "strings.xml"
+        # Combat config (HitFlinchPatch.cpp)
+        "NpcFlinch.xml"
     )
 )
 
@@ -100,7 +98,7 @@ if (-not (Test-Path -LiteralPath $OutputFolder)) {
 $SourceFolder = (Resolve-Path -LiteralPath $SourceFolder).Path
 $OutputFolder = (Resolve-Path -LiteralPath $OutputFolder).Path
 
-Write-Host "=== Packing unified UI assets (Mimir + Disconnect) ===" -ForegroundColor Cyan
+Write-Host "=== Packing unified UI assets ===" -ForegroundColor Cyan
 
 $indexLines = New-Object System.Collections.Generic.List[string]
 $allBytes = New-Object System.Collections.Generic.List[byte]

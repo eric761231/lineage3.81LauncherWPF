@@ -7,7 +7,7 @@ setlocal
 set "SCRIPT_DIR=%~dp0"
 set "SOURCE=%SCRIPT_DIR%ui_sample"
 set "OUTPUT=%SCRIPT_DIR%ui_sample\_packed"
-set "DEPLOY=C:\3.81Lineage自製登入器測試用\ui"
+set "DEPLOY=D:\天堂資料\天堂專案#380客戶端+自製登入器\ui"
 
 echo === UI使用者介面素材打包中 ===
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%Pack-UiAssets.ps1" -SourceFolder "%SOURCE%" -OutputFolder "%OUTPUT%"

@@ -1,0 +1,154 @@
+<!-- NpcFlinch.xml: 每種怪物受身/血效果設定，打包進 ui.pak（見 Pack-UiAssets.ps1），
+     由 HitFlinchPatch.cpp 的 LoadCombatConfig() 讀取。
+     id = 客戶端 sprite/gfxid（不是伺服器端 npcid，客戶端物件本身沒有這個欄位）。
+     查某隻怪物的 sprite id：伺服器端 new-odin.sql 的 npc 資料表，gfxid 欄位對照 name 欄位。
+     suppressFlinch="false" = 這隻怪維持原本的後仰受身動作，不要跳過。
+     suppressFlinch="true"，或整隻怪根本沒列在這份表裡 = 跳過受傷、直接播血效果（預設行為）。
+     bloodEffect 目前只解析、還沒實際生效（見 HitFlinchPatch.cpp 開頭註解）。 -->
+<Sprite id="31" bloodEffect="1248" /> <!-- 99699 閃爍之星#新編號 -->
+<Sprite id="173" bloodEffect="1248" /> <!-- 99604 卡士伯#新編號 -->
+<Sprite id="183" bloodEffect="1248" /> <!-- 99610 黑長者#新編號; 99719 西瑪#新編號 -->
+<Sprite id="185" bloodEffect="1248" /> <!-- 99720 巴土瑟#新編號 -->
+<Sprite id="187" bloodEffect="1248" /> <!-- 99721 馬庫爾#新編號 -->
+<Sprite id="1011" bloodEffect="1248" /> <!-- 99616 巴列斯#新編號 -->
+<Sprite id="1180" bloodEffect="1248" /> <!-- 99636 惡魔#新編號 -->
+<Sprite id="1390" bloodEffect="1248" /> <!-- 99602 變種巨蟻女皇#新編號 -->
+<Sprite id="1791" bloodEffect="1248" /> <!-- 99628 不死鳥#新編號 -->
+<Sprite id="2268" bloodEffect="1248" /> <!-- 99656 水之精靈#新編號 -->
+<Sprite id="2332" bloodEffect="1248" /> <!-- 99736 夢魘#新編號 -->
+<Sprite id="2356" bloodEffect="1248" /> <!-- 99717 愛恨的布魯托#新編號 -->
+<Sprite id="2362" bloodEffect="1248" /> <!-- 99607 飛龍#新編號 -->
+<Sprite id="2389" bloodEffect="1248" /> <!-- 99611 變形怪首領#新編號; 99652 變形怪#新編號 -->
+<Sprite id="2402" bloodEffect="1248" /> <!-- 99617 巨大牛人#新編號 -->
+<Sprite id="2417" bloodEffect="1248" /> <!-- 99600 強盜頭目#新編號; 99685 強盜首領克萊恩#新編號 -->
+<Sprite id="2421" bloodEffect="1248" /> <!-- 99624 古代巨人#新編號 -->
+<Sprite id="2535" bloodEffect="1248" /> <!-- 99657 受詛咒的 梅杜莎#新編號 -->
+<Sprite id="2544" bloodEffect="1248" /> <!-- 99734 風龍之裔[伊納爾]#新編號 -->
+<Sprite id="2738" bloodEffect="1248" /> <!-- 99631 水精靈王#新編號 -->
+<Sprite id="2741" bloodEffect="1248" /> <!-- 99632 風精靈王#新編號 -->
+<Sprite id="2747" bloodEffect="1248" /> <!-- 99633 火精靈王#新編號 -->
+<Sprite id="2749" bloodEffect="1248" /> <!-- 99630 土精靈王#新編號 -->
+<Sprite id="2755" bloodEffect="1248" /> <!-- 99735 獨角獸#新編號 -->
+<Sprite id="2763" bloodEffect="1248" /> <!-- 99694 巴風特的追蹤者#新編號 -->
+<Sprite id="2803" bloodEffect="1248" /> <!-- 99674 腐爛的 殭屍王#新編號 -->
+<Sprite id="2807" bloodEffect="1248" /> <!-- 99737 扭曲的潔尼斯女王#新編號 -->
+<Sprite id="3049" bloodEffect="1248" /> <!-- 99741 地獄的黑豹#新編號 -->
+<Sprite id="3101" bloodEffect="1248" /> <!-- 99718 黑騎士隊長#新編號 -->
+<Sprite id="3664" bloodEffect="1248" /> <!-- 99654 魔獸軍王．巴蘭卡#新編號 -->
+<Sprite id="3744" bloodEffect="1248" /> <!-- 99655 法令軍王．蕾雅#新編號 -->
+<Sprite id="4003" bloodEffect="1248" /> <!-- 99730 黑騎士團長#新編號 -->
+<Sprite id="4034" bloodEffect="1248" /> <!-- 99634 深淵之主#新編號 -->
+<Sprite id="4068" bloodEffect="1248" /> <!-- 99643 墮落#新編號 -->
+<Sprite id="4168" bloodEffect="1248" /> <!-- 99608 曼波兔#新編號 -->
+<Sprite id="4171" bloodEffect="1248" /> <!-- 99609 曼波兔#新編號 -->
+<Sprite id="4370" bloodEffect="1248" /> <!-- 99637 阿利歐克#新編號 -->
+<Sprite id="4404" bloodEffect="1248" /> <!-- 99659 受詛咒的 水精靈王#新編號 -->
+<Sprite id="4466" bloodEffect="1248" /> <!-- 99751 亞克魔#新編號 -->
+<Sprite id="4493" bloodEffect="1248" /> <!-- 99649 樹精#新編號 -->
+<Sprite id="4527" bloodEffect="1248" /> <!-- 99635 暗殺軍王．史雷佛#新編號 -->
+<Sprite id="4533" bloodEffect="1248" /> <!-- 99640 冥法軍王．海露拜#新編號 -->
+<Sprite id="4561" bloodEffect="1248" /> <!-- 99671 伯爵的親衛隊#新編號 -->
+<Sprite id="4569" bloodEffect="1248" /> <!-- 99639 火焰之影#新編號 -->
+<Sprite id="4587" bloodEffect="1248" /> <!-- 99638 死亡#新編號 -->
+<Sprite id="4595" bloodEffect="1248" /> <!-- 99629 混沌#新編號 -->
+<Sprite id="4612" bloodEffect="1248" /> <!-- 99681 火焰之影#新編號 -->
+<Sprite id="4618" bloodEffect="1248" /> <!-- 99618 暗殺團長．布雷哲#新編號 -->
+<Sprite id="4625" bloodEffect="1248" /> <!-- 99614 突擊旅長．闇黑劍士#新編號; 99622 魔獸團長．凱巴勒#新編號; 99623 傭兵隊長．麥帕斯托#新編號; 99627 冥法團長．可利波斯#新編號 -->
+<Sprite id="4667" bloodEffect="1248" /> <!-- 99625 神官長．邦妮#新編號 -->
+<Sprite id="4701" bloodEffect="1248" /> <!-- 99613 親衛隊長．凱特#新編號; 99670 副神官．卡山德拉#新編號 -->
+<Sprite id="4746" bloodEffect="1248" /> <!-- 99605 庫曼#新編號 -->
+<Sprite id="4790" bloodEffect="1248" /> <!-- 99673 曼孟#新編號 -->
+<Sprite id="4851" bloodEffect="1248" /> <!-- 99672 塔洛斯伯爵#新編號 -->
+<Sprite id="4855" bloodEffect="1248" /> <!-- 99621 魔法團長．卡勒米爾#新編號 -->
+<Sprite id="4912" bloodEffect="1248" /> <!-- 99650 瑪依奴夏門的鑽石高崙#新編號 -->
+<Sprite id="5008" bloodEffect="1248" /> <!-- 99653 巴貝多#新編號 -->
+<Sprite id="5072" bloodEffect="1248" /> <!-- 99651 瑪依奴夏門#新編號 -->
+<Sprite id="5212" bloodEffect="1248" /> <!-- 99676 瑪雅#新編號; 99701 黑魔法師#新編號 -->
+<Sprite id="5274" bloodEffect="1248" /> <!-- 99667 長老．泰瑪斯#新編號 -->
+<Sprite id="5284" bloodEffect="1248" /> <!-- 99668 長老．拉曼斯#新編號 -->
+<Sprite id="5293" bloodEffect="1248" /> <!-- 99665 長老．安迪斯#新編號 -->
+<Sprite id="5297" bloodEffect="1248" /> <!-- 99666 長老．艾迪爾#新編號 -->
+<Sprite id="5365" bloodEffect="1248" /> <!-- 99663 長老．巴塔斯#新編號 -->
+<Sprite id="5373" bloodEffect="1248" /> <!-- 99662 長老．琪娜#新編號 -->
+<Sprite id="5447" bloodEffect="1248" /> <!-- 99658 受詛咒的巫女莎爾#新編號 -->
+<Sprite id="5471" bloodEffect="1248" /> <!-- 99669 長老．巴陸德#新編號 -->
+<Sprite id="5478" bloodEffect="1248" /> <!-- 99664 長老．巴洛斯#新編號 -->
+<Sprite id="5507" bloodEffect="1248" /> <!-- 99646 炎魔#新編號 -->
+<Sprite id="5511" bloodEffect="1248" /> <!-- 99647 炎魔#新編號 -->
+<Sprite id="5547" bloodEffect="1248" /> <!-- 99644 大王烏賊#新編號 -->
+<Sprite id="5620" bloodEffect="1248" /> <!-- 99682 吉爾塔斯#新編號 -->
+<Sprite id="5677" bloodEffect="1248" /> <!-- 99675 腐爛的 骷髏騎士#新編號 -->
+<Sprite id="5708" bloodEffect="1248" /> <!-- 99645 半魚人首領#新編號 -->
+<Sprite id="5767" bloodEffect="1248" /> <!-- 99753 須曼#新編號 -->
+<Sprite id="5786" bloodEffect="1248" /> <!-- 99661 巨大蜈蚣#新編號 -->
+<Sprite id="5818" bloodEffect="1248" /> <!-- 99660 卡普#新編號 -->
+<Sprite id="5938" bloodEffect="1248" /> <!-- 99648 污濁 妖魔戰士#新編號 -->
+<Sprite id="6010" bloodEffect="1248" /> <!-- 99698 紅色妖魔#新編號 -->
+<Sprite id="6569" bloodEffect="1248" /> <!-- 99677 底比斯 賀洛斯#新編號 -->
+<Sprite id="6581" bloodEffect="1248" /> <!-- 99679 冰之女王#新編號 -->
+<Sprite id="6595" bloodEffect="1248" /> <!-- 99678 底比斯 阿努比斯#新編號 -->
+<Sprite id="6778" bloodEffect="1248" /> <!-- 99696 狂風的夏斯奇(綠)#新編號 -->
+<Sprite id="7234" bloodEffect="1248" /> <!-- 99683 提卡爾 杰弗雷庫#新編號 -->
+<Sprite id="7236" bloodEffect="1248" /> <!-- 99684 提卡爾 杰弗雷庫#新編號 -->
+<Sprite id="7463" bloodEffect="1248" /> <!-- 99702 哈汀之影#新編號 -->
+<Sprite id="7515" bloodEffect="1248" /> <!-- 99686 浮士德#新編號 -->
+<Sprite id="7558" bloodEffect="1248" /> <!-- 99760 恐怖的 安塔瑞斯#新編號 -->
+<Sprite id="7864" bloodEffect="1248" /> <!-- 99641 恐怖的 法利昂#新編號 -->
+<Sprite id="7939" bloodEffect="1248" /> <!-- 99705 風龍的謝托雷#新編號; 99727 史派伊斯#新編號 -->
+<Sprite id="7940" bloodEffect="1248" /> <!-- 99722 風龍的守護者 -->
+<Sprite id="8036" bloodEffect="1248" /> <!-- 99759 恐怖的 林德拜爾#新編號 -->
+<Sprite id="8134" bloodEffect="1248" /> <!-- 99603 魔法師#新編號 -->
+<Sprite id="10042" bloodEffect="1248" /> <!-- 99688 凱巴雷#新編號 -->
+<Sprite id="10071" bloodEffect="1248" /> <!-- 99700 沙蟲#新編號 -->
+<Sprite id="10433" bloodEffect="1248" /> <!-- 99729 地龍的圖帕#新編號 -->
+<Sprite id="10596" bloodEffect="1248" /> <!-- 99687 力卡溫#新編號 -->
+<Sprite id="10621" bloodEffect="1248" /> <!-- 99689 奈克偌斯#新編號 -->
+<Sprite id="10626" bloodEffect="1248" /> <!-- 99690 烏若庫斯#新編號 -->
+<Sprite id="10632" bloodEffect="1248" /> <!-- 99691 阿勒尼亞#新編號 -->
+<Sprite id="10642" bloodEffect="1248" /> <!-- 99692 萬年史萊姆#新編號; 99704 蒼暮之星#新編號 -->
+<Sprite id="10654" bloodEffect="1248" /> <!-- 99693 腐蝕的 骷髏騎士#新編號 -->
+<Sprite id="10655" bloodEffect="1248" /> <!-- 99754 牛鬼#新編號 -->
+<Sprite id="10851" bloodEffect="1248" /> <!-- 99755 白面金毛九尾狐#新編號 -->
+<Sprite id="10884" bloodEffect="1248" /> <!-- 99695 狂風的夏斯奇(紅)#新編號 -->
+<Sprite id="10891" bloodEffect="1248" /> <!-- 99697 大腳的瑪幽#新編號 -->
+<Sprite id="10899" bloodEffect="1248" /> <!-- 99626 巨蟻女皇#新編號 -->
+<Sprite id="10913" bloodEffect="1248" /> <!-- 99703 巨型骷髏#新編號 -->
+<Sprite id="11157" bloodEffect="1248" /> <!-- 99726 背叛者 可羅蘭斯#新編號 -->
+<Sprite id="11490" bloodEffect="1248" /> <!-- 99758 吉爾塔斯#新編號 -->
+<Sprite id="11616" bloodEffect="1248" /> <!-- 99620 死亡騎士#新編號 -->
+<Sprite id="12289" bloodEffect="1248" /> <!-- 99731 赤鬼#新編號 -->
+<Sprite id="12440" bloodEffect="1248" /> <!-- 99752 傑羅斯#新編號 -->
+<Sprite id="12579" bloodEffect="1248" /> <!-- 99756 奇美拉爾德#新編號 -->
+<Sprite id="12607" bloodEffect="1248" /> <!-- 99728 納拉庫#新編號 -->
+<Sprite id="12848" bloodEffect="1248" /> <!-- 99723 歐吉王#新編號 -->
+<Sprite id="12854" bloodEffect="1248" /> <!-- 99725 亞力安王#新編號 -->
+<Sprite id="12870" bloodEffect="1248" /> <!-- 99724 哈維女皇#新編號 -->
+<Sprite id="12895" bloodEffect="1248" /> <!-- 99601 巨大鱷魚#新編號 -->
+<Sprite id="13021" bloodEffect="1248" /> <!-- 99708 恐怖的<露西>#新編號 -->
+<Sprite id="13048" bloodEffect="1248" /> <!-- 99738 不幸的幻象眼魔#新編號 -->
+<Sprite id="13055" bloodEffect="1248" /> <!-- 99739 恐怖的吸血鬼#新編號 -->
+<Sprite id="13073" bloodEffect="1248" /> <!-- 99742 不死的木乃伊王#新編號 -->
+<Sprite id="13083" bloodEffect="1248" /> <!-- 99744 闇黑的騎士范德#新編號 -->
+<Sprite id="13088" bloodEffect="1248" /> <!-- 99745 不滅的巫妖#新編號 -->
+<Sprite id="13103" bloodEffect="1248" /> <!-- 99746 傲慢的烏格奴斯#新編號 -->
+<Sprite id="13104" bloodEffect="1248" /> <!-- 99747 邪惡的鐮刀死神#新編號 -->
+<Sprite id="13106" bloodEffect="1248" /> <!-- 99740 死亡的殭屍王#新編號 -->
+<Sprite id="13160" bloodEffect="1248" /> <!-- 99707 不幸的<思提志>#新編號 -->
+<Sprite id="13164" bloodEffect="1248" /> <!-- 99706 歪曲的<阿拉克妮>#新編號 -->
+<Sprite id="13246" bloodEffect="1248" /> <!-- 99743 冷酷的艾莉絲#新編號 -->
+<Sprite id="13424" bloodEffect="1248" /> <!-- 99757 古代守護者#新編號 -->
+<Sprite id="13556" bloodEffect="1248" /> <!-- 99749 伊娃王國軍長．涅特#新編號 -->
+<Sprite id="13559" bloodEffect="1248" /> <!-- 99750 神殿守護者．托利頓#新編號 -->
+<Sprite id="14036" bloodEffect="1248" /> <!-- 99748 泰坦高崙#新編號 -->
+<Sprite id="14084" bloodEffect="1248" /> <!-- 99615 飛龍#新編號 -->
+<Sprite id="14239" bloodEffect="1248" /> <!-- 99732 熔岩域主#新編號 -->
+<Sprite id="14316" bloodEffect="1248" /> <!-- 99612 巴風特#新編號 -->
+<Sprite id="14340" bloodEffect="1248" /> <!-- 99619 克特#新編號 -->
+<Sprite id="15492" bloodEffect="1248" /> <!-- 99642 恐怖的 巴拉卡斯#新編號 -->
+<Sprite id="16250" bloodEffect="1248" /> <!-- 99606 伊弗利特#新編號 -->
+<Sprite id="16287" bloodEffect="1248" /> <!-- 99733 涅槃鳳凰#新編號 -->
+<Sprite id="16304" bloodEffect="1248" /> <!-- 99785 魔化法令軍王．蕾雅 -->
+<Sprite id="16398" bloodEffect="1248" /> <!-- 99787 魔化暗殺軍王．史雷佛 -->
+<Sprite id="16418" bloodEffect="1248" /> <!-- 99786 魔化冥法軍王．海露拜 -->
+<Sprite id="16499" bloodEffect="1248" /> <!-- 99784 魔化魔獸軍王．巴蘭卡 -->
+<Sprite id="16974" bloodEffect="1248" /> <!-- 99680 冰魔#新編號 -->

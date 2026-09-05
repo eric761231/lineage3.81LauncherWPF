@@ -1,19 +1,22 @@
 #include "stdafx.h"
 #include "LauncherDll.h"
-#include "L1Offsets.h"
-#include "DisconnectHook.h"
-#include "DisconnectOverlay.h"
 #include "MimirPowerHook.h"
 #include "LineageEncryption.h"
-#include "ImGuiHook.h"
 #include "MatchMakingHook.h"
 #include "WebNavigateHook.h"
+#include "HitFlinchPatch.h"
+#include "NumberingMarkerHook.h"
+#include "WarehouseStatusHook.h"
+#include "TradeStatusHook.h"
+#include "ShopStatusHook.h"
 
 #include "VMProtectSDK.h"
 #include <map>
 #include <string>
 #include <sstream>
 #include <vector>
+#include <intrin.h>
+#include <stdarg.h>
 
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "comctl32.lib")
@@ -33,7 +36,6 @@ constexpr int SERVER_LIST_RSA_XOR_D = 32345678;
 // SHARE_INFO struct is now in ShareMemory.h
 HHOOK hhk = NULL;
 HHOOK h_hook = NULL;
-HHOOK h_callWndHook = NULL;
 HINSTANCE hins;
 HANDLE g_hInitEvent = NULL;
 SHARE_INFO ShareInfo;
@@ -75,14 +77,6 @@ static DWORD modpow(unsigned long base, unsigned long exp, unsigned long mod) {
 }
 
 bool inited = false;
-// 精靈戰鬥組態設定（Combat Config）
-struct SpriteConfig {
-  bool suppressFlinch;
-  int bloodEffect;
-};
-
-std::map<int, SpriteConfig> g_SpriteConfigs;
-
 // =============================================================================
 // 前向宣告
 // =============================================================================
@@ -108,7 +102,7 @@ void __dbg_print(const char *fmt, ...) {
   OutputDebugStringA(buffer);
 }
 
-static void launcherdll_net_log(const char *fmt, ...) {
+static void launcherdll_vlog(const char *fmt, va_list args) {
   char exePath[MAX_PATH] = {0};
   char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
@@ -126,10 +120,7 @@ static void launcherdll_net_log(const char *fmt, ...) {
   SYSTEMTIME st;
   GetLocalTime(&st);
   char msg[2048] = {0};
-  va_list args;
-  va_start(args, fmt);
   vsprintf_s(msg, fmt, args);
-  va_end(args);
   fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] %s\n",
           st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
           st.wMilliseconds, (unsigned int)GetCurrentProcessId(),
@@ -138,57 +129,18 @@ static void launcherdll_net_log(const char *fmt, ...) {
   fclose(fp);
 }
 
-static void LoadCombatConfig() {
-  char exePath[MAX_PATH] = {0};
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) <= 0)
-    return;
-  // 截取執行檔目錄路徑
-  for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
-    if (exePath[i] == '\\' || exePath[i] == '/') {
-      exePath[i] = '\0';
-      break;
-    }
-  }
-  char xmlPath[MAX_PATH];
-  sprintf_s(xmlPath, "%s\\xml\\bloodeffect.xml", exePath);
-  FILE *fp = NULL;
-  if (fopen_s(&fp, xmlPath, "r") != 0 || !fp) {
-    launcherdll_net_log("[CombatFix] XML not found: %s", xmlPath);
-    return;
-  }
-  char line[512];
-  int count = 0;
-  while (fgets(line, sizeof(line), fp)) {
-    // 逐行解析 XML 標籤（例如 <Sprite ）
-    if (strstr(line, "<Sprite")) {
-      int spriteId = -1;
-      char flinchStr[32] = "false";
-      int bloodEffectID = 10770; // 預設血液特效 ID
-      // 解析 id 屬性
-      char *pId = strstr(line, "id=\"");
-      if (pId)
-        sscanf_s(pId + 4, "%d", &spriteId);
-      // 解析 suppressFlinch 屬性
-      char *pFlinch = strstr(line, "suppressFlinch=\"");
-      if (pFlinch)
-        sscanf_s(pFlinch + 16, "%[^\"]", flinchStr,
-                 (unsigned int)sizeof(flinchStr));
-      // 解析 bloodEffect 屬性
-      char *pBlood = strstr(line, "bloodEffect=\"");
-      if (pBlood)
-        sscanf_s(pBlood + 13, "%d", &bloodEffectID);
-      if (spriteId != -1) {
-          SpriteConfig cfg{};
-        cfg.suppressFlinch = (_stricmp(flinchStr, "true") == 0);
-        cfg.bloodEffect = bloodEffectID;
-        g_SpriteConfigs[spriteId] = cfg;
-        count++;
-      }
-    }
-  }
-  fclose(fp);
-  launcherdll_net_log("[CombatFix] Loaded %d monster configs from %s", count,
-                      xmlPath);
+void launcherdll_hook_log(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  launcherdll_vlog(fmt, args);
+  va_end(args);
+}
+
+static void launcherdll_net_log(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  launcherdll_vlog(fmt, args);
+  va_end(args);
 }
 
 static void bytes_to_hex_preview(const BYTE *data, int len, char *out,
@@ -252,32 +204,6 @@ static int find_subseq(const BYTE *haystack, int hayLen, const BYTE *needle,
   return -1;
 }
 
-// =============================================================================
-// Advanced Combat Helpers (C++ Lookup)
-// =============================================================================
-// 查詢指定精靈是否抑制受擊硬直
-extern "C" bool __stdcall GetSuppressFlinch(int spriteId) {
-  auto it = g_SpriteConfigs.find(spriteId);
-  if (it != g_SpriteConfigs.end()) {
-    return it->second.suppressFlinch;
-  }
-  return false;
-}
-
-// 查詢指定精靈的血液特效 ID
-extern "C" int __stdcall GetBloodEffect(int spriteId) {
-  auto it = g_SpriteConfigs.find(spriteId);
-  if (it != g_SpriteConfigs.end()) {
-    return it->second.bloodEffect;
-  }
-  return 10770; // 預設血液特效
-}
-
-// =============================================================================
-// Advanced Combat Hooks (Naked Jumpers)
-// =============================================================================
-// Advanced hooks have been moved to NakedFlinchHook.cpp, NakedBloodHook.cpp,
-// NakedLocomotionHook.cpp
 
 // =============================================================================
 // 記憶體補丁與 Hook 安裝輔助函式（Patch / Hook）
@@ -366,29 +292,6 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     */
   }
   return CallNextHookEx(h_hook ? h_hook : hhk, nCode, wParam, lParam);
-}
-
-// WM_DESTROY/WM_CLOSE 是 DestroyWindow() 直接送給 WndProc 的 sent message，
-// 不會進訊息佇列，所以上面的 WH_GETMESSAGE hook（只看 GetMessage/PeekMessage
-// 取出的 queued message）永遠攔不到。要在遊戲主窗真的開始關閉時盡快知道，得用
-// WH_CALLWNDPROC（在 sent message 送達目的地視窗程序「之前」攔截）。
-//
-// 用途：DestroyWindow(遊戲主窗) 當下立刻關閉斷線疊層的 WH_MOUSE_LL（系統級
-// low-level hook）。不這樣做的話，這個 hook 要等到 ExitProcess 真的把持有它的
-// 執行緒強制中止才會順便解除，但 OS 在那段「執行緒已死但 hook 還註冊著」的空窗
-// 期會偵測到這個 hook 沒有回應，導致整個系統的滑鼠輸入卡住到逾時為止——這就是
-// 遊戲視窗關閉瞬間滑鼠移動延遲、畫面小卡的成因，跟密米爾之泉那次「hook/handler
-// 沒有及時卸載」是類似問題，只是這次是低階滑鼠 hook，影響範圍是全系統而不只是
-// 遊戲本身。
-static LRESULT CALLBACK CallWndProc(int nCode, WPARAM wParam, LPARAM lParam) {
-  if (nCode == HC_ACTION) {
-    CWPSTRUCT *pCwp = (CWPSTRUCT *)lParam;
-    if (pCwp->hwnd == g_hGameWnd &&
-        (pCwp->message == WM_DESTROY || pCwp->message == WM_CLOSE)) {
-      DisconnectOverlay_Shutdown();
-    }
-  }
-  return CallNextHookEx(h_callWndHook, nCode, wParam, lParam);
 }
 
 // =============================================================================
@@ -565,13 +468,11 @@ static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen)
   }
   if (hasMappedHost) {
     mappedAddr.sin_port = htons(ShareInfo.port);
-    DisconnectHook_ResetSession();
     MimirPowerHook_SetSocket(s);
     VMProtectEnd;
     inited = false;
     return real_connect(s, (const sockaddr *)&mappedAddr, sizeof(mappedAddr));
   }
-  DisconnectHook_ResetSession();
   MimirPowerHook_SetSocket(s);
   VMProtectEnd;
   inited = false;
@@ -662,36 +563,6 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
     useHeap = true;
   }
   memcpy(buffer_ptr, buf, len);
-  if (len > 0) {
-    char preview[64] = {0};
-    char hex[128] = {0};
-    bytes_to_ascii_preview((const BYTE *)buffer_ptr, len, preview,
-                           sizeof(preview), 32);
-    bytes_to_hex_preview((const BYTE *)buffer_ptr, len, hex, sizeof(hex), 32);
-    unsigned op0 = (unsigned)buffer_ptr[0];
-    unsigned opBody = (len >= 3) ? (unsigned)buffer_ptr[2] : 0;
-    // 抓封包除錯用 log：每個 send() 都會觸發，懷疑遊戲視窗關閉時的長時間卡頓跟
-    // log 寫太多有關（NetLog 每次呼叫都是 fopen+fwrite+fflush+fclose），先暫時
-    // 註解掉測試是否為肇因。
-    // launcherdll_net_log(
-    //     "[my_send] socket=%u len=%u opcode=0x%02X bodyOp=0x%02X msg=[%s] hex=[%s]",
-    //     (unsigned)s, (unsigned)len, op0, opBody, preview, hex);
-
-    // 血盟推薦除錯用：opcode 76(0x4C)= C_PledgeRecommendation，抓真的送出這個
-    // opcode 時的呼叫堆疊，找出是哪段 client 程式碼呼叫 send()（比對用自訂文字
-    // 登錄「有」送出封包 vs 用預設訊息「沒有」送出封包這兩種情況，才能定位到
-    // client 端擋住送出的驗證邏輯在哪。確認完可以拿掉，見 LogPossibleReturnAddrs。
-    if (op0 == 0x4C || opBody == 0x4C) {
-      LogPossibleReturnAddrs();
-    }
-
-    // Arm after account/password submit.
-    // 0x77 = C_OPCODE_AUTHLOGIN / Login77; 0x2E seen on this client pack as login-sized send.
-    if (op0 == 0x77 || opBody == 0x77 ||
-        (op0 == 0x2E && len >= 30 && len <= 80)) {
-      DisconnectHook_OnClientLoginSent();
-    }
-  }
   // 封包加密：依 Encoder UI / LinEncoder.ini 寫進 list 的 RandKey（ShareInfo.randenc）。
   //   randenc=0 → xorByte = (plain % 255) + 1，C2S 固定 XOR
   //   randenc=1 → 明文當 LCG 種子，C2S 逐 byte nextRand()
@@ -768,7 +639,6 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
     // 4-byte RSA authdata：用 D,N 還原明文後，依 randenc 開關選路徑（對齊伺服器 RandomEnc）。
     {
       unsigned long plain = modpow(*(unsigned long *)buffer, _rsaD, _rsaN);
-      DisconnectHook_InitRecvCipher((int)plain);
       if (ShareInfo.randenc) {
         _seed = (int)plain;
         launcherdll_net_log("[my_recv] randenc=1 LCG seed=%d", _seed);
@@ -790,7 +660,6 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
     launcherdll_net_log(
         "[my_recv] socket=%u ret=%d WSAGetLastError=%d (connection closed/error)",
         (unsigned)s, ret, err);
-    DisconnectHook_OnRecvClosed();
     return ret;
   }
   if (ret > 0) {
@@ -803,9 +672,6 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
     unsigned decodedLen = 0xFFFFFFFFu;
     bool lenMismatch = false;
     char decodedHex[512] = {0};
-
-    // S2C 長度頭是明文；payload 走天堂自身加密。xorByte 反解只在 randenc=0 當 log 對照。
-    DisconnectHook_InspectRecvPlain((const unsigned char *)buf, ret);
 
     if (ShareInfo.encrypt && !ShareInfo.randenc && inited && ret >= 2) {
       BYTE decoded[4096];
@@ -843,7 +709,6 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
 //   - 時間保護／PATCHCODE1 → PatchThread（對齊 patch.rs::wait_and_patch）
 //   - 帳密／Login77        → InstallLogin77Hooks（對齊 login.rs）
 //   - CreateWindowEx 只負責 UI：標題隨機化、g_hGameWnd、Helper、可選 GetFileData
-//   - MessageBoxA/W Detour：斷線期間條件吞掉（見 DisconnectHook.cpp）
 // =============================================================================
 HWND(WINAPI *real_CreateWindowEx)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int,
                                   int, HWND, HMENU, HINSTANCE,
@@ -851,19 +716,6 @@ HWND(WINAPI *real_CreateWindowEx)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int,
 HWND(WINAPI *real_CreateWindowExW)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int,
                                    int, int, HWND, HMENU, HINSTANCE,
                                    LPVOID) = CreateWindowExW;
-
-// 血盟推薦除錯用：LUnicodeEdit（Intro_Edit 用的原生 Win32 edit control）到底
-// 有沒有被讀到、讀到什麼內容。見 GetWindowTextA/W 的 hook。
-int(WINAPI *real_GetWindowTextA)(HWND, LPSTR, int) = GetWindowTextA;
-int(WINAPI *real_GetWindowTextW)(HWND, LPWSTR, int) = GetWindowTextW;
-
-// 血盟推薦除錯用：反過來查「預設文字有沒有被寫進 LUnicodeEdit」。
-// ChangeLabel（點介紹欄位＝選擇預設訊息）理論上應該要把畫面上顯示的預設文字
-// 填進這個 edit control，玩家不用打字就能直接送出——如果這裡完全沒被呼叫過，
-// 就代表 ChangeLabel 只是把 UI 換成可編輯狀態，但沒有真的把預設文字寫進去，
-// 緩衝區還是空的，這樣按登錄當然送不出東西。
-BOOL(WINAPI *real_SetWindowTextA)(HWND, LPCSTR) = SetWindowTextA;
-BOOL(WINAPI *real_SetWindowTextW)(HWND, LPCWSTR) = SetWindowTextW;
 
 // 遊戲主窗 class "Lineage" 首次建立：只裝 UI 側（登入／PATCHCODE1 已移出）。
 static void OnLineageWindowCreating() {
@@ -877,18 +729,6 @@ static void OnLineageWindowCreating() {
   if (!h_hook) {
     h_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)HookProc, hins,
                               GetCurrentThreadId());
-  }
-  // WH_CALLWNDPROC 攔截遊戲主窗 WM_DESTROY 呼叫 DisconnectOverlay_Shutdown()，
-  // 主動卸載 DisconnectOverlay 裝的 WH_MOUSE_LL（全系統低階滑鼠鉤子）。這個鉤子
-  // 從殼解密完成、InstallDisconnectHooks() 呼叫 DisconnectOverlay_Start() 那一刻
-  // 就已經裝上，跟玩家有沒有登入、有沒有送封包無關——不主動卸載的話，只能等
-  // ExitProcess 強殺 overlay 執行緒後由 OS 逾時偵測清除，這段空窗期會讓全系統
-  // 滑鼠輸入卡住，就是關閉遊戲視窗卡頓/滑鼠延遲的根因（實測驗證：停用這段
-  // 期間，即使停在帳密登入畫面、零封包流量，關閉一樣卡頓；此為必要修法，不是
-  // log 量問題）。
-  if (!h_callWndHook) {
-    h_callWndHook = SetWindowsHookEx(WH_CALLWNDPROC, CallWndProc, hins,
-                                     GetCurrentThreadId());
   }
 }
 
@@ -911,10 +751,6 @@ static HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
                               HMENU hMenu, HINSTANCE hInstance,
                               LPVOID lpParam) {
   bool isLineage = false;
-  launcherdll_net_log(
-      "[CreateWindowExA] class='%s' title='%s'",
-      (lpClassName && HIWORD(lpClassName) != 0) ? lpClassName : "(atom)",
-      (lpWindowName && HIWORD(lpWindowName) != 0) ? lpWindowName : "(null)");
   if (lpClassName && HIWORD(lpClassName) != 0 &&
       _stricmp(lpClassName, "Lineage") == 0) {
     OnLineageWindowCreating();
@@ -954,52 +790,6 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
   }
   return hWnd;
 }
-
-// 血盟推薦除錯用：MatchRegister_Window 的 Intro_Edit 點開後，engine 實際上會
-// CreateWindowEx 一個 class="LUnicodeEdit" 的原生 Win32 edit control（已經在
-// [CreateWindowExA] log 裡看到過），猜測按登錄的時候是透過 GetWindowText 去讀
-// 這個 control 目前的內容。這裡兩個都 hook，直接記每次呼叫讀到什麼，藉此確認
-// 「用預設內容失敗」的案例，究竟有沒有呼叫到、讀到的是空字串還是別的東西。
-// 確認完可以拿掉。
-static int WINAPI my_GetWindowTextA(HWND hWnd, LPSTR lpString, int nMaxCount) {
-  int ret = real_GetWindowTextA(hWnd, lpString, nMaxCount);
-  launcherdll_net_log(
-      "[MatchMakingDbg] GetWindowTextA hwnd=0x%p ret=%d text=[%s]", hWnd, ret,
-      (ret > 0 && lpString) ? lpString : "");
-  return ret;
-}
-
-static int WINAPI my_GetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount) {
-  int ret = real_GetWindowTextW(hWnd, lpString, nMaxCount);
-  char narrow[256] = {0};
-  if (ret > 0 && lpString) {
-    WideCharToMultiByte(CP_UTF8, 0, lpString, ret, narrow, sizeof(narrow) - 1,
-                         NULL, NULL);
-  }
-  launcherdll_net_log(
-      "[MatchMakingDbg] GetWindowTextW hwnd=0x%p ret=%d text=[%s]", hWnd, ret,
-      narrow);
-  return ret;
-}
-
-static BOOL WINAPI my_SetWindowTextA(HWND hWnd, LPCSTR lpString) {
-  launcherdll_net_log("[MatchMakingDbg] SetWindowTextA hwnd=0x%p text=[%s]",
-                       hWnd, lpString ? lpString : "");
-  return real_SetWindowTextA(hWnd, lpString);
-}
-
-static BOOL WINAPI my_SetWindowTextW(HWND hWnd, LPCWSTR lpString) {
-  char narrow[256] = {0};
-  if (lpString) {
-    WideCharToMultiByte(CP_UTF8, 0, lpString, -1, narrow, sizeof(narrow) - 1,
-                         NULL, NULL);
-  }
-  launcherdll_net_log("[MatchMakingDbg] SetWindowTextW hwnd=0x%p text=[%s]",
-                       hWnd, narrow);
-  return real_SetWindowTextW(hWnd, lpString);
-}
-
-// MessageBox Detour 實作見 DisconnectHook.cpp（斷線 Layered 彈窗）
 
 // 設定檔解密 / 檔案讀取（純 XOR 還原 + 虛擬編譯模式）
 // =============================================================================
@@ -1329,7 +1119,7 @@ static DWORD WINAPI PatchThread(void *p) {
     while (true) {
       if (*(DWORD *)0x004E204E == 0x0097850F) {
         launcherdll_net_log("[Patch] 核心解密完成，開始執行記憶體補丁程序... ");
-        launcherdll_net_log("[Patch] 目前基準位址: 0x%p ", (void*)L1Offsets::BASE_ADDRESS);
+        launcherdll_net_log("[Patch] 目前基準位址: 0x%p ", (void*)0x400000);
 
         DWORD kernelPatch = 0x0097E990;
         PatchCode((void *)0x004E204E, &kernelPatch, sizeof(DWORD));
@@ -1351,6 +1141,100 @@ static DWORD WINAPI PatchThread(void *p) {
     launcherdll_net_log("[Patch] *** CRITICAL *** 補丁執行例外。 ");
   }
   return 0;
+}
+
+// 畫面上看得到字面 \f4 ⇒ 沒走 46E0F0 的色碼掃描（那條會把 5C 66 34 吃掉）。
+// 改攔不解析 \f 的 46FEC0（6 參：font,str,len,x,y,color）與 46D420 生字。
+typedef void(__cdecl *ItemUiDraw6Fn)(void *font, const char *str, int x, int y,
+                                    DWORD color, DWORD flag);
+static ItemUiDraw6Fn real_ItemUiDraw6 = (ItemUiDraw6Fn)0x46E0F0;
+
+typedef void(__cdecl *ItemUiDrawFecFn)(void *font, const char *str, int len, int x,
+                                      int y, DWORD color);
+static ItemUiDrawFecFn real_ItemUiDrawFec = (ItemUiDrawFecFn)0x46FEC0;
+
+typedef int(__cdecl *ItemUiGlyphFn)(void *font, const char *start, int len, int unk,
+                                   int x, int y, DWORD color);
+static ItemUiGlyphFn real_ItemUiGlyph = (ItemUiGlyphFn)0x46D420;
+
+static bool ItemBufHasFColor(const char *s, int len) {
+  if (!s) {
+    return false;
+  }
+  const int n = (len > 0) ? len : 256;
+  for (int i = 0; i + 1 < n && s[i]; ++i) {
+    if (static_cast<unsigned char>(s[i]) == 0x5C &&
+        static_cast<unsigned char>(s[i + 1]) == 0x66) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static void __cdecl Hook_ItemUiDraw6(void *font, const char *str, int x, int y,
+                                    DWORD color, DWORD flag) {
+  const bool hasF = ItemBufHasFColor(str, 0);
+  real_ItemUiDraw6(font, str, x, y, color, hasF ? 0 : flag);
+}
+
+static void __cdecl Hook_ItemUiDrawFec(void *font, const char *str, int len, int x,
+                                      int y, DWORD color) {
+  if (!str || len <= 0 || !ItemBufHasFColor(str, len)) {
+    real_ItemUiDrawFec(font, str, len, x, y, color);
+    return;
+  }
+  // 不可轉呼叫 46E6B0：它常再 call 46FEC0 畫剩餘字，會在同一幀重入、畫面卡住。
+  char tmp[512];
+  int out = 0;
+  DWORD col = color;
+  const int n = (len < 511) ? len : 511;
+  for (int i = 0; i < n && str[i] && out < 511;) {
+    if (i + 2 < n && static_cast<unsigned char>(str[i]) == 0x5C &&
+        static_cast<unsigned char>(str[i + 1]) == 0x66) {
+      const unsigned char ch = static_cast<unsigned char>(str[i + 2]);
+      if (ch >= 0x30 && ch < 0x7D) {
+        col = *reinterpret_cast<DWORD *>(0x95FA78 + ch * 4);
+        i += 3;
+        continue;
+      }
+    }
+    tmp[out++] = str[i++];
+  }
+  tmp[out] = 0;
+  real_ItemUiDrawFec(font, tmp, out, x, y, col);
+}
+
+static int __cdecl Hook_ItemUiGlyph(void *font, const char *start, int len, int unk,
+                                   int x, int y, DWORD color) {
+  if (start && len >= 3 && static_cast<unsigned char>(start[0]) == 0x5C &&
+      static_cast<unsigned char>(start[1]) == 0x66) {
+    const unsigned char ch = static_cast<unsigned char>(start[2]);
+    if (ch >= 0x30 && ch < 0x7D) {
+      color = *reinterpret_cast<DWORD *>(0x95FA78 + ch * 4);
+      start += 3;
+      len -= 3;
+    }
+  }
+  return real_ItemUiGlyph(font, start, len, unk, x, y, color);
+}
+
+static void InstallItemStatusColorHook() {
+  static const BYTE expF0[6] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x10};
+  static const BYTE expFec[5] = {0x55, 0x8B, 0xEC, 0x81, 0x3D};
+  static const BYTE expGlyph[5] = {0x55, 0x8B, 0xEC, 0x51, 0x83};
+  if (memcmp(reinterpret_cast<void *>(0x46E0F0), expF0, sizeof(expF0)) != 0 ||
+      memcmp(reinterpret_cast<void *>(0x46FEC0), expFec, sizeof(expFec)) != 0 ||
+      memcmp(reinterpret_cast<void *>(0x46D420), expGlyph, sizeof(expGlyph)) != 0) {
+    launcherdll_net_log("[ItemStatusColor] prologue mismatch, skipping");
+    return;
+  }
+  DetourTransactionBegin();
+  DetourUpdateThread(GetCurrentThread());
+  DetourAttach(&(PVOID &)real_ItemUiDraw6, reinterpret_cast<PVOID>(Hook_ItemUiDraw6));
+  DetourAttach(&(PVOID &)real_ItemUiDrawFec, reinterpret_cast<PVOID>(Hook_ItemUiDrawFec));
+  DetourAttach(&(PVOID &)real_ItemUiGlyph, reinterpret_cast<PVOID>(Hook_ItemUiGlyph));
+  const LONG result = DetourTransactionCommit();
+  launcherdll_net_log("[ItemStatusColor] 46FEC0/46D420/46E0F0 result=%ld", result);
 }
 
 // 延遲安裝 Detours 的執行緒：等保護殼解密完成後才安裝所有 hook
@@ -1423,21 +1307,6 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
                reinterpret_cast<PVOID>(my_CreateWindowEx));
   DetourAttach(&(PVOID &)real_CreateWindowExW,
                reinterpret_cast<PVOID>(my_CreateWindowExW));
-  DetourAttach(&(PVOID &)real_GetWindowTextA,
-               reinterpret_cast<PVOID>(my_GetWindowTextA));
-  DetourAttach(&(PVOID &)real_GetWindowTextW,
-               reinterpret_cast<PVOID>(my_GetWindowTextW));
-  DetourAttach(&(PVOID &)real_SetWindowTextA,
-               reinterpret_cast<PVOID>(my_SetWindowTextA));
-  DetourAttach(&(PVOID &)real_SetWindowTextW,
-               reinterpret_cast<PVOID>(my_SetWindowTextW));
-  // 斷線：條件吞掉原生 MessageBox 白窗（見 DisconnectHook）
-  DetourAttach(&(PVOID &)real_MessageBoxA,
-               reinterpret_cast<PVOID>(my_MessageBoxA));
-  DetourAttach(&(PVOID &)real_MessageBoxW,
-               reinterpret_cast<PVOID>(my_MessageBoxW));
-  DetourAttach(&(PVOID &)real_closesocket,
-               reinterpret_cast<PVOID>(my_closesocket));
   LONG detourResult = DetourTransactionCommit();
   launcherdll_net_log("[DelayedDetour] DetourTransactionCommit result=%ld",
                       detourResult);
@@ -1448,34 +1317,39 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   // 對齊 Rust login.rs：解殼後立刻裝 USER/PASS/Login77（不綁 CreateWindowEx）
   InstallLogin77Hooks();
 
-  // S_Disconnect Layered 彈窗：DISABLED（使用者確認這個方法對這次的白色
-  // 方塊問題沒用，先維持停用）。
-  // InstallDisconnectHooks();
-
   // 密米爾之泉：ProcessPacket 分派 cave（S_PledgeWatch/200 sentinel 攔截）
   InstallMimirPowerHook();
 
-  // 血盟推薦登錄：選類別後把說明文字也寫進 Intro_Edit，不然介紹欄位是空的、
-  // 登錄一律靜默失敗
+  // 血盟推薦登錄：選類別（Killer/Hunter/Talker）後把對應說明文字也寫進
+  // Intro_Edit，不然介紹欄位一直是空的、Register 一律靜默失敗
   InstallMatchMakingHook();
 
   // 內建瀏覽器導向自訂網址，取代原廠客服頁
   InstallWebNavigateHook();
 
-  // Dear ImGui test overlay: DISABLED for now. The dummy-device vtable
-  // capture technique in ImGuiHook.cpp doesn't actually intercept the
-  // game's real rendering calls under dgvoodoo2 (confirmed via log: hook
-  // install reports success but Hooked_EndScene is never invoked), and the
-  // throwaway CreateDevice call during startup is a plausible destabilizer
-  // even though the hook itself is inert. Needs a different approach
-  // (hook Direct3DCreate9/IDirect3D9::CreateDevice to capture the real
-  // device instead of a throwaway one) before re-enabling.
-  // InstallImGuiHook();
+  // 怪物被打卡在僵直不受身：依 ui.pak 內 NpcFlinch.xml 資料表決定每種怪物該
+  // 不該跳過受身，玩家角色（含 PK 對手）的受身反應不受影響（內含 LoadCombatConfig()）
+  InstallHitFlinchPatch();
+
+  // 隊伍快捷列「編號標記」鈕：改成隊長攻擊目標標記開關，對齊 C_SendLocation
+  // type 50（伺服器端已存在，只差客戶端這顆按鈕真的送出短包）
+  InstallNumberingMarkerHook();
+
+  // 物品詳細資料列：46FEC0 就地剝 \f、46D420 跳過三字、46E0F0 flag=0
+  InstallItemStatusColorHook();
+
+  // 倉庫清單名稱後的 L1ItemStatus：官方不解；hook 吃 blob 再掛上詳細
+  InstallWarehouseStatusHook();
+
+  // 交易視窗、個人商店分開裝：一邊 mismatch 不影響另一邊
+  InstallTradeStatusHook();
+  // 實驗：商店列表會把第一行砍掉，先整組不裝（blob／寬高／畫線／595736 克隆）
+  // InstallShopStatusHook();
+  launcherdll_hook_log("[ShStatus] skipped (experiment: list first-line clip)");
 
   // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動
   // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
 
-  LoadCombatConfig();
   launcherdll_net_log("[DelayedDetour] all hooks installed successfully");
   return 0;
 }

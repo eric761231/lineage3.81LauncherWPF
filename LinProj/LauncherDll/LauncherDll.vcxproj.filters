@@ -39,13 +39,10 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="NakedBloodHook.cpp">
+    <ClCompile Include="TradeStatusHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="NakedFlinchHook.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="NakedLocomotionHook.cpp">
+    <ClCompile Include="ShopStatusHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,16 +79,10 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="NakedBloodHook.h">
+    <ClInclude Include="TradeStatusHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="NakedFlinchHook.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="NakedLocomotionHook.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="L1Offsets.h">
+    <ClInclude Include="ShopStatusHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="packet.h">

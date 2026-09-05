@@ -24,9 +24,14 @@
        3 行在線下），整塊移到分隔線下面才不會被線切到。content 高度加回 230
        （名稱+底下的 note 敘述文字兩行都要放，135 只夠放名稱一行，note 那行會被
        裁掉顯示不出來）。 -->
-  <Card index="0" rect="40,110,250,410" content="48,122,234,230" statsRect="56,362,234,140" bg="option.png"/>
-  <Card index="1" rect="325,110,250,410" content="333,122,234,230" statsRect="341,362,234,140" bg="option.png"/>
-  <Card index="2" rect="610,110,250,410" content="618,122,234,230" statsRect="626,362,234,140" bg="option.png"/>
+  <!-- 2026-09-03：statsRect 的 y 分兩次上移，共 31px（14+17，即高度 140 的
+       10%+12%），搭配下面 DetailStats fontSize 15->17 一起調，改善版面偏空的
+       觀感。量過卡片圖 option.png 中間那條分隔線，換算成這裡的座標系大約在
+       Y≈306（卡片 rect top=110 + 圖片內約 196），目前 statsRect top=331，距離
+       約 25px，還有安全邊界不會壓到線。 -->
+  <Card index="0" rect="40,110,250,410" content="48,122,234,230" statsRect="56,331,234,140" bg="option.png"/>
+  <Card index="1" rect="325,110,250,410" content="333,122,234,230" statsRect="341,331,234,140" bg="option.png"/>
+  <Card index="2" rect="610,110,250,410" content="618,122,234,230" statsRect="626,331,234,140" bg="option.png"/>
 
   <!-- 卡片內容用的圖示/名稱/描述大小：圖示 64x64，名稱字級/描述字級沿用先前
        放大 25% 的結果（18->23、14->18）。新版卡片是圖示置中、名稱在圖示下方
@@ -35,8 +40,9 @@
        fallback 用的 DrawDetailContent（圖示靠左）排版不同，但共用這裡設定的
        大小數值。 -->
   <Detail iconSize="64" nameFontSize="23" descFontSize="18" color="FFFFFF"/>
-  <!-- 統計文字沿用先前放大 25% 的結果（12->15）。 -->
-  <DetailStats fontSize="15" color="FFFFFF"/>
+  <!-- 統計文字沿用先前放大 25% 的結果（12->15），2026-09-03 再放大到 17，改善
+       版面偏空的觀感。 -->
+  <DetailStats fontSize="17" color="FFFFFF"/>
 
   <!-- 菱形圖繪製邊長跟著 DetailStats fontSize 走（目前 15），不是固定值。 -->
   <Image id="diamond" file="diamond.png"/>
@@ -71,7 +77,12 @@
   <Countdown rect="40,570,820,16" fontSize="14" color="AAAAAA"
              prefix="選擇將於 " suffix=" 後更新"/>
 
-  <ConfirmButton rect="325,595,250,44" normal="btn_confirm.png"
+  <!-- 2026-09-03：素材 btn_confirm.png 原始尺寸 485x64（比例 7.58:1），舊版 rect
+       250x44（比例 5.68:1）垂直方向被壓縮得比水平少，圖片上的字看起來被拉高、
+       比例怪異。改成 333x44（照素材比例反推：44*(485/64)≈333），寬度變寬後 x
+       跟著往左移，維持置中對齊中間那張卡（卡片1 x範圍 325~575，中心 450；
+       新按鈕 284~617，中心 450.5，對齊一致）。 -->
+  <ConfirmButton rect="284,595,333,44" normal="btn_confirm.png"
                  pressed="btn_confirm_pressed.png" fontSize="18" color="FFFFFF" text="選擇此能力"/>
 
   <!-- 右上角關閉鈕（X）：rect 是 x,y,w,h；w/h 跟素材 btn_close.png 原始尺寸 33x32

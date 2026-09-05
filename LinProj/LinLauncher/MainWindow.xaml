@@ -336,13 +336,29 @@
             </Setter>
         </Style>
 
-        <!-- 關閉按鈕專用 (紅色懸停) -->
+        <!-- 關閉按鈕專用 (紅色懸停)。不能只靠 Style.Triggers 設 Background——基底
+             WindowButtonStyle 的 ControlTemplate 自己也有一個 IsMouseOver trigger
+             直接設內部 Border（x:Name="Bd"）的 Background 成半透明白，那個設定的
+             優先權比外層 Style.Triggers 透過 TemplateBinding 傳進來的值高，
+             之前的寫法在畫面上完全被蓋掉、看起來像沒反應。這裡改成整個覆寫
+             Template，直接在 ControlTemplate.Triggers 裡設 Bd 的 Background，
+             才會真的顯示紅色（#E81123，Windows 標準關閉鈕紅）。 -->
         <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource WindowButtonStyle}">
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#7232f2"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Bd" CornerRadius="2" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -365,7 +381,8 @@
                     <TextBlock Text="LINEAGE 3.81 PREMIUM LAUNCHER" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Foreground="#AAA" FontSize="14" FontWeight="Bold"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
                         <Button Content="—" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click" Cursor="Hand"/>
-                        <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="Close_Click" Cursor="Hand"/>
+                        <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="Close_Click" Cursor="Hand"
+                                IsEnabled="{Binding IsNotBusy}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -456,9 +473,11 @@
                         </DockPanel>
                         <DockPanel Margin="0,0,0,10" LastChildFill="False">
                             <Button DockPanel.Dock="Right" Content="SYNC" Command="{Binding SyncCommand}"
-                                    Style="{StaticResource SecondaryButtonStyle}" Width="80" Margin="16,0,0,0"/>
+                                    Style="{StaticResource SecondaryButtonStyle}" Width="80" Margin="16,0,0,0"
+                                    ToolTip="更新"/>
                             <Button DockPanel.Dock="Right" Content="PATCH" Command="{Binding PatchCommand}"
-                                    Style="{StaticResource SecondaryButtonStyle}" Width="80"/>
+                                    Style="{StaticResource SecondaryButtonStyle}" Width="80"
+                                    ToolTip="吃檔"/>
                         </DockPanel>
                         <Button Command="{Binding StartCommand}" Style="{StaticResource StartButtonStyle}" Height="60" Content="{Binding StartButtonCaption}" FontSize="22" FontWeight="Bold"/>
                     </StackPanel>

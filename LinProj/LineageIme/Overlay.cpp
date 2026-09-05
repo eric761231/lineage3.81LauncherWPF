@@ -245,14 +245,31 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   }
 }
 
+// FindWindowW 是系統範圍搜尋，不會限定在呼叫端自己這個行程——雙開兩份遊戲時
+// 系統上同時有兩個 "Lineage" class 的視窗，FindWindowW 只會回傳其中一個（不保
+// 證是自己這個行程開的那個），導致這個行程的 SubclassGameWindow/TSF init 全部
+// 作用在別的遊戲行程的視窗上，候選字視窗就再也不會出現。改成逐一列舉所有同
+// class/title 的頂層視窗，用 GetWindowThreadProcessId 過濾出真正屬於自己這個
+// 行程的那一個。
+HWND FindWindowInThisProcess(LPCWSTR className, LPCWSTR windowTitle) {
+  DWORD myPid = GetCurrentProcessId();
+  HWND h = NULL;
+  while ((h = FindWindowExW(NULL, h, className, windowTitle)) != NULL) {
+    DWORD pid = 0;
+    GetWindowThreadProcessId(h, &pid);
+    if (pid == myPid) return h;
+  }
+  return NULL;
+}
+
 } // namespace
 
 HWND WaitForGameWindow(DWORD timeoutMs) {
   DWORD start = GetTickCount();
   while (true) {
-    HWND h = FindWindowW(kGameClass, NULL);
+    HWND h = FindWindowInThisProcess(kGameClass, NULL);
     if (h) return h;
-    h = FindWindowW(NULL, kGameTitle);
+    h = FindWindowInThisProcess(NULL, kGameTitle);
     if (h) return h;
     if (GetTickCount() - start >= timeoutMs) return NULL;
     Sleep(200);

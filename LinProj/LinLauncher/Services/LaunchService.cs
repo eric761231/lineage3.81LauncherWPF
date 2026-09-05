@@ -75,6 +75,7 @@ namespace LinLauncher.Services
                 uint mode = windowMode is >= 4 and <= 7 ? windowMode : 5u;
                 LineageCfgService.ApplyDisplayMode(dir, windowed, mode);
                 CompatFlagsService.ApplyForLaunch(gameExePath, windowed);
+                BrowserEmulationService.ApplyForLaunch(gameExePath);
             }
 
             var si = new NativeMethods.STARTUPINFO();
@@ -165,7 +166,10 @@ namespace LinLauncher.Services
         /// </summary>
         private bool SetupSharedMemory(uint pid, ServerInfo server, string account, string password)
         {
-            string name = $"Local\\{ShmGuid}";
+            // 名稱要帶 pid，跟 ShareMemory.cpp 的 get_shm 保持一致——雙開時沒有
+            // pid 的話兩個遊戲行程會開到同一塊共用記憶體，可能在另一個行程還
+            // 沒讀完自己的資料時就被這次寫入覆蓋掉，導致當機。
+            string name = $"Local\\{ShmGuid}-{pid}";
             int shmSize = ShareInfoSize;
             _hShm = NativeMethods.CreateFileMapping(new IntPtr(-1), IntPtr.Zero, NativeMethods.PAGE_READWRITE, 0, (uint)shmSize, name);
             if (_hShm == IntPtr.Zero) return false;

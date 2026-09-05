@@ -67,10 +67,26 @@ void Log(const char *fmt, ...) {
   fclose(fp);
 }
 
+// FindWindowW 是系統範圍搜尋，不限定呼叫端自己這個行程——雙開兩份遊戲時系統
+// 上同時有兩個 "Lineage" class 的視窗，FindWindowW 只會回傳其中一個（不保證是
+// 自己這個行程開的那個），導致這個行程的 IsIconic 判斷可能作用在別的遊戲行程
+// 的視窗上。改成逐一列舉所有同 class 的頂層視窗，用 GetWindowThreadProcessId
+// 過濾出真正屬於自己這個行程的那一個。
+HWND FindWindowInThisProcess(LPCWSTR className) {
+  DWORD myPid = GetCurrentProcessId();
+  HWND h = NULL;
+  while ((h = FindWindowExW(NULL, h, className, NULL)) != NULL) {
+    DWORD pid = 0;
+    GetWindowThreadProcessId(h, &pid);
+    if (pid == myPid) return h;
+  }
+  return NULL;
+}
+
 HWND WaitForGameWindow(DWORD timeoutMs) {
   DWORD start = GetTickCount();
   for (;;) {
-    HWND h = FindWindowW(kGameClass, NULL);
+    HWND h = FindWindowInThisProcess(kGameClass);
     if (h) return h;
     if (GetTickCount() - start >= timeoutMs) return NULL;
     Sleep(200);
