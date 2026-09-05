@@ -112,9 +112,18 @@ namespace LinLauncher.ViewModels
             {
                 _isBusy = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsNotBusy));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
+
+        /// <summary>
+        /// 給右上角關閉鈕的 IsEnabled 綁定：忙碌中（遊戲啟動中、sync/patch 執行中）
+        /// 暫時不能關閉，避免中途強制關閉登入器打斷正在寫入的 pak/idx（吃檔）或
+        /// 遊戲注入流程。XAML 沒有內建的布林反相 converter，直接開一個計算屬性
+        /// 比另外寫 IValueConverter 簡單。
+        /// </summary>
+        public bool IsNotBusy => !IsBusy;
         public ICommand StartCommand { get; }
         public ICommand SyncCommand { get; }
         public ICommand PatchCommand { get; }
@@ -298,6 +307,7 @@ namespace LinLauncher.ViewModels
             {
                 StartupLog.Append($"TryEatClientPacks: 無散檔 ({gameRoot})");
                 ClearEatPending(gameRoot);
+                StatusText = "無須套用更新檔案";
                 return true; // 沒有散檔要吃，代表本機已經跟目前的 update.txt 一致
             }
 
@@ -305,6 +315,7 @@ namespace LinLauncher.ViewModels
             {
                 StartupLog.Append("[吃檔] 遊戲執行中，跳過並標記 .eat_pending");
                 MarkEatPending(gameRoot);
+                StatusText = "請先關閉遊戲";
                 return false; // 還沒真正吃檔，狀態還沒同步，不能當作已同步處理
             }
 
@@ -316,19 +327,23 @@ namespace LinLauncher.ViewModels
                     void Apply()
                     {
                         StatusText = p.Message;
-                        if (p.Total > 0)
-                            OverallProgress = Math.Clamp(p.Current * 100 / p.Total, 0, 100);
+                        OverallProgress = Math.Clamp(p.OverallPercent, 0, 100);
                     }
 
                     if (Application.Current?.Dispatcher.CheckAccess() == true)
+                    {
                         Apply();
+                    }
                     else
+                    {
                         Application.Current?.Dispatcher.Invoke(Apply);
+                    }
                 });
 
                 var result = await Task.Run(() => EatService.Run(gameRoot, keepLooseFiles: false, progress: progress));
                 StartupLog.Append($"TryEatClientPacks: {result.Summary}");
-                StatusText = result.Summary;
+                // Done 回報已寫短文案；再覆寫一次確保最終狀態正確。
+                StatusText = result.Ok ? "套用完成" : "套用未完成";
 
                 if (result.Ok)
                 {
@@ -337,14 +352,14 @@ namespace LinLauncher.ViewModels
                 }
 
                 MarkEatPending(gameRoot);
-                MessageBox.Show(result.Summary, "吃檔未完全成功", MessageBoxButton.OK, MessageBoxImage.Warning);
+                StatusText = "套用未完成";
                 return false;
             }
             catch (Exception ex)
             {
                 StartupLog.Append("TryEatClientPacks: 執行失敗", ex);
                 MarkEatPending(gameRoot);
-                MessageBox.Show($"吃檔失敗：{ex.Message}", "吃檔錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusText = "套用失敗";
                 return false;
             }
         }
@@ -356,24 +371,16 @@ namespace LinLauncher.ViewModels
             {
                 StartupLog.Append("[更新] 偵測到遊戲仍在執行中，跳過吃檔並寫入 .eat_pending");
                 MarkEatPending(gameRoot);
-                MessageBox.Show(
-                    "更新檔案已下載完成，但偵測到遊戲目前仍在執行中，暫時跳過套用資源封裝（吃檔）步驟。\n\n" +
-                    "請先關閉遊戲，再重新開啟登入器一次以完成套用。",
-                    "更新提示",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                StatusText = "請關閉遊戲後重開登入器";
                 return false;
             }
 
             bool eaten = await TryEatClientPacksAsync(gameRoot);
-            string extra = anyDeferred
-                ? "\n\n部分登入器自身檔案目前使用中，已保留待更新，將於下次啟動登入器時自動完成。"
-                : "";
-            MessageBox.Show(
-                "更新下載完成，已套用吃檔（若有 icon／sprite／Surf／text／Tile 散檔）。請重新啟動登入器以套用變更。" + extra,
-                "更新提示",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            if (anyDeferred)
+            {
+                StartupLog.Append("[更新] 部分登入器自身檔案使用中，已保留待下次啟動套用");
+            }
+            StatusText = "更新完成，請重開登入器";
             return eaten;
         }
 
@@ -585,11 +592,8 @@ namespace LinLauncher.ViewModels
                             try
                             {
                                 MessageBox.Show(
-                                    "無法載入伺服器清單。\n\n"
-                                    + "請在 config.dat（Encoder／Proxy 產生）中設定合法 http(s) 清單網址，\n"
-                                    + "或於登入器同目錄／上一層目錄放置本機 list.txt。\n"
-                                    + "若 config 解密異常，請用 Encoder 重打包。",
-                                    "LinLauncher",
+                                    "無法載入伺服器清單",
+                                    "Launcher",
                                     MessageBoxButton.OK,
                                     MessageBoxImage.Warning);
                             }
@@ -824,25 +828,23 @@ namespace LinLauncher.ViewModels
                 string gameRoot = GamePathHelper.GetGameRootDirectory();
                 if (IsGameProcessRunning())
                 {
-                    MessageBox.Show(
-                        "遊戲目前仍在執行中，請先關閉遊戲再執行吃檔。",
-                        "吃檔提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    StatusText = "請先關閉遊戲";
                     return;
                 }
 
                 bool hadPending = EatService.HasPendingFiles(gameRoot);
                 bool ok = await TryEatClientPacksAsync(gameRoot);
-                if (ok)
+                if (ok && !hadPending)
                 {
-                    MessageBox.Show(
-                        hadPending ? "吃檔完成。" : "目前沒有待處理的散檔，不需要吃檔。",
-                        "吃檔提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    StatusText = "無須套用更新檔案";
                 }
-                // ok == false：TryEatClientPacksAsync 內部已經跳過對應的失敗/警告 MessageBox，這裡不重複顯示
+                // ok && hadPending：進度已由 EatService 回報寫在 StatusText。
+                // ok == false：TryEatClientPacksAsync 已寫短文案到 StatusText。
             }
             catch (Exception ex)
             {
                 StartupLog.Append("[手動 patch] 未預期錯誤", ex);
+                StatusText = "套用失敗";
             }
             finally
             {
@@ -929,8 +931,14 @@ namespace LinLauncher.ViewModels
 
         private static string SafePreview(string? s, int max = 120)
         {
-            if (string.IsNullOrEmpty(s)) return "(empty)";
-            if (s.Length <= max) return s;
+            if (string.IsNullOrEmpty(s)) 
+            {
+                return "(empty)"; 
+            }
+            if (s.Length <= max) 
+            {
+                return s;
+            }
             return s.Substring(0, max) + "…";
         }
 
@@ -944,7 +952,10 @@ namespace LinLauncher.ViewModels
         {
             if (isManualRefresh)
             {
-                if (!CanRefreshServers) return;
+                if (!CanRefreshServers) 
+                {
+                    return;
+                }
                 _lastServerRefreshUtc = DateTime.UtcNow;
                 CanRefreshServers = false;
                 CommandManager.InvalidateRequerySuggested();
@@ -1050,7 +1061,11 @@ namespace LinLauncher.ViewModels
             OverallProgress = 0;
             StatusText = windowAppeared
                 ? "遊戲啟動中..."
-                : "遊戲仍在啟動中，若持續無回應請檢查防毒/防火牆是否擋住了 LauncherDll 注入";
+                : "遊戲仍在啟動中，若持續無回應請檢查防毒/防火牆是否擋住了遊戲。";
+            // 啟動流程（等視窗出現）本身跑完就放開「開始遊戲」鈕，不用等這個
+            // 遊戲行程真正結束（GameExited）才放開——否則同一個登入器視窗沒辦法
+            // 在第一個遊戲還開著時再啟動第二個，雙開只能被迫開兩個登入器視窗。
+            IsBusy = false;
         }
 
         private void PersistDisplayPrefs()
