@@ -5,7 +5,14 @@
 #include "MatchMakingHook.h"
 #include "WebNavigateHook.h"
 #include "HitFlinchPatch.h"
-#include "NumberingMarkerHook.h"
+#include "SmoothRunPatch.h"
+#include "VitalsPacketHook.h"
+#include "ShowClockPatch.h"
+#include "AttackDamageHook.h"
+#include "BroadcastToPledgeHook.h"
+#include "AutoPotionOverlay.h"
+#include "AutoPotionConfig.h"
+#include "InventoryDebugHook.h"
 #include "WarehouseStatusHook.h"
 #include "TradeStatusHook.h"
 #include "ShopStatusHook.h"
@@ -103,6 +110,13 @@ void __dbg_print(const char *fmt, ...) {
 }
 
 static void launcherdll_vlog(const char *fmt, va_list args) {
+  // 暫時只留 SmoothRun／AutoPotion 主要訊息（其他 DLL log 關閉）
+  char msg[2048] = {0};
+  vsprintf_s(msg, fmt, args);
+  if (strstr(msg, "[SmoothRun]") == NULL && strstr(msg, "[AutoPotion]") == NULL &&
+      strstr(msg, "[AutoPotionUI]") == NULL)
+    return;
+
   char exePath[MAX_PATH] = {0};
   char logPath[MAX_PATH] = "./Core/launcher.log";
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
@@ -119,8 +133,6 @@ static void launcherdll_vlog(const char *fmt, va_list args) {
     return;
   SYSTEMTIME st;
   GetLocalTime(&st);
-  char msg[2048] = {0};
-  vsprintf_s(msg, fmt, args);
   fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] %s\n",
           st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
           st.wMilliseconds, (unsigned int)GetCurrentProcessId(),
@@ -254,11 +266,40 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // MimirPowerHook.cpp）。不依賴 pMsg 內容，故意放在最前面，跟下面的除錯
     // switch 完全獨立。
     MimirPowerHook_PumpPendingChoice();
+    AutoPotionOverlay_PumpPendingSave();
+    AutoPotionOverlay_PumpPendingUiNotify();
 
     MSG *pMsg = (MSG *)lParam;
-    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_HOME) {
-      if (ShareInfo.usehelper) {
-        ShowOrHideHelperDialog();
+    // HOME／Insert：自動喝水 Mimir 式 overlay（toggle）。原本 HOME 這裡卡了
+    // `if (ShareInfo.usehelper)`，但這個旗標被 Encoder（BuildListEntryNative）
+    // 寫死成 false，不管伺服器設定怎麼勾都傳不到客戶端，等於 HOME 永遠沒反應
+    // ——2026-09-07 拿掉這個限制，兩個鍵都直接開，不用等 Encoder 那邊修好。
+    if (pMsg->message == WM_KEYDOWN &&
+        (pMsg->wParam == VK_HOME || pMsg->wParam == VK_INSERT)) {
+      AutoPotionOverlay_Show();
+    }
+    // 2026-09-08/09：「點格子→點背包道具」選道具流程（見
+    // docs/AutoPotionOverlay_點選道具計畫.md）。overlay 目前在等某個 section/
+    // slot 的選擇時，偵測到玩家點擊就去讀「剛被點的那個背包道具」，讀到就送
+    // 7-byte 解析請求給伺服器；伺服器查完回覆抵達後，overlay 自己直接寫入＋
+    // 自動存檔（不再有「確認中」中繼顯示，點道具就是最終確認動作）。沒點到
+    // 任何道具（例如點到背包空格）就什麼都不做，維持選擇中狀態。
+    // 2026-09-10：這裡掛的是 WH_GETMESSAGE，會在訊息從佇列被取出、但「還沒
+    // DispatchMessage 給遊戲自己的 WndProc」之前就先跑到。原本掛在
+    // WM_LBUTTONDOWN，代表我們讀 unknow2 旗標時，遊戲自己這次點擊的處理邏輯
+    // 根本還沒執行——讀到的其實是「上一次點擊」殘留的舊旗標，導致連續點兩個
+    // 不同道具時，第二次讀到的還是第一次的結果（回報：「第2格選的是另一種
+    // 藥水卻送跟其他格一樣的資料」）。改成在 WM_LBUTTONUP 才讀：同一次點擊的
+    // WM_LBUTTONDOWN 這時候已經走完一輪完整的 DispatchMessage（遊戲已經處理
+    // 過這次點擊、旗標理論上已經更新），確保讀到的是「這次」點的道具。
+    if (pMsg->message == WM_LBUTTONUP) {
+      int pickSection = -1, pickSlot = -1;
+      if (AutoPotionOverlay_IsPicking(&pickSection, &pickSlot)) {
+        ClickedItemInfo clicked;
+        if (InventoryDebug_FindJustClickedItem(&clicked)) {
+          AutoPotionConfig_SendResolveItemRequest(pickSection, pickSlot,
+                                                  clicked.objId);
+        }
       }
     }
     // 血盟推薦除錯用 log（WM_LBUTTONDOWN/UP、WM_CHAR、WM_KEYDOWN）：懷疑遊戲
@@ -582,6 +623,8 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
   // 密米爾之泉：這裡呼叫安全，PumpPendingChoice 內部改成呼叫下面的
   // MimirSendEncoded（直接送、不經過 send()），不會再遞迴繞回 my_send。
   MimirPowerHook_PumpPendingChoice();
+  AutoPotionOverlay_PumpPendingSave();
+  AutoPotionOverlay_PumpPendingUiNotify();
   return ret;
 }
 
@@ -884,6 +927,9 @@ static BYTE *GetFileBuffer() {
 // shellcode assembly match the Rust version byte-for-byte.
 // =============================================================================
 namespace EquipUiPatch {
+  // 2026-09-10：暫時關閉 EquipUI 相關 launcher.log（功能仍安裝）
+  static void EquipUiLog(const char *, ...) {}
+
   constexpr uintptr_t SCAN_START_ADDR = 0x00790000;
   constexpr uintptr_t SCAN_END_ADDR = 0x007A0000;
   constexpr uintptr_t SURF_BOUNDS_CHECK = 0x004387DB;
@@ -926,22 +972,22 @@ namespace EquipUiPatch {
         0x8B, 0x55, 0xF4, 0xFF, 0x24, 0x95};
     BYTE *hit = FindPattern((BYTE *)SCAN_START_ADDR, (BYTE *)SCAN_END_ADDR, AOB, 22);
     if (!hit) {
-      launcherdll_net_log("[EquipUI][WARN] Patch A: ServerIndex_to_UISlot AOB not found, skipping");
+      EquipUiLog("[EquipUI][WARN] Patch A: ServerIndex_to_UISlot AOB not found, skipping");
       return;
     }
     BYTE *funcEntry = FindFuncEntryBackward(hit, 0x30);
     if (!funcEntry) {
-      launcherdll_net_log("[EquipUI][WARN] Patch A: function entry not found, skipping");
+      EquipUiLog("[EquipUI][WARN] Patch A: function entry not found, skipping");
       return;
     }
     if (funcEntry[0] == 0xE9) {
-      launcherdll_net_log("[EquipUI] Patch A: already hooked, skipping");
+      EquipUiLog("[EquipUI] Patch A: already hooked, skipping");
       return;
     }
 
     BYTE *cave = (BYTE *)VirtualAlloc(NULL, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!cave) {
-      launcherdll_net_log("[EquipUI][WARN] Patch A: codecave allocation failed");
+      EquipUiLog("[EquipUI][WARN] Patch A: codecave allocation failed");
       return;
     }
     BYTE *tableAddr = cave + 32;
@@ -959,7 +1005,7 @@ namespace EquipUiPatch {
     sc[i++] = 0x5D; sc[i++] = 0xC2; sc[i++] = 0x04; sc[i++] = 0x00; // pop ebp; ret 4
     sc[i++] = 0x31; sc[i++] = 0xC0; sc[i++] = 0x5D; sc[i++] = 0xC2; sc[i++] = 0x04; sc[i++] = 0x00; // .ret_zero
     if (i != 32) {
-      launcherdll_net_log("[EquipUI][WARN] Patch A: codecave length mismatch (%d != 32), aborting", i);
+      EquipUiLog("[EquipUI][WARN] Patch A: codecave length mismatch (%d != 32), aborting", i);
       VirtualFree(cave, 0, MEM_RELEASE);
       return;
     }
@@ -971,7 +1017,7 @@ namespace EquipUiPatch {
     *(int *)&jmp5[1] = (int)((intptr_t)cave - (intptr_t)funcEntry - 5);
     PatchCode(funcEntry, jmp5, 5);
 
-    launcherdll_net_log("[EquipUI] Patch A OK: ServerIndex_to_UISlot @0x%p -> codecave 0x%p", funcEntry, cave);
+    EquipUiLog("[EquipUI] Patch A OK: ServerIndex_to_UISlot @0x%p -> codecave 0x%p", funcEntry, cave);
   }
 
   // Patch B: SetupSlots 雙 Hook — 附加式佈局（不改迴圈上限，新 slot 在 child 46-51）
@@ -985,7 +1031,7 @@ namespace EquipUiPatch {
         0x83, 0x7D, 0xF8, -1};
     BYTE *hit = FindPattern((BYTE *)SCAN_START_ADDR, (BYTE *)SCAN_END_ADDR, AOB, 22);
     if (!hit) {
-      launcherdll_net_log("[EquipUI][WARN] Patch B: SetupSlots AOB not found, skipping");
+      EquipUiLog("[EquipUI][WARN] Patch B: SetupSlots AOB not found, skipping");
       return;
     }
 
@@ -994,16 +1040,16 @@ namespace EquipUiPatch {
     BYTE *bgCalcAddr = hit + 0xBB8;
 
     if (exitAddr[0] == 0xE9) {
-      launcherdll_net_log("[EquipUI] Patch B: already hooked, skipping");
+      EquipUiLog("[EquipUI] Patch B: already hooked, skipping");
       return;
     }
     static const BYTE expectedExit[5] = {0x8B, 0xE5, 0x5D, 0xC3, 0xCC};
     if (memcmp(exitAddr, expectedExit, 5) != 0) {
-      launcherdll_net_log("[EquipUI][WARN] Patch B1: exit bytes mismatch @0x%p, skipping", exitAddr);
+      EquipUiLog("[EquipUI][WARN] Patch B1: exit bytes mismatch @0x%p, skipping", exitAddr);
       return;
     }
     if (callAddr[0] != 0xE8) {
-      launcherdll_net_log("[EquipUI][WARN] Patch B: call instruction mismatch (0x%02X), skipping", callAddr[0]);
+      EquipUiLog("[EquipUI][WARN] Patch B: call instruction mismatch (0x%02X), skipping", callAddr[0]);
       return;
     }
     int rel32 = *(int *)&callAddr[1];
@@ -1011,13 +1057,13 @@ namespace EquipUiPatch {
 
     static const BYTE expectedBg[7] = {0x8B, 0x4D, 0x0C, 0x83, 0xC1, 0x1A, 0x51};
     if (memcmp(bgCalcAddr, expectedBg, 7) != 0) {
-      launcherdll_net_log("[EquipUI][WARN] Patch B2: bg bytes mismatch @0x%p, skipping", bgCalcAddr);
+      EquipUiLog("[EquipUI][WARN] Patch B2: bg bytes mismatch @0x%p, skipping", bgCalcAddr);
       return;
     }
 
     BYTE *cave = (BYTE *)VirtualAlloc(NULL, 128, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!cave) {
-      launcherdll_net_log("[EquipUI][WARN] Patch B: codecave allocation failed");
+      EquipUiLog("[EquipUI][WARN] Patch B: codecave allocation failed");
       return;
     }
     BYTE *caveB1 = cave;
@@ -1078,7 +1124,7 @@ namespace EquipUiPatch {
     hookB2[6] = 0x90; // nop
     PatchCode(bgCalcAddr, hookB2, 7);
 
-    launcherdll_net_log("[EquipUI] Patch B OK: helper@0x%p, exit@0x%p->0x%p, bg@0x%p->0x%p",
+    EquipUiLog("[EquipUI] Patch B OK: helper@0x%p, exit@0x%p->0x%p, bg@0x%p->0x%p",
                         helperAddr, exitAddr, caveB1, bgCalcAddr, caveB2);
   }
 
@@ -1086,25 +1132,25 @@ namespace EquipUiPatch {
   static void PatchSurfBoundsCheck() {
     BYTE *addr = (BYTE *)SURF_BOUNDS_CHECK;
     if (addr[0] == 0x81 && addr[1] == 0xFA) {
-      launcherdll_net_log("[EquipUI] Patch D: already applied, skipping");
+      EquipUiLog("[EquipUI] Patch D: already applied, skipping");
       return;
     }
     static const BYTE expected[6] = {0x3B, 0x15, 0xB0, 0xD0, 0xC2, 0x00};
     if (memcmp(addr, expected, 6) != 0) {
-      launcherdll_net_log("[EquipUI][WARN] Patch D: instruction mismatch @0x%p, skipping", addr);
+      EquipUiLog("[EquipUI][WARN] Patch D: instruction mismatch @0x%p, skipping", addr);
       return;
     }
     BYTE patched[6] = {0x81, 0xFA, 0x33, 0x75, 0x00, 0x00}; // cmp edx, 30003
     PatchCode(addr, patched, 6);
-    launcherdll_net_log("[EquipUI] Patch D OK: Surf bounds check -> cmp edx,30003");
+    EquipUiLog("[EquipUI] Patch D OK: Surf bounds check -> cmp edx,30003");
   }
 
   static void InstallAll() {
-    launcherdll_net_log("[EquipUI] Installing equip slot expansion patch (A+B+D, AOB dynamic locate, 14->31)");
+    EquipUiLog("[EquipUI] Installing equip slot expansion patch (A+B+D, AOB dynamic locate, 14->31)");
     PatchServerIndexToUiSlot();
     PatchSetupSlotsHooks();
     PatchSurfBoundsCheck();
-    launcherdll_net_log("[EquipUI] Equip slot expansion A+B+D finished");
+    EquipUiLog("[EquipUI] Equip slot expansion A+B+D finished");
   }
 } // namespace EquipUiPatch
 
@@ -1112,31 +1158,115 @@ namespace EquipUiPatch {
 // PatchThread：對齊 Rust patch.rs::wait_and_patch（進程內版）
 //   1) 0x004E204E：JNZ → NOP+JMP（ConditionalPatch）
 //   2) 0x00722761 ← 0x859001B0（PATCHCODE1）
-// 時序：DelayedDetourThread 在保護殼解密完成後啟動
+//   之後：EquipUI / SmoothRun / ShowClock / AttackDamage
+// 時序：DelayedDetourThread 解殼並裝完 API/Detours hook 後，同執行緒呼叫本函式。
+// （先前 CreateThread 另開執行緒實測從未出現 [Patch] log，改 inline。）
+//
+// 閘門對齊 Rust classify_decrypt_marker_value：
+//   0x0097850F = Ready（尚未補丁）
+//   0x0097E990 = AlreadyPatched（可直接裝後續 hook）
+//   其他 = 尚未解密；每 5 秒打一次目前 dword，120 秒逾時放棄。
 // =============================================================================
 static DWORD WINAPI PatchThread(void *p) {
+  constexpr DWORD kDecryptAddr = 0x004E204E;
+  constexpr DWORD kDecryptReady = 0x0097850F;      // JNZ +0x97（原始）
+  constexpr DWORD kDecryptPatched = 0x0097E990;    // NOP+JMP（已補丁）
+  constexpr int kTimeoutMs = 120000;
+  constexpr int kPollLogMs = 5000;
+
+  launcherdll_net_log("[Patch] PatchThread started, waiting for 0x%08X marker...",
+                      (unsigned)kDecryptAddr);
+
   __try {
+    const DWORD t0 = GetTickCount();
+    DWORD lastLog = t0;
+    bool alreadyPatched = false;
+
     while (true) {
-      if (*(DWORD *)0x004E204E == 0x0097850F) {
-        launcherdll_net_log("[Patch] 核心解密完成，開始執行記憶體補丁程序... ");
-        launcherdll_net_log("[Patch] 目前基準位址: 0x%p ", (void*)0x400000);
+      const DWORD elapsed = GetTickCount() - t0;
+      if (elapsed >= (DWORD)kTimeoutMs) {
+        DWORD cur = 0;
+        __try {
+          cur = *(volatile DWORD *)kDecryptAddr;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+          cur = 0xFFFFFFFF;
+        }
+        launcherdll_net_log(
+            "[Patch][WARN] TIMEOUT %ds, 0x%08X=0x%08X (expect Ready=0x%08X or "
+            "Patched=0x%08X) — SmoothRun/ShowClock/AttackDamage/EquipUI 未安裝",
+            kTimeoutMs / 1000, (unsigned)kDecryptAddr, (unsigned)cur,
+            (unsigned)kDecryptReady, (unsigned)kDecryptPatched);
+        return 0;
+      }
 
-        DWORD kernelPatch = 0x0097E990;
-        PatchCode((void *)0x004E204E, &kernelPatch, sizeof(DWORD));
-        launcherdll_net_log("[Patch] 1. ConditionalPatch @0x004E204E ");
+      DWORD marker = 0;
+      __try {
+        marker = *(volatile DWORD *)kDecryptAddr;
+      } __except (EXCEPTION_EXECUTE_HANDLER) {
+        marker = 0;
+      }
 
-        // ↔ Rust PATCHCODE1_ADDR / PATCHCODE1_VAL
-        DWORD patchCode1 = 0x859001B0;
-        PatchCode((void *)0x00722761, &patchCode1, sizeof(DWORD));
-        launcherdll_net_log("[Patch] 2. PATCHCODE1 @0x00722761 = 0x859001B0 ");
-
-        // 裝備欄擴展 A+B+D（AOB 動態定位，14->31，對照 Rust src/equip_ui.rs）。
-        EquipUiPatch::InstallAll();
-
+      if (marker == kDecryptReady) {
+        alreadyPatched = false;
         break;
+      }
+      if (marker == kDecryptPatched) {
+        alreadyPatched = true;
+        break;
+      }
+
+      if (GetTickCount() - lastLog >= (DWORD)kPollLogMs) {
+        lastLog = GetTickCount();
+        launcherdll_net_log(
+            "[Patch] poll %ds: 0x%08X=0x%08X (waiting Ready/Patched)",
+            (int)(elapsed / 1000), (unsigned)kDecryptAddr, (unsigned)marker);
       }
       Sleep(1);
     }
+
+    launcherdll_net_log(
+        "[Patch] 核心解密完成（%s），開始執行記憶體補丁程序...",
+        alreadyPatched ? "already patched" : "ready");
+    launcherdll_net_log("[Patch] 目前基準位址: 0x%p ", (void *)0x400000);
+
+    if (!alreadyPatched) {
+      DWORD kernelPatch = kDecryptPatched;
+      PatchCode((void *)kDecryptAddr, &kernelPatch, sizeof(DWORD));
+      launcherdll_net_log("[Patch] 1. ConditionalPatch @0x%08X ",
+                          (unsigned)kDecryptAddr);
+    } else {
+      launcherdll_net_log("[Patch] 1. ConditionalPatch already applied, skip write");
+    }
+
+    // ↔ Rust PATCHCODE1_ADDR / PATCHCODE1_VAL
+    DWORD patchCode1 = 0x859001B0;
+    PatchCode((void *)0x00722761, &patchCode1, sizeof(DWORD));
+    launcherdll_net_log("[Patch] 2. PATCHCODE1 @0x00722761 = 0x859001B0 ");
+
+    // 裝備欄擴展 A+B+D（AOB 動態定位，14->31，對照 Rust src/equip_ui.rs）。
+    EquipUiPatch::InstallAll();
+
+    // 變身跑步（順跑）hook；對照 Rust smooth_run_hook.rs（fail-soft）。
+    // 需變身表 slot 98/99；2026-09-10 暫不檢查加速（有 98 即切腳）。
+    InstallSmoothRunPatch();
+
+    // 2026-09-10：暫時停用——原本的「call ReadH 再自己記錄」trampoline
+    // 設計有 bug：巢狀 call 會在 ReadH 自己的 [ebp+8] 定址前多插入一層
+    // stack frame，導致 ReadH 讀到垃圾指標，實測選完角色進世界就斷線/
+    // 疑似當機。修好前（改成直接複製 ReadH 真實 bytes、在它自己的
+    // epilogue 前插入 capture code，不要巢狀 call）先關掉，不要帶著已知
+    // 會炸的 hook 上線。見 VitalsPacketHook.cpp 開頭說明。
+    // InstallVitalsPacketHook();
+
+    // A2：時鐘常駐顯示（純 NOP 一個條件跳轉，fail-soft）。對照 RUST 參考
+    // src/aux/show_clock_patch.rs。
+    InstallShowClockPatch();
+
+    // 攻擊傷害顯示（普攻／單體）：codecave @0x5295D9，預設 OFF，
+    // Overlay「其他→顯示傷害」再開。對照 attack_damage_hook.rs。
+    InstallAttackDamageHook();
+
+    launcherdll_net_log("[Patch] PatchThread finished OK");
   } __except (1) {
     launcherdll_net_log("[Patch] *** CRITICAL *** 補丁執行例外。 ");
   }
@@ -1311,9 +1441,6 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   launcherdll_net_log("[DelayedDetour] DetourTransactionCommit result=%ld",
                       detourResult);
 
-  // wait_and_patch（ConditionalPatch + PATCHCODE1）+ 裝備欄等
-  CloseHandle(CreateThread(NULL, 0, PatchThread, NULL, 0, NULL));
-
   // 對齊 Rust login.rs：解殼後立刻裝 USER/PASS/Login77（不綁 CreateWindowEx）
   InstallLogin77Hooks();
 
@@ -1331,9 +1458,10 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   // 不該跳過受身，玩家角色（含 PK 對手）的受身反應不受影響（內含 LoadCombatConfig()）
   InstallHitFlinchPatch();
 
-  // 隊伍快捷列「編號標記」鈕：改成隊長攻擊目標標記開關，對齊 C_SendLocation
-  // type 50（伺服器端已存在，只差客戶端這顆按鈕真的送出短包）
-  InstallNumberingMarkerHook();
+  // 隊伍快捷列「編號標記」：已移至 parked_hooks/NumberingMarkerHook（同 LightStamp）
+
+  // 血盟「成員登入訊息」快捷：接管 Action_BrodcastToPledge，確保送出 opcode 75
+  InstallBroadcastToPledgeHook();
 
   // 物品詳細資料列：46FEC0 就地剝 \f、46D420 跳過三字、46E0F0 flag=0
   InstallItemStatusColorHook();
@@ -1351,6 +1479,13 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
 
   launcherdll_net_log("[DelayedDetour] all hooks installed successfully");
+
+  // wait_and_patch（ConditionalPatch + PATCHCODE1）+ EquipUI/SmoothRun/ShowClock/AttackDamage
+  // 改為同執行緒直接跑：實測 CreateThread(PatchThread) 從未出現任何 [Patch] log
+  //（整份 launcher.log 零筆），疑似被殼／環境吞掉；同執行緒可確定會跑到。
+  launcherdll_net_log("[DelayedDetour] entering PatchThread (inline)...");
+  PatchThread(NULL);
+
   return 0;
 }
 
