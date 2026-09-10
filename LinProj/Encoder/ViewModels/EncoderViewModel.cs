@@ -38,6 +38,16 @@ namespace LinEncoder.ViewModels
         private bool _useUpdate;
         public bool UseUpdate { get => _useUpdate; set { _useUpdate = value; OnPropertyChanged(); } }
 
+        // 順跑（Smooth Run）前處理開關：打包變身檔（PackagePak）前先跑一次
+        // SmoothRun.SmoothRunPipeline，把走路動作對應的 RunL/RunR 補進 slot 98/99。
+        // 預設關閉，避免第一次升級這個 Encoder 就悄悄改變既有變身檔的打包結果。
+        private bool _morphPreprocessEnabled;
+        public bool MorphPreprocessEnabled
+        {
+            get => _morphPreprocessEnabled;
+            set { _morphPreprocessEnabled = value; OnPropertyChanged(); }
+        }
+
         private string _updateUrl = "http://www.google.com/update.txt";
         public string UpdateUrl { get => _updateUrl; set { _updateUrl = value; OnPropertyChanged(); } }
 
@@ -290,6 +300,7 @@ namespace LinEncoder.ViewModels
             List = _ini.Read("LauncherMaker", "list", "http://www.google.com/list.txt");
             UseUpdate = _ini.ReadBool("LauncherMaker", "enable_update", false);
             UpdateUrl = _ini.Read("LauncherMaker", "update", "http://www.google.com/update.txt");
+            MorphPreprocessEnabled = _ini.ReadBool("BdMaker", "morph_preprocess", false);
             for (int i = 0; i < 5; i++)
             {
                 Links[i].Enabled = _ini.ReadBool("LauncherMaker", "link_enable" + (i + 1), false);
@@ -346,6 +357,7 @@ namespace LinEncoder.ViewModels
             _ini.Write("LauncherMaker", "list", List);
             _ini.WriteBool("LauncherMaker", "enable_update", UseUpdate);
             _ini.Write("LauncherMaker", "update", UpdateUrl);
+            _ini.WriteBool("BdMaker", "morph_preprocess", MorphPreprocessEnabled);
             for (int i = 0; i < 5; i++)
             {
                 _ini.WriteBool("LauncherMaker", "link_enable" + (i + 1), Links[i].Enabled);
@@ -1155,7 +1167,7 @@ namespace LinEncoder.ViewModels
             }
             string output = Path.Combine(BdOutputDir, fileName);
 
-            if (_encoderService.PackagePak(input, output))
+            if (_encoderService.PackagePak(input, output, MorphPreprocessEnabled))
             {
                 if (SelectedServer != null)
                     SelectedServer.BdFile = fileName;

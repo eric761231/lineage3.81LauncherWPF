@@ -401,6 +401,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
 
@@ -417,28 +418,35 @@
                                             <Button Content="生成" Command="{Binding PackagePakCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" IsEnabled="{Binding SelectedServer.UseBd}" Click="Button_Click_1"/>
                                         </StackPanel>
 
+                                        <!-- 順跑（Smooth Run）前處理開關：打包前先跑 SmoothRun pipeline，把走路動作
+                                             對應的 RunL/RunR 幀資料補進 slot 98/99，搭配 LauncherDll 的
+                                             SmoothRunPatch（執行期 hook）才能讓加速時動畫正確顯示。 -->
+                                        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="13,10,0,0" HorizontalAlignment="Left" Width="323">
+                                            <CheckBox Content="啟用順跑前處理" IsChecked="{Binding MorphPreprocessEnabled}" Style="{StaticResource ToggleSwitchStyle}" FontWeight="Bold" IsEnabled="{Binding SelectedServer.UseBd}"/>
+                                        </StackPanel>
+
                                         <!-- 啟用伺服器與產生清單移到下方一行 -->
-                                        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="14,18,0,0" HorizontalAlignment="Left" Width="307">
+                                        <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="14,18,0,0" HorizontalAlignment="Left" Width="307">
                                             <CheckBox Content="啟用此伺服器" IsChecked="{Binding SelectedServer.IsUsed}" Style="{StaticResource ToggleSwitchStyle}" Width="153"/>
                                             <Button Content="產生清單" Command="{Binding GenerateListCommand}"
                                                     Style="{StaticResource ModernButton}" Background="{StaticResource AccentGreen}" Width="144" Height="32"/>
                                         </StackPanel>
 
                                         <!-- 封包加密／隨機加密：per-server 開關，供 A/B 測試 -->
-                                        <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="14,10,0,0" HorizontalAlignment="Left" Width="323">
+                                        <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="14,10,0,0" HorizontalAlignment="Left" Width="323">
                                             <CheckBox Content="封包加密" IsChecked="{Binding SelectedServer.Encrypt}" Style="{StaticResource ToggleSwitchStyle}" Width="153"/>
                                             <CheckBox Content="隨機加密" IsChecked="{Binding SelectedServer.RandKey}" Style="{StaticResource ToggleSwitchStyle}" Width="153"/>
                                         </StackPanel>
 
                                         <!-- 變身檔（pak）輸出目錄：可瀏覽選擇，沒記錄過會自動跳瀏覽視窗 -->
-                                        <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="18,10,0,0" HorizontalAlignment="Left" Width="336">
+                                        <StackPanel Orientation="Horizontal" Grid.Row="5" Margin="18,10,0,0" HorizontalAlignment="Left" Width="336">
                                             <TextBlock Text="pak 輸出目錄：" VerticalAlignment="Center"/>
                                             <TextBox Text="{Binding BdOutputDir}" Width="145" Margin="5,0,0,0" IsReadOnly="True"/>
                                             <Button Content="瀏覽…" Command="{Binding BrowseBdOutputDirCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Margin="5,0,0,0"/>
                                         </StackPanel>
 
                                         <!-- RSA 金鑰：可手動填 pack.properties 的 RSA_KEY_E/D/N；產生清單會用這組值 -->
-                                        <Grid Grid.Row="5" Margin="14,8,0,0" HorizontalAlignment="Left" Width="336">
+                                        <Grid Grid.Row="6" Margin="14,8,0,0" HorizontalAlignment="Left" Width="336">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="22"/>
                                                 <ColumnDefinition Width="*"/>

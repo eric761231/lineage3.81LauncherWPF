@@ -52,14 +52,27 @@ namespace LinEncoder.Services
         /// 'S' 前綴，所以這裡刻意不加那個前綴 byte）。加解密邏輯沿用
         /// CryptoService（跟 list.txt ServerData 用同一套 XOR table +
         /// AES-128-ECB，已經跟 C++ 的 aes.cpp 驗證過相容）。
+        ///
+        /// morphPreprocessEnabled=true 時，在壓縮加密之前先跑一次順跑（Smooth Run）五階段
+        /// pipeline（LinEncoder.Services.SmoothRun.SmoothRunPipeline，逐函式對照
+        /// L1J3.8Launcher(RUST)參考 src/smooth_run/**），把變身檔裡走路動作對應的 RunL/RunR
+        /// 幀資料補進 slot 98/99，讓 LauncherDll 的 SmoothRunPatch（執行期 hook，讀 slot 98/99）
+        /// 真的有東西可用。用 Latin1（byte↔char 一對一）讀寫，不用 UTF-8——語法本身全 ASCII，
+        /// Latin1 能保證非 ASCII byte 原樣往返，不會被 UTF-8 解碼器改動或報錯。
         /// </summary>
-        public bool PackagePak(string input, string output)
+        public bool PackagePak(string input, string output, bool morphPreprocessEnabled = false)
         {
             if (!File.Exists(input)) return false;
             try
             {
                 byte[] raw = File.ReadAllBytes(input);
-                int origLen = raw.Length;
+                if (morphPreprocessEnabled)
+                {
+                    string text = Encoding.Latin1.GetString(raw);
+                    string processed = SmoothRun.SmoothRunPipeline.ProcessVariantLines(text);
+                    raw = Encoding.Latin1.GetBytes(processed);
+                }
+                int origLen = raw.Length; // 一定要在前處理「之後」算，前處理會改變內容長度
 
                 byte[] compressed;
                 using (var ms = new MemoryStream())
