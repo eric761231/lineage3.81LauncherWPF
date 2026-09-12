@@ -6,6 +6,7 @@
 // them without needing to touch the higher-level wrapper or any XML.
 #include "stdafx.h"
 #include "WebNavigateHook.h"
+#include "LauncherDll.h"
 #include "detours.h"
 
 #pragma comment(lib, "detours.lib")
@@ -18,33 +19,7 @@ namespace {
  * @param ... 可變參數
  */
 void WebLog(const char *fmt, ...) {
-  char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./Core/launcher.log";
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
-    for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
-      if (exePath[i] == '\\' || exePath[i] == '/') {
-        exePath[i] = '\0';
-        break;
-      }
-    }
-    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
-  }
-  FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) {
-    return;
-  }
-  SYSTEMTIME st;
-  GetLocalTime(&st);
-  char msg[512] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf_s(msg, fmt, args);
-  va_end(args);
-  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] [WebNavigate] %s\n",
-          st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-          st.wMilliseconds, (unsigned)GetCurrentProcessId(), (unsigned)GetCurrentThreadId(), msg);
-  fflush(fp);
-  fclose(fp);
+  (void)fmt;
 }
 
 typedef void(__thiscall *Navigate_t)(void *self, const char *url);
@@ -72,7 +47,7 @@ void InstallWebNavigateHook() {
   BYTE prologue[3];
   memcpy(prologue, (void *)0x610D70, 3);
   if (prologue[0] != 0x55 || prologue[1] != 0x8B || prologue[2] != 0xEC) {
-    WebLog("0x610D70 prologue mismatch (expected push ebp; mov ebp,esp), skipping install");
+    launcherdll_hook_log("[Install] WebNavigate skip");
     return;
   }
 
@@ -80,5 +55,5 @@ void InstallWebNavigateHook() {
   DetourUpdateThread(GetCurrentThread());
   DetourAttach(&(PVOID &)real_Navigate, reinterpret_cast<PVOID>(Hook_Navigate));
   LONG result = DetourTransactionCommit();
-  WebLog("Navigate hook install result=%ld", result);
+  launcherdll_hook_log("[Install] WebNavigate %s", result == 0 ? "ok" : "fail");
 }

@@ -26,3 +26,6 @@ void PssOverlay_PumpPendingUiNotify();
 
 void PssOverlay_OnItemFilterList(int listType, int n, const int *itemIds,
                                  const int *gfxids, const wchar_t names[][64]);
+
+// 進世界（PacketBox KARMA）把本機 cfg 灌進伺服器。不要靠連線快取，重登才會接著跑。
+void PssOverlay_OnWorldEnter();

@@ -53,12 +53,4 @@ namespace LinEncoder.Models
         public int Width = 1000;
         public int Height = 600;
     }
-
-    public class LinkItem
-    {
-        public int DisplayIndex { get; set; }
-        public bool Enabled { get; set; }
-        public string Name { get; set; } = "";
-        public string Url { get; set; } = "";
-    }
 }

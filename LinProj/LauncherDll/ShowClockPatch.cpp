@@ -47,18 +47,13 @@ void PatchCode(void *addr, const void *code, int len) {
 void InstallShowClockPatch() {
   BYTE *addr = (BYTE *)CLOCK_GATE_ADDR;
   if (memcmp(addr, PATCHED_BYTES, PATCH_LEN) == 0) {
-    launcherdll_hook_log("[ShowClock] 已經是 patch 過的狀態，跳過");
+    launcherdll_hook_log("[Install] ShowClock already applied");
     return;
   }
   if (memcmp(addr, EXPECTED_BYTES, PATCH_LEN) != 0) {
-    launcherdll_hook_log(
-        "[ShowClock][WARN] 0x%08X 位元組不符（%02X %02X %02X %02X %02X %02X，"
-        "預期 0F 84 A1 00 00 00），跳過",
-        (unsigned)CLOCK_GATE_ADDR, addr[0], addr[1], addr[2], addr[3], addr[4],
-        addr[5]);
+    launcherdll_hook_log("[Install] ShowClock skip");
     return;
   }
   PatchCode(addr, PATCHED_BYTES, PATCH_LEN);
-  launcherdll_hook_log("[ShowClock] hook 已安裝 @0x%08X（時鐘常駐顯示）",
-                       (unsigned)CLOCK_GATE_ADDR);
+  launcherdll_hook_log("[Install] ShowClock ok");
 }

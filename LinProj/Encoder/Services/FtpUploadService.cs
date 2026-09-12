@@ -255,7 +255,10 @@ namespace LinEncoder.Services
         private static FtpWebRequest CreateRequest(string host, int port, string username, string password, string remotePath, string method)
         {
             string url = $"ftp://{host}:{port}{remotePath}";
+            // HttpClient 不支援 FTP；.NET 仍只能走 FtpWebRequest（整個 API 標 obsolete，無內建替代）。
+#pragma warning disable SYSLIB0014
             var req = (FtpWebRequest)WebRequest.Create(url);
+#pragma warning restore SYSLIB0014
             req.Method = method;
             req.Credentials = new NetworkCredential(username ?? "", password ?? "");
             req.UsePassive = true;

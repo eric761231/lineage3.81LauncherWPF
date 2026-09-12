@@ -72,33 +72,7 @@ ULONG_PTR g_gdiplusToken = 0;
 std::map<std::string, OverlayAssetSet *> g_instances; // key: folderName+"|"+pakBaseName
 
 void NetLog(const char *fmt, ...) {
-  char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./Core/launcher.log";
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
-    for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
-      if (exePath[i] == '\\' || exePath[i] == '/') {
-        exePath[i] = '\0';
-        break;
-      }
-    }
-    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
-  }
-  FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
-    return;
-  SYSTEMTIME st;
-  GetLocalTime(&st);
-  char msg[1024] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf_s(msg, fmt, args);
-  va_end(args);
-  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] %s\n",
-          st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-          st.wMilliseconds, (unsigned)GetCurrentProcessId(),
-          (unsigned)GetCurrentThreadId(), msg);
-  fflush(fp);
-  fclose(fp);
+  (void)fmt;
 }
 
 bool ResolveExeRelativePath(const char *relPath, char *outPath, size_t outSize) {

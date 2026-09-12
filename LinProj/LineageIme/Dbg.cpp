@@ -1,10 +1,9 @@
-// Dbg.cpp: 對照 Rust 版 ime_overlay/src/dbg.rs — 寫到
-// %LOCALAPPDATA%\Lineage38Launcher\dgvoodoo\ime_debug.log（沿用同一路徑慣例，方便比對）。
+// Dbg.cpp: 寫到 <遊戲根目錄>\Core\ime_debug.log（與 launcher.log 同目錄）。
 #include "Common.h"
 #include "Dbg.h"
 #include <cstdio>
 #include <cstdarg>
-#include <string>
+#include <cstring>
 
 static CRITICAL_SECTION g_logLock;
 static bool g_logLockInit = false;
@@ -16,17 +15,24 @@ static void EnsureLockInit() {
   }
 }
 
+// 注入後 GetModuleFileNameA(NULL) = 遊戲 exe 目錄；log 放同層 Core\。
 static bool BuildLogPath(char *out, size_t outSize) {
-  char local[MAX_PATH] = {0};
-  size_t len = 0;
-  if (getenv_s(&len, local, MAX_PATH, "LOCALAPPDATA") != 0 || len == 0) return false;
+  char exePath[MAX_PATH] = {0};
+  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) == 0)
+    return false;
 
-  std::string dir = std::string(local) + "\\Lineage38Launcher\\dgvoodoo";
-  CreateDirectoryA((std::string(local) + "\\Lineage38Launcher").c_str(), NULL);
-  CreateDirectoryA(dir.c_str(), NULL);
+  for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
+    if (exePath[i] == '\\' || exePath[i] == '/') {
+      exePath[i] = '\0';
+      break;
+    }
+  }
 
-  std::string full = dir + "\\ime_debug.log";
-  strncpy_s(out, outSize, full.c_str(), _TRUNCATE);
+  char coreDir[MAX_PATH] = {0};
+  sprintf_s(coreDir, "%s\\Core", exePath);
+  CreateDirectoryA(coreDir, NULL);
+
+  sprintf_s(out, outSize, "%s\\ime_debug.log", coreDir);
   return true;
 }
 

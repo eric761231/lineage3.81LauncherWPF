@@ -414,8 +414,8 @@
                                         <!-- 加密 txt 選檔與加密打包同一行 -->
                                         <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="18,10,0,0" HorizontalAlignment="Left" Width="336">
                                             <TextBlock Text="加密變檔 (.txt)：" VerticalAlignment="Center"/>
-                                            <ComboBox ItemsSource="{Binding BdSourceFiles}" SelectedItem="{Binding SelectedBdSourceFile}" Width="145" Margin="5,0,0,0" SelectionChanged="ComboBox_SelectionChanged" IsEnabled="{Binding SelectedServer.UseBd}"/>
-                                            <Button Content="生成" Command="{Binding PackagePakCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" IsEnabled="{Binding SelectedServer.UseBd}" Click="Button_Click_1"/>
+                                            <ComboBox ItemsSource="{Binding BdSourceFiles}" SelectedItem="{Binding SelectedBdSourceFile}" Width="145" Margin="5,0,0,0" IsEnabled="{Binding SelectedServer.UseBd}"/>
+                                            <Button Content="生成" Command="{Binding PackagePakCommand}" Width="88" Height="32" Style="{StaticResource ModernButton}" Background="{StaticResource AccentPurple}" IsEnabled="{Binding SelectedServer.UseBd}"/>
                                         </StackPanel>
 
                                         <!-- 順跑（Smooth Run）前處理開關：打包前先跑 SmoothRun pipeline，把走路動作

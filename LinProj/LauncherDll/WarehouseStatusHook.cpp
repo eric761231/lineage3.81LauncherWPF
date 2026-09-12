@@ -636,12 +636,12 @@ void InstallWarehouseStatusHook() {
   static const BYTE kPlusInv[8] = {0x6A, 0x03, 0x8B, 0x95, 0x94, 0xFE, 0xFF, 0xFF};
   BYTE *pSplit = reinterpret_cast<BYTE *>(0x4AEC90);
   if (pAttach[0] != 0x55 || pAttach[1] != 0x8B || pAttach[2] != 0xEC) {
-    launcherdll_hook_log("[WhStatus] 4AF070 prologue mismatch, skipping");
+    launcherdll_hook_log("[Install] Warehouse skip");
     return;
   }
   if (memcmp(p29, kAfterParse, 6) != 0 || memcmp(p21, kAfterParse, 6) != 0 ||
       memcmp(p0B, kAfterParse, 6) != 0) {
-    launcherdll_hook_log("[WhStatus] dchcdcs epilogue mismatch, skipping");
+    launcherdll_hook_log("[Install] Warehouse skip");
     return;
   }
 
@@ -655,11 +655,11 @@ void InstallWarehouseStatusHook() {
     DetourAttach(&(PVOID &)real_SplitFmt, reinterpret_cast<PVOID>(Hook_SplitFmt));
     splitOk = 1;
   } else {
-    launcherdll_hook_log("[WhStatus] 4AEC90 prologue mismatch, skip nl");
+    splitOk = 0;
   }
   const LONG result = DetourTransactionCommit();
   if (result != 0) {
-    launcherdll_hook_log("[WhStatus] 4AF070/4AEC90 Detour result=%ld", result);
+    launcherdll_hook_log("[Install] Warehouse fail");
     return;
   }
   if (!splitPrologueOk) {
@@ -678,8 +678,6 @@ void InstallWarehouseStatusHook() {
     PatchJmpN(pDraw18, reinterpret_cast<void *>(Tramp_WhTipDraw18), sizeof(kTipDraw18));
     PatchJmpN(pDraw0C, reinterpret_cast<void *>(Tramp_WhTipDraw0C), sizeof(kTipDraw0C));
     tipOk = 1;
-  } else {
-    launcherdll_hook_log("[WhStatus] tooltip site mismatch, skip 5B65F0/6930/6A73");
   }
   int plusOk = 0;
   if (memcmp(pPlusA, kPlusA, sizeof(kPlusA)) == 0 &&
@@ -689,11 +687,9 @@ void InstallWarehouseStatusHook() {
     PatchJmpN(pPlusB, reinterpret_cast<void *>(Tramp_WhPlusCstr), 0x6C);
     PatchJmpN(pPlusInv, reinterpret_cast<void *>(Tramp_InvPlusCstr), 0x77);
     plusOk = 1;
-  } else {
-    launcherdll_hook_log("[WhStatus] plus-prefix site mismatch, skip 5B4A30/4B98/594AA0");
   }
-  launcherdll_hook_log(
-      "[WhStatus] 52D762/52D4EC/52CF94 consume + 4AF070 attach result=0 tip=%d plus=%d "
-      "nl=%d",
-      tipOk, plusOk, splitOk);
+  launcherdll_hook_log("[Install] Warehouse ok");
+  (void)splitOk;
+  (void)tipOk;
+  (void)plusOk;
 }

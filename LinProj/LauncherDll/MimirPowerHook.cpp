@@ -50,6 +50,7 @@
 #include "LineageEncryption.h"
 #include "MimirPowerOverlay.h"
 #include "PlaySupportSystem.h"
+#include "LauncherDll.h"
 
 #pragma comment(lib, "detours.lib")
 
@@ -92,36 +93,7 @@ DWORD g_pssConsumedFlag = 0;
 volatile LONG g_pendingChoiceIndex = -1;
 
 void NetLog(const char *fmt, ...) {
-  // 密米爾之泉 UI 顯示異常除錯用：暫時恢復這個檔案的 log（原本已確認穩定所以關
-  // 掉過，現在查中文字串/倒數秒數解析是否對齊，需要看實際內容），查完記得改回
-  // return; 關掉。
-  char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./Core/launcher.log";
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
-    for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
-      if (exePath[i] == '\\' || exePath[i] == '/') {
-        exePath[i] = '\0';
-        break;
-      }
-    }
-    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
-  }
-  FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
-    return;
-  SYSTEMTIME st;
-  GetLocalTime(&st);
-  char msg[1024] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf_s(msg, fmt, args);
-  va_end(args);
-  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] %s\n",
-          st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-          st.wMilliseconds, (unsigned)GetCurrentProcessId(),
-          (unsigned)GetCurrentThreadId(), msg);
-  fflush(fp);
-  fclose(fp);
+  (void)fmt;
 }
 
 // 讀一筆 MimirOption：基本格式 [iconId:4(D)][iconPngId:4(D)][name:C字串+0x00]
@@ -273,6 +245,8 @@ __declspec(naked) void MimirDispatchCave() {
     je do_pss
     cmp eax, 0x2F
     je do_pss
+    cmp eax, 0x57
+    je do_pss
     jmp pass_through
 
   do_pss:
@@ -306,14 +280,13 @@ void InstallMimirPowerHook() {
   __try {
     memcpy(cur, (void *)JMP_PATCH_ADDR, sizeof(cur));
   } __except (EXCEPTION_EXECUTE_HANDLER) {
-    NetLog("[mimir-hook] read original bytes @0x%08X failed", JMP_PATCH_ADDR);
+    launcherdll_hook_log("[Install] MimirPower skip");
     return;
   }
 
   static const BYTE expected[7] = {0xFF, 0x24, 0x85, 0xB4, 0x15, 0x54, 0x00};
   if (memcmp(cur, expected, sizeof(expected)) != 0) {
-    NetLog("[mimir-hook] unexpected original bytes @0x%08X, abort (got %02X %02X %02X %02X %02X %02X %02X)",
-           JMP_PATCH_ADDR, cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], cur[6]);
+    launcherdll_hook_log("[Install] MimirPower skip");
     return;
   }
 
@@ -328,13 +301,13 @@ void InstallMimirPowerHook() {
 
   DWORD oldProt = 0;
   if (!VirtualProtect((void *)JMP_PATCH_ADDR, sizeof(patch), PAGE_EXECUTE_READWRITE, &oldProt)) {
-    NetLog("[mimir-hook] VirtualProtect failed @0x%08X", JMP_PATCH_ADDR);
+    launcherdll_hook_log("[Install] MimirPower skip");
     return;
   }
   memcpy((void *)JMP_PATCH_ADDR, patch, sizeof(patch));
   VirtualProtect((void *)JMP_PATCH_ADDR, sizeof(patch), oldProt, &oldProt);
   FlushInstructionCache(GetCurrentProcess(), (void *)JMP_PATCH_ADDR, sizeof(patch));
-  NetLog("[mimir-hook] installed @0x%08X -> cave@0x%p", JMP_PATCH_ADDR, &MimirDispatchCave);
+  launcherdll_hook_log("[Install] MimirPower ok");
 }
 
 void MimirPowerHook_SetSocket(SOCKET s) { g_gameSocket = s; }

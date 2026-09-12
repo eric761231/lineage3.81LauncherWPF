@@ -300,9 +300,11 @@ __declspec(naked) void SmoothRun_Stub() {
 void InstallSmoothRunPatch() {
   BYTE *addr = (BYTE *)HOOK_ADDR;
   if (addr[0] == 0xE9) {
+    launcherdll_hook_log("[Install] SmoothRun already applied");
     return;
   }
   if (memcmp(addr, EXPECTED_BYTES, 5) != 0) {
+    launcherdll_hook_log("[Install] SmoothRun skip");
     return;
   }
 
@@ -314,5 +316,5 @@ void InstallSmoothRunPatch() {
       (int)((intptr_t)SmoothRun_Stub - (intptr_t)addr - 5);
   PatchCode(addr, jmp5, 5);
 
-  launcherdll_hook_log("[SmoothRun][install] OK");
+  launcherdll_hook_log("[Install] SmoothRun ok");
 }

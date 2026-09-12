@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "PlaySupportSystem.h"
 #include "PssOverlay.h"
+#include "PssConfig.h"
 #include "LauncherDll.h"
 
 #include <string.h>
@@ -129,12 +130,12 @@ DWORD OnItemFilterDispatch(const BYTE *pktData) {
     int pos = 0;
     BYTE listType = pktData[pos++];
     BYTE n = pktData[pos++];
-    if (n > 40) {
+    if (n > (BYTE)kItemFilterMax) {
       return 0;
     }
-    int itemIds[40];
-    int gfxids[40];
-    wchar_t names[40][64];
+    int itemIds[kItemFilterMax];
+    int gfxids[kItemFilterMax];
+    wchar_t names[kItemFilterMax][64];
     for (BYTE i = 0; i < n; i++) {
       if (pos + 8 > kMaxScanLen) {
         return 0;
@@ -182,6 +183,10 @@ extern "C" DWORD __cdecl PlaySupportSystem_OnPacketBox(DWORD subtype,
     return OnSlotCountsDispatch(pktData);
   case kPssPacketBoxItemFilter:
     return OnItemFilterDispatch(pktData);
+  case kPacketBoxKarma:
+    // 原生 KARMA 包：不要吃掉。只當「人物已進世界」訊號，把 cfg 灌進 State。
+    PssOverlay_OnWorldEnter();
+    return 0;
   default:
     return 0;
   }

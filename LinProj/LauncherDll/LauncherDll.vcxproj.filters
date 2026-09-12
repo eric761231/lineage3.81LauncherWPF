@@ -45,6 +45,21 @@
     <ClCompile Include="PrivateShopStatus.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PatchUtil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EquipUiPatch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Login77Hook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemStatusColorHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MorphPakInject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="SmoothRunPatch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -104,6 +119,21 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PrivateShopStatus.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PatchUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EquipUiPatch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Login77Hook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemStatusColorHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MorphPakInject.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SmoothRunPatch.h">

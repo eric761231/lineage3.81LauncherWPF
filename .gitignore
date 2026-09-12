@@ -1,4 +1,4 @@
-﻿# Build folders
+# Build folders
 bin/
 obj/
 publish/
@@ -20,6 +20,13 @@ x86/
 # Webview2 cache
 EBWebView/
 *.WebView2/
+
+# Encoder 根目錄誤放的 Proxy/WebView2 建置殘留（正式範本只保留 LinLauncher.dat）
+LinProj/Encoder/LinLauncher.dll
+LinProj/Encoder/LinLauncher.deps.json
+LinProj/Encoder/LinLauncher.runtimeconfig.json
+LinProj/Encoder/Microsoft.Web.WebView2.*.dll
+LinProj/Encoder/runtimes/
 
 # User-specific files
 *.user

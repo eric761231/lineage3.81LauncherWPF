@@ -48,6 +48,7 @@
 // registration itself functions correctly.
 #include "stdafx.h"
 #include "MatchMakingHook.h"
+#include "LauncherDll.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -62,31 +63,7 @@ namespace {
 // launcherdll_net_log in LauncherDll.cpp is `static` (internal linkage) and
 // isn't linkable from here.
 void MmLog(const char *fmt, ...) {
-  char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./Core/launcher.log";
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
-    for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
-      if (exePath[i] == '\\' || exePath[i] == '/') {
-        exePath[i] = '\0';
-        break;
-      }
-    }
-    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
-  }
-  FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) return;
-  SYSTEMTIME st;
-  GetLocalTime(&st);
-  char msg[512] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf_s(msg, fmt, args);
-  va_end(args);
-  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] [MatchMaking] %s\n",
-          st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-          st.wMilliseconds, (unsigned)GetCurrentProcessId(), (unsigned)GetCurrentThreadId(), msg);
-  fflush(fp);
-  fclose(fp);
+  (void)fmt;
 }
 
 // VA 0x4021B0: LookupString(ecx=stringTableObj, id) -> ANSI char* (Big5).
@@ -189,7 +166,7 @@ void __fastcall Hook_SetTypeLabel(void *mm, void * /*edx*/, int type) {
 void InstallMatchMakingHook() {
   const BYTE expected[6] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x10};
   if (memcmp((void *)0x64F700, expected, sizeof(expected)) != 0) {
-    MmLog("0x64F700 prologue mismatch, skipping install");
+    launcherdll_hook_log("[Install] MatchMaking skip");
     return;
   }
 
@@ -197,5 +174,5 @@ void InstallMatchMakingHook() {
   DetourUpdateThread(GetCurrentThread());
   DetourAttach(&(PVOID &)real_SetTypeLabel, reinterpret_cast<PVOID>(Hook_SetTypeLabel));
   LONG result = DetourTransactionCommit();
-  MmLog("SetTypeLabel hook install result=%ld", result);
+  launcherdll_hook_log("[Install] MatchMaking %s", result == 0 ? "ok" : "fail");
 }

@@ -49,16 +49,21 @@ constexpr int kGap = 8;
 constexpr float kSplitX = 0.50f;
 constexpr float kSplitY = 0.46f;
 
-constexpr int kSlotSize = 40;
+constexpr int kSlotSize = 44;
 constexpr int kSlotGap = 6;
+constexpr int kFilterCols = 5;
 
 enum TabId { Tab_Buff = 0, Tab_Item = 1, Tab_Teleport = 2, Tab_Misc = 3, Tab_Count = 4 };
 int g_activeTab = Tab_Buff;
-int g_itemSubTab = 0; // 0=刪除 1=溶解
+int g_filterListType = 0; // 0=刪除 1=溶解（左欄標籤＋選取）
 int g_filterSel = -1;
-int g_pressedSubTab = -1;
+int g_itemScrollY[2] = {0, 0}; // 刪除／溶解各自捲動
+int g_itemScrollMax = 0;
 int g_pressedRemove = 0;
 int g_pressedTab = -1;
+int g_pressedSubTab = -1;
+
+constexpr int kDarkStoneGfx[4] = {1061, 1054, 1055, 1056};
 int g_pressedEnable = 0;
 constexpr int TIMER_CARET = 2;
 constexpr int TIMER_VITALS = 3; // 節流重繪（~200ms），非輪詢記憶體
@@ -178,7 +183,8 @@ struct ItemFilterListMsg {
 };
 
 volatile LONG g_pendingSave = 0;
-volatile LONG g_pendingFilterRequest = -1;
+volatile LONG g_pendingFilterRequest = 0;
+volatile LONG g_inPump = 0; // SendPacketData → my_send 重入時不可再組包
 PssConfig g_pendingCfg;
 
 // 2026-09-10：道具名稱/數量現在是 PssSlot 自己的欄位（見
@@ -359,65 +365,176 @@ RECT HintBarRc() {
   return ScaleRc(kPad + 200, kBaseH - kFooterH + 12, kBaseW - kPad * 2 - 300, 20);
 }
 
-/** 道具頁「刪除／溶解」子標籤。 */
-RECT ItemSubTabRc(int index) {
-  RECT o = ContentOuterRc();
-  const int w = (int)(88 * g_scaleX);
-  const int h = (int)(24 * g_scaleY);
-  const int x = o.left + (int)(8 * g_scaleX) + index * (w + (int)(6 * g_scaleX));
-  RECT rc = {x, o.top + (int)(6 * g_scaleY), x + w, o.top + (int)(6 * g_scaleY) + h};
-  return rc;
-}
-
-/** 道具頁右下「移除」。 */
+/** 道具頁左欄「移除」。 */
 RECT FilterRemoveRc() {
   RECT o = ContentOuterRc();
   const int w = (int)(72 * g_scaleX);
   const int h = (int)(24 * g_scaleY);
   RECT rc;
-  rc.right = o.right - (int)(10 * g_scaleX);
-  rc.left = rc.right - w;
+  rc.left = o.left + (int)(8 * g_scaleX);
+  rc.right = rc.left + w;
   rc.bottom = o.bottom - (int)(8 * g_scaleY);
   rc.top = rc.bottom - h;
   return rc;
 }
 
-/** 道具頁 5 欄宮格第 index 格（0 起算）。 */
-RECT FilterCellRc(int index) {
+int FilterVisibleCells(int count) {
+  int rows = kItemFilterMinCells / kFilterCols;
+  if (count > 0) {
+    int need = (count + kFilterCols - 1) / kFilterCols;
+    if (need > rows)
+      rows = need;
+  }
+  if (count >= kItemFilterMinCells && count < kItemFilterMax)
+    rows = count / kFilterCols + 1;
+  int cells = rows * kFilterCols;
+  if (cells > kItemFilterMax)
+    cells = kItemFilterMax;
+  return cells;
+}
+
+struct ItemPageLayout {
+  RECT leftPane;
+  RECT rightPane;
+  RECT clip;
+  RECT track;
+  RECT subTab[2];
+  RECT remove;
+  RECT darkHead;
+  RECT stone[4];
+  RECT stoneChk[4];
+  RECT scrollHead;
+  RECT scrollBody;
+  int cell;
+  int gap;
+  int cells;
+  int contentH;
+  int scrollY;
+  int scrollMax;
+};
+
+void BuildItemPageLayout(ItemPageLayout *out, const PssConfig &cfg) {
   RECT o = ContentOuterRc();
-  const int cols = 5;
-  const int subH = (int)(34 * g_scaleY);
-  const int botH = (int)(36 * g_scaleY);
-  const int pad = (int)(10 * g_scaleX);
-  const int gap = (int)(4 * g_scaleX);
-  int gridL = o.left + pad;
-  int gridT = o.top + subH;
-  int gridW = (o.right - o.left) - pad * 2;
-  int gridH = (o.bottom - o.top) - subH - botH;
-  int cell = (gridW - gap * (cols - 1)) / cols;
-  if (cell > (int)(40 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY)))
-    cell = (int)(40 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
-  if (cell < 20)
-    cell = 20;
-  int col = index % cols;
-  int row = index / cols;
+  const int midGap = (int)(8 * g_scaleX);
+  const int split = o.left + (int)((o.right - o.left) * 0.56f);
+  out->leftPane = o;
+  out->leftPane.right = split - midGap / 2;
+  out->rightPane = o;
+  out->rightPane.left = split + midGap / 2;
+
+  const int tabH = (int)(24 * g_scaleY);
+  const int tabGap = (int)(4 * g_scaleX);
+  int tabW = (out->leftPane.right - out->leftPane.left - (int)(12 * g_scaleX) - tabGap) / 2;
+  out->subTab[0].left = out->leftPane.left + (int)(6 * g_scaleX);
+  out->subTab[0].top = out->leftPane.top + (int)(6 * g_scaleY);
+  out->subTab[0].right = out->subTab[0].left + tabW;
+  out->subTab[0].bottom = out->subTab[0].top + tabH;
+  out->subTab[1] = out->subTab[0];
+  out->subTab[1].left = out->subTab[0].right + tabGap;
+  out->subTab[1].right = out->subTab[1].left + tabW;
+
+  const int rmW = (int)(72 * g_scaleX);
+  const int rmH = (int)(24 * g_scaleY);
+  out->remove.left = out->leftPane.left + (int)(8 * g_scaleX);
+  out->remove.right = out->remove.left + rmW;
+  out->remove.bottom = out->leftPane.bottom - (int)(8 * g_scaleY);
+  out->remove.top = out->remove.bottom - rmH;
+
+  out->clip = out->leftPane;
+  out->clip.left += (int)(4 * g_scaleX);
+  out->clip.right -= (int)(16 * g_scaleX);
+  out->clip.top = out->subTab[0].bottom + (int)(6 * g_scaleY);
+  out->clip.bottom = out->remove.top - (int)(6 * g_scaleY);
+
+  out->track = out->leftPane;
+  out->track.left = out->clip.right + (int)(2 * g_scaleX);
+  out->track.right = out->leftPane.right - (int)(3 * g_scaleX);
+  out->track.top = out->clip.top;
+  out->track.bottom = out->clip.bottom;
+
+  out->gap = (int)(5 * g_scaleX);
+  out->cell = (int)(kSlotSize * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
+  if (out->cell < 22)
+    out->cell = 22;
+  const ItemFilterList &list =
+      (g_filterListType == 1) ? cfg.autoDissolve : cfg.autoDelete;
+  out->cells = FilterVisibleCells(list.count);
+  int rows = (out->cells + kFilterCols - 1) / kFilterCols;
+  out->contentH = rows * out->cell + (rows > 0 ? (rows - 1) * out->gap : 0);
+  int viewH = out->clip.bottom - out->clip.top;
+  out->scrollMax = out->contentH > viewH ? out->contentH - viewH : 0;
+  int tabIdx = (g_filterListType == 1) ? 1 : 0;
+  if (g_itemScrollY[tabIdx] > out->scrollMax)
+    g_itemScrollY[tabIdx] = out->scrollMax;
+  if (g_itemScrollY[tabIdx] < 0)
+    g_itemScrollY[tabIdx] = 0;
+  out->scrollY = g_itemScrollY[tabIdx];
+  g_itemScrollMax = out->scrollMax;
+
+  out->darkHead = out->rightPane;
+  out->darkHead.left += (int)(8 * g_scaleX);
+  out->darkHead.right -= (int)(8 * g_scaleX);
+  out->darkHead.top += (int)(6 * g_scaleY);
+  out->darkHead.bottom = out->darkHead.top + (int)(20 * g_scaleY);
+
+  int stone = (int)(kSlotSize * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
+  int chk = (int)(16 * g_scaleY);
+  int innerW = out->rightPane.right - out->rightPane.left - (int)(16 * g_scaleX);
+  int stoneGap = (int)(6 * g_scaleX);
+  if (4 * stone + 3 * stoneGap > innerW) {
+    stone = (innerW - 3 * stoneGap) / 4;
+    if (stone < 20)
+      stone = 20;
+  }
+  int rowW = 4 * stone + 3 * stoneGap;
+  int sx = out->rightPane.left + (innerW - rowW) / 2 + (int)(8 * g_scaleX);
+  int syStone = out->darkHead.bottom + (int)(6 * g_scaleY);
+  for (int i = 0; i < 4; i++) {
+    out->stone[i].left = sx + i * (stone + stoneGap);
+    out->stone[i].top = syStone;
+    out->stone[i].right = out->stone[i].left + stone;
+    out->stone[i].bottom = out->stone[i].top + stone;
+    out->stoneChk[i].left = out->stone[i].left + (stone - chk) / 2;
+    out->stoneChk[i].top = out->stone[i].bottom + (int)(4 * g_scaleY);
+    out->stoneChk[i].right = out->stoneChk[i].left + chk;
+    out->stoneChk[i].bottom = out->stoneChk[i].top + chk;
+  }
+
+  out->scrollHead = out->rightPane;
+  out->scrollHead.left += (int)(8 * g_scaleX);
+  out->scrollHead.right -= (int)(8 * g_scaleX);
+  out->scrollHead.top = out->stoneChk[0].bottom + (int)(10 * g_scaleY);
+  out->scrollHead.bottom = out->scrollHead.top + (int)(20 * g_scaleY);
+  out->scrollBody = out->rightPane;
+  out->scrollBody.left += (int)(8 * g_scaleX);
+  out->scrollBody.right -= (int)(8 * g_scaleX);
+  out->scrollBody.top = out->scrollHead.bottom + (int)(4 * g_scaleY);
+  out->scrollBody.bottom = out->rightPane.bottom - (int)(8 * g_scaleY);
+}
+
+RECT FilterCellRcAt(const ItemPageLayout &ly, int listType, int index) {
+  (void)listType;
+  int col = index % kFilterCols;
+  int row = index / kFilterCols;
+  int gridL = ly.clip.left + (int)(4 * g_scaleX);
   RECT rc;
-  rc.left = gridL + col * (cell + gap);
-  rc.top = gridT + row * (cell + gap);
-  rc.right = rc.left + cell;
-  rc.bottom = rc.top + cell;
-  if (rc.bottom > o.bottom - botH)
-    rc.bottom = o.bottom - botH;
+  rc.left = gridL + col * (ly.cell + ly.gap);
+  rc.top = ly.clip.top - ly.scrollY + row * (ly.cell + ly.gap);
+  rc.right = rc.left + ly.cell;
+  rc.bottom = rc.top + ly.cell;
   return rc;
 }
 
-/** 依目前子標籤回傳 autoDelete 或 autoDissolve。 */
-ItemFilterList &CurrentFilterList(PssConfig &cfg) {
-  return (g_itemSubTab == 0) ? cfg.autoDelete : cfg.autoDissolve;
+bool FilterCellInClip(const ItemPageLayout &ly, const RECT &rc) {
+  return rc.bottom > ly.clip.top && rc.top < ly.clip.bottom;
 }
 
-const ItemFilterList &CurrentFilterList(const PssConfig &cfg) {
-  return (g_itemSubTab == 0) ? cfg.autoDelete : cfg.autoDissolve;
+ItemFilterList &FilterListOf(PssConfig &cfg, int listType) {
+  return (listType == 1) ? cfg.autoDissolve : cfg.autoDelete;
+}
+
+const ItemFilterList &FilterListOf(const PssConfig &cfg, int listType) {
+  return (listType == 1) ? cfg.autoDissolve : cfg.autoDelete;
 }
 
 // section 0=heal / 1=mana，落在左下「恢復道具設定」宮格內
@@ -444,7 +561,7 @@ RECT SlotRc(int section /*0 heal 1 mana*/, int index) {
   RECT box = (section == 0) ? HealBoxRc() : ManaBoxRc();
   // 標題列約 20px，再留一點給 HP/MP 示意條，槽列往上靠
   const int titleH = (int)(18 * g_scaleY);
-  const int barH = (int)(10 * g_scaleY);
+  const int barH = (int)(14 * g_scaleY);
   const int rowY = box.top + titleH + barH + (int)(4 * g_scaleY);
   const int slot = (int)(kSlotSize * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
   const int gap = (int)(kSlotGap * g_scaleX);
@@ -521,7 +638,13 @@ void QueueSave() {
 
 /** 排 128/0x59 請回推名單（開面板時）。 */
 void QueueFilterRequest(int listType) {
-  InterlockedExchange(&g_pendingFilterRequest, listType);
+  if (listType < 0 || listType > 1)
+    return;
+  const LONG bit = 1L << listType;
+  LONG old;
+  do {
+    old = g_pendingFilterRequest;
+  } while (InterlockedCompareExchange(&g_pendingFilterRequest, old | bit, old) != old);
 }
 
 // 編輯中游標：閃爍的「｜」（全形較好認）；關掉時只顯示已打的字。
@@ -784,14 +907,11 @@ void DrawSection(Gdiplus::Graphics &g, int section, const PssSection &sec,
   titleRc.right = box.right - (int)(4 * g_scaleX);
   DrawTextIn(g, titleRc, title, Gdiplus::Color(255, 230, 210, 160), 12, true, false);
 
-  // HP/MP 條 + 「當前/最大」文字（同步角色）
+  // HP/MP 條：數字＋百分比置中疊在條上
   RECT barRc = titleRc;
   barRc.top = titleRc.bottom + (int)(2 * g_scaleY);
-  barRc.bottom = barRc.top + (int)(12 * g_scaleY);
-  const int textW = (int)(90 * g_scaleX);
-  barRc.right = box.right - (int)(8 * g_scaleX) - textW;
-  if (barRc.right < barRc.left + (int)(40 * g_scaleX))
-    barRc.right = barRc.left + (int)(40 * g_scaleX);
+  barRc.bottom = barRc.top + (int)(14 * g_scaleY);
+  barRc.right = box.right - (int)(8 * g_scaleX);
 
   DrawRoundRect(g, barRc, Gdiplus::Color(255, 25, 20, 18),
                 Gdiplus::Color(255, 80, 70, 50), 1.0f);
@@ -809,15 +929,12 @@ void DrawSection(Gdiplus::Graphics &g, int section, const PssSection &sec,
                     (Gdiplus::REAL)fillW, (Gdiplus::REAL)(barRc.bottom - barRc.top));
   }
 
-  RECT numRc = barRc;
-  numRc.left = barRc.right + (int)(4 * g_scaleX);
-  numRc.right = box.right - (int)(4 * g_scaleX);
-  wchar_t vit[32] = {};
+  wchar_t vit[48] = {};
   if (maxv > 0)
-    swprintf_s(vit, L"%d/%d", cur, maxv);
+    swprintf_s(vit, L"%d/%d  %d%%", cur, maxv, (int)(ratio * 100.0 + 0.5));
   else
-    wcscpy_s(vit, L"\u2014/\u2014"); // —/—
-  DrawTextIn(g, numRc, vit, Gdiplus::Color(255, 230, 220, 200), 10, false, false);
+    wcscpy_s(vit, L"\u2014/\u2014");
+  DrawTextIn(g, barRc, vit, Gdiplus::Color(255, 245, 240, 220), 10, true, true);
 
   for (int i = 0; i < kPssSlotsPerSection; i++)
     DrawSlot(g, section, i, sec.slots[i]);
@@ -928,37 +1045,18 @@ void DrawBuffPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   }
 }
 
-/** 道具頁：刪除／溶解子標籤 + 宮格。 */
-void DrawItemPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
-  RECT o = ContentOuterRc();
-  DrawRoundRect(g, o, Gdiplus::Color(255, 48, 36, 30),
-                Gdiplus::Color(255, 120, 95, 55), 1.5f);
-
-  const wchar_t *subNames[2] = {L"刪除", L"溶解"};
-  for (int i = 0; i < 2; i++) {
-    RECT rc = ItemSubTabRc(i);
-    const bool active = (g_itemSubTab == i);
-    const bool pressed = (g_pressedSubTab == i);
-    DrawRoundRect(g, rc,
-                  active ? Gdiplus::Color(255, 70, 110, 50)
-                         : (pressed ? Gdiplus::Color(255, 60, 48, 40)
-                                    : Gdiplus::Color(255, 45, 36, 30)),
-                  active ? Gdiplus::Color(255, 140, 200, 90)
-                         : Gdiplus::Color(255, 120, 95, 55),
-                  active ? 2.0f : 1.2f);
-    DrawTextIn(g, rc, subNames[i], Gdiplus::Color(255, 240, 230, 200), 12, active,
-               true);
-  }
-
-  const ItemFilterList &list = CurrentFilterList(cfg);
-  for (int i = 0; i < kItemFilterMax; i++) {
-    RECT rc = FilterCellRc(i);
-    if (rc.bottom - rc.top < 12)
-      break;
-    const bool sel = (g_filterSel == i && i < list.count);
-    Gdiplus::Color fill(255, 40, 32, 28);
+/** 道具頁：左欄目前標籤的宮格，格子黑底。 */
+void DrawFilterGrid(Gdiplus::Graphics &g, const ItemPageLayout &ly, int listType,
+                    const ItemFilterList &list) {
+  const int n = ly.cells;
+  for (int i = 0; i < n; i++) {
+    RECT rc = FilterCellRcAt(ly, listType, i);
+    if (!FilterCellInClip(ly, rc))
+      continue;
+    const bool sel = (g_filterListType == listType && g_filterSel == i && i < list.count);
+    Gdiplus::Color fill(255, 0, 0, 0);
     Gdiplus::Color stroke =
-        sel ? Gdiplus::Color(255, 255, 220, 120) : Gdiplus::Color(255, 90, 75, 50);
+        sel ? Gdiplus::Color(255, 255, 220, 120) : Gdiplus::Color(255, 70, 70, 70);
     DrawRoundRect(g, rc, fill, stroke, sel ? 2.2f : 1.0f);
     if (i < list.count && list.items[i].itemId > 0) {
       Gdiplus::Bitmap *icon = GetItemIconBitmap(list.items[i].gfxid);
@@ -973,15 +1071,97 @@ void DrawItemPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
       }
     }
   }
+}
 
-  if (g_filterSel >= 0 && g_filterSel < list.count) {
-    RECT rm = FilterRemoveRc();
+void DrawItemPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
+  RECT o = ContentOuterRc();
+  DrawRoundRect(g, o, Gdiplus::Color(255, 48, 36, 30),
+                Gdiplus::Color(255, 120, 95, 55), 1.5f);
+
+  ItemPageLayout ly;
+  BuildItemPageLayout(&ly, cfg);
+
+  DrawRoundRect(g, ly.leftPane, Gdiplus::Color(255, 40, 30, 26),
+                Gdiplus::Color(255, 90, 75, 50), 1.0f);
+  DrawRoundRect(g, ly.rightPane, Gdiplus::Color(255, 40, 30, 26),
+                Gdiplus::Color(255, 90, 75, 50), 1.0f);
+
+  const wchar_t *subLabels[2] = {L"刪除", L"溶解"};
+  for (int i = 0; i < 2; i++) {
+    const bool active = (g_filterListType == i);
+    const bool pressed = (g_pressedSubTab == i);
+    DrawRoundRect(g, ly.subTab[i],
+                  pressed ? Gdiplus::Color(255, 90, 60, 40)
+                          : (active ? Gdiplus::Color(255, 80, 58, 38)
+                                    : Gdiplus::Color(255, 32, 24, 20)),
+                  Gdiplus::Color(255, 160, 130, 70), active ? 2.0f : 1.0f);
+    DrawTextIn(g, ly.subTab[i], subLabels[i], Gdiplus::Color(255, 230, 210, 160), 12,
+               true, true);
+  }
+
+  Gdiplus::Rect clipR(ly.clip.left, ly.clip.top, ly.clip.right - ly.clip.left,
+                      ly.clip.bottom - ly.clip.top);
+  g.SetClip(clipR);
+  DrawFilterGrid(g, ly, g_filterListType, FilterListOf(cfg, g_filterListType));
+  g.ResetClip();
+
+  if (ly.scrollMax > 0) {
+    DrawRoundRect(g, ly.track, Gdiplus::Color(255, 20, 16, 14),
+                  Gdiplus::Color(255, 80, 70, 50), 1.0f);
+    int viewH = ly.clip.bottom - ly.clip.top;
+    int thumbH = viewH * viewH / ly.contentH;
+    if (thumbH < (int)(18 * g_scaleY))
+      thumbH = (int)(18 * g_scaleY);
+    int travel = (ly.track.bottom - ly.track.top) - thumbH;
+    int thumbY = ly.track.top;
+    if (ly.scrollMax > 0)
+      thumbY += travel * ly.scrollY / ly.scrollMax;
+    RECT thumb = {ly.track.left + 1, thumbY, ly.track.right - 1, thumbY + thumbH};
+    DrawRoundRect(g, thumb, Gdiplus::Color(255, 90, 70, 50),
+                  Gdiplus::Color(255, 160, 130, 70), 1.0f);
+  }
+
+  if (g_filterSel >= 0) {
+    RECT rm = ly.remove;
     DrawRoundRect(g, rm,
                   g_pressedRemove ? Gdiplus::Color(255, 140, 50, 40)
                                   : Gdiplus::Color(255, 90, 40, 35),
                   Gdiplus::Color(255, 220, 140, 80), 2.0f);
     DrawTextIn(g, rm, L"移除", Gdiplus::Color(255, 255, 240, 200), 12, true, true);
   }
+
+  DrawTextIn(g, ly.darkHead, L"提煉黑魔石", Gdiplus::Color(255, 230, 210, 160), 12, true,
+             false);
+  for (int i = 0; i < 4; i++) {
+    DrawRoundRect(g, ly.stone[i], Gdiplus::Color(255, 0, 0, 0),
+                  Gdiplus::Color(255, 120, 95, 55), 1.2f);
+    Gdiplus::Bitmap *icon = GetItemIconBitmap(kDarkStoneGfx[i]);
+    if (icon) {
+      int pad = (int)(3 * g_scaleX);
+      Gdiplus::RectF ir((Gdiplus::REAL)(ly.stone[i].left + pad),
+                        (Gdiplus::REAL)(ly.stone[i].top + pad),
+                        (Gdiplus::REAL)(ly.stone[i].right - ly.stone[i].left - pad * 2),
+                        (Gdiplus::REAL)(ly.stone[i].bottom - ly.stone[i].top - pad * 2));
+      g.DrawImage(icon, ir);
+    } else {
+      DrawItemPlaceholderIcon(g, ly.stone[i], false);
+    }
+    DrawRoundRect(g, ly.stoneChk[i],
+                  cfg.darkStone[i] ? Gdiplus::Color(255, 90, 140, 70)
+                                   : Gdiplus::Color(255, 30, 24, 20),
+                  Gdiplus::Color(255, 160, 130, 70), 1.5f);
+    if (cfg.darkStone[i]) {
+      DrawTextIn(g, ly.stoneChk[i], L"✓", Gdiplus::Color(255, 230, 255, 210), 11, true,
+                 true);
+    }
+  }
+
+  DrawTextIn(g, ly.scrollHead, L"製作魔法卷軸", Gdiplus::Color(255, 230, 210, 160), 12,
+             true, false);
+  DrawRoundRect(g, ly.scrollBody, Gdiplus::Color(255, 28, 22, 18),
+                Gdiplus::Color(255, 80, 70, 50), 1.0f);
+  DrawTextIn(g, ly.scrollBody, L"技能欄未接", Gdiplus::Color(255, 140, 120, 90), 12, true,
+             true);
 }
 
 /** 傳送頁暫用佔位。 */
@@ -1097,7 +1277,7 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
              g_activeTab == Tab_Buff
                  ? L"點格子選背包道具；點格子下方 % 設門檻｜啟動對應 autoPotionEnabled"
                  : (g_activeTab == Tab_Item
-                        ? L"本機刪除／溶解會加入名單；點格子後按移除"
+                        ? L"刪除與溶解同一頁；滿 40 格會加一行，過長請滾輪"
                         : L""),
              Gdiplus::Color(255, 140, 130, 110), 10, false, false);
 
@@ -1303,41 +1483,56 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
   }
 
   if (g_activeTab == Tab_Item) {
+    ItemPageLayout ly;
+    PssConfig cfgSnap;
+    {
+      std::lock_guard<std::mutex> lock(g_lock);
+      cfgSnap = g_cfg;
+    }
+    BuildItemPageLayout(&ly, cfgSnap);
     for (int i = 0; i < 2; i++) {
-      if (PtIn(ItemSubTabRc(i), x, y)) {
+      if (PtIn(ly.subTab[i], x, y)) {
         g_pressedSubTab = i;
         PaintLayered(hwnd);
         return;
       }
     }
+    for (int i = 0; i < 4; i++) {
+      if (PtIn(ly.stone[i], x, y) || PtIn(ly.stoneChk[i], x, y)) {
+        {
+          std::lock_guard<std::mutex> lock(g_lock);
+          g_cfg.darkStone[i] = !g_cfg.darkStone[i];
+        }
+        QueueSave();
+        PaintLayered(hwnd);
+        return;
+      }
+    }
     {
-      std::lock_guard<std::mutex> lock(g_lock);
-      const ItemFilterList &list = CurrentFilterList(g_cfg);
-      if (g_filterSel >= 0 && g_filterSel < list.count &&
-          PtIn(FilterRemoveRc(), x, y)) {
+      const ItemFilterList &list = FilterListOf(cfgSnap, g_filterListType);
+      if (g_filterSel >= 0 && g_filterSel < list.count && PtIn(ly.remove, x, y)) {
         g_pressedRemove = 1;
         PaintLayered(hwnd);
         return;
       }
     }
-    for (int i = 0; i < kItemFilterMax; i++) {
-      RECT rc = FilterCellRc(i);
-      if (rc.bottom - rc.top < 12)
-        break;
-      if (!PtIn(rc, x, y))
+    if (x < ly.clip.left || x >= ly.clip.right || y < ly.clip.top || y >= ly.clip.bottom)
+      return;
+    const ItemFilterList &list = FilterListOf(cfgSnap, g_filterListType);
+    for (int i = 0; i < ly.cells; i++) {
+      RECT rc = FilterCellRcAt(ly, g_filterListType, i);
+      if (!FilterCellInClip(ly, rc) || !PtIn(rc, x, y))
         continue;
-      int count = 0;
-      {
-        std::lock_guard<std::mutex> lock(g_lock);
-        count = CurrentFilterList(g_cfg).count;
-      }
-      if (i < count)
+      if (i < list.count) {
         g_filterSel = i;
-      else
+      } else {
         g_filterSel = -1;
+      }
       PaintLayered(hwnd);
       return;
     }
+    g_filterSel = -1;
+    PaintLayered(hwnd);
     return;
   }
 
@@ -1398,8 +1593,10 @@ void OnLButtonUp(HWND hwnd, int x, int y) {
       g_activeTab = t;
       g_filterSel = -1;
       CancelTextEdit();
-      if (t == Tab_Item)
-        QueueFilterRequest(g_itemSubTab);
+      if (t == Tab_Item) {
+        QueueFilterRequest(kItemFilterListDelete);
+        QueueFilterRequest(kItemFilterListDissolve);
+      }
     }
     PaintLayered(hwnd);
     return;
@@ -1407,10 +1604,18 @@ void OnLButtonUp(HWND hwnd, int x, int y) {
   if (g_pressedSubTab >= 0) {
     int t = g_pressedSubTab;
     g_pressedSubTab = -1;
-    if (PtIn(ItemSubTabRc(t), x, y)) {
-      g_itemSubTab = t;
-      g_filterSel = -1;
-      QueueFilterRequest(t);
+    if (g_activeTab == Tab_Item) {
+      ItemPageLayout ly;
+      PssConfig cfgSnap;
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        cfgSnap = g_cfg;
+      }
+      BuildItemPageLayout(&ly, cfgSnap);
+      if (t >= 0 && t < 2 && PtIn(ly.subTab[t], x, y)) {
+        g_filterListType = t;
+        g_filterSel = -1;
+      }
     }
     PaintLayered(hwnd);
     return;
@@ -1420,7 +1625,7 @@ void OnLButtonUp(HWND hwnd, int x, int y) {
     if (PtIn(FilterRemoveRc(), x, y) && g_filterSel >= 0) {
       {
         std::lock_guard<std::mutex> lock(g_lock);
-        ItemFilterList &list = CurrentFilterList(g_cfg);
+        ItemFilterList &list = FilterListOf(g_cfg, g_filterListType);
         if (g_filterSel < list.count) {
           for (int i = g_filterSel; i < list.count - 1; i++)
             list.items[i] = list.items[i + 1];
@@ -1510,6 +1715,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     {
       std::lock_guard<std::mutex> lock(g_lock);
       g_cfg = loaded;
+      // 數量以伺服器 PacketBox 46 為準；cfg 快照可能是舊的（背包已空仍亮著）
+      for (int i = 0; i < kPssSlotsPerSection; i++) {
+        g_cfg.heal.slots[i].count = 0;
+        g_cfg.mana.slots[i].count = 0;
+      }
     }
     AttackDamageHook_SetEnabled(loaded.showDamage);
     // 2026-09-10：名稱/數量現在跟著設定檔一起讀（PssSlot.name/count），
@@ -1643,7 +1853,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         g_pendingCfg = g_cfg;
       }
       g_filterSel = -1;
-      InterlockedExchange(&g_pendingSave, 1);
+      // 只更新畫面。回推若再 QueueSave 會在開面板時重送 128 名單，
+      // 且 SendPacketData 會從 my_send 重入把 native 組包打亂。
       delete m;
       if (g_visible.load())
         PaintLayered(hwnd);
@@ -1663,6 +1874,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     if (g_hoverSection >= 0 || g_hoverSlot >= 0) {
       g_hoverSection = -1;
       g_hoverSlot = -1;
+      PaintLayered(hwnd);
+    }
+    return 0;
+  case WM_MOUSEWHEEL:
+    if (g_activeTab == Tab_Item && g_itemScrollMax > 0) {
+      int delta = GET_WHEEL_DELTA_WPARAM(wp);
+      int step = (int)(32 * g_scaleY);
+      int idx = (g_filterListType == 1) ? 1 : 0;
+      if (delta > 0)
+        g_itemScrollY[idx] -= step;
+      else
+        g_itemScrollY[idx] += step;
+      if (g_itemScrollY[idx] < 0)
+        g_itemScrollY[idx] = 0;
+      if (g_itemScrollY[idx] > g_itemScrollMax)
+        g_itemScrollY[idx] = g_itemScrollMax;
       PaintLayered(hwnd);
     }
     return 0;
@@ -1880,11 +2107,12 @@ void PssOverlay_OnResolveReply(bool success, int section, int slot,
   PostMessageW(hwnd, WM_PSS_RESOLVE_REPLY, 0, (LPARAM)m);
 }
 
-void PssOverlay_PumpPendingSave() {
-  LONG req = InterlockedExchange(&g_pendingFilterRequest, -1);
-  if (req >= 0) {
-    PssConfig_RequestItemFilterList((int)req);
-  }
+static void PumpPendingSaveUnlocked() {
+  LONG bits = InterlockedExchange(&g_pendingFilterRequest, 0);
+  if (bits & 1)
+    PssConfig_RequestItemFilterList(kItemFilterListDelete);
+  if (bits & 2)
+    PssConfig_RequestItemFilterList(kItemFilterListDissolve);
   if (InterlockedExchange(&g_pendingSave, 0) == 0)
     return;
   PssConfig cfg;
@@ -1894,14 +2122,15 @@ void PssOverlay_PumpPendingSave() {
   }
   ApLog("PumpPendingSave flush");
   PssConfig_Save(cfg);
-  // 75 喝水（62）+ 128 flags 吃肉／修武（4）+ 128 名單。必須遊戲主執行緒。
+  // 進世界／儲存：75 喝水（含啟動）+ 128 吃肉／修武 + 128 黑魔石 + 128 名單。
   PssConfig_SendToServer(cfg);
   PssConfig_SendStatusToServer(cfg);
+  PssConfig_SendCraftToServer(cfg);
   PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
   PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
 }
 
-void PssOverlay_PumpPendingUiNotify() {
+static void PumpPendingUiNotifyUnlocked() {
   LONG v = InterlockedExchange(&g_pendingUiNotify, -1);
   if (v < 0)
     return;
@@ -1915,6 +2144,7 @@ void PssOverlay_PumpPendingUiNotify() {
     }
     PssConfig_SendToServer(cfg);
     PssConfig_SendStatusToServer(cfg);
+    PssConfig_SendCraftToServer(cfg);
     PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
     PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
     PssConfig_RequestItemFilterList(kItemFilterListDelete);
@@ -1922,6 +2152,19 @@ void PssOverlay_PumpPendingUiNotify() {
   }
   PssConfig_SendUiVisible(v != 0);
 }
+
+// SendPacketData 會走到 my_send，裡面又 Pump。重入會在 native 組包緩衝上疊下一包。
+static void PumpPendingAll() {
+  if (InterlockedCompareExchange(&g_inPump, 1, 0) != 0)
+    return;
+  PumpPendingSaveUnlocked();
+  PumpPendingUiNotifyUnlocked();
+  InterlockedExchange(&g_inPump, 0);
+}
+
+void PssOverlay_PumpPendingSave() { PumpPendingAll(); }
+
+void PssOverlay_PumpPendingUiNotify() { PumpPendingAll(); }
 
 void PssOverlay_OnHpUpdate(int cur, int max) {
   ClampVital(&cur, &max);
@@ -2021,9 +2264,36 @@ void PssOverlay_OnItemFilterList(int listType, int n, const int *itemIds,
       }
       g_pendingCfg = g_cfg;
     }
-    InterlockedExchange(&g_pendingSave, 1);
     delete m;
     return;
   }
   PostMessageW(hwnd, WM_PSS_ITEM_FILTER, 0, (LPARAM)m);
+}
+
+void PssOverlay_OnWorldEnter() {
+  static DWORD lastApply = 0;
+  const DWORD now = GetTickCount();
+  if (lastApply != 0 && (now - lastApply) < 2000)
+    return;
+  lastApply = now;
+
+  PssConfig cfg;
+  if (!g_visible.load()) {
+    cfg = PssConfig_Load();
+    {
+      std::lock_guard<std::mutex> lock(g_lock);
+      g_cfg = cfg;
+      g_pendingCfg = cfg;
+    }
+    AttackDamageHook_SetEnabled(cfg.showDamage);
+  } else {
+    std::lock_guard<std::mutex> lock(g_lock);
+    cfg = g_cfg;
+    g_pendingCfg = cfg;
+  }
+  InterlockedExchange(&g_pendingSave, 1);
+  ApLog("world enter: apply cfg enabled=%d eat=%d whet=%d ds=%d%d%d%d",
+        (int)cfg.enabled, (int)cfg.eatMeat, (int)cfg.whetstone,
+        (int)cfg.darkStone[0], (int)cfg.darkStone[1], (int)cfg.darkStone[2],
+        (int)cfg.darkStone[3]);
 }

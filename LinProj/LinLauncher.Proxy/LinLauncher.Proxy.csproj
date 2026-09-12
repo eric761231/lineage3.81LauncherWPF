@@ -19,6 +19,8 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- 消除 CA1416：本專案為 WinForms 殼，僅支援 Windows（MessageBox 等 API） -->
+    <SupportedOSPlatformVersion>6.1</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>LinLauncher.Proxy</RootNamespace>

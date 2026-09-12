@@ -49,21 +49,6 @@ namespace LinEncoder
             this.Close();
         }
 
-        private void ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private void PatchSourceDir_LostFocus(object sender, RoutedEventArgs e)
         {
             if (DataContext is EncoderViewModel vm)

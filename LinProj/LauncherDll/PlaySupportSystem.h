@@ -10,6 +10,7 @@ constexpr DWORD kPssPacketBoxResolve = 0x20;     // 32 解析道具回覆
 constexpr DWORD kPssPacketBoxVitals = 0x27;      // 39 HP/MP
 constexpr DWORD kPssPacketBoxSlotCounts = 0x2E;  // 46 槽數量
 constexpr DWORD kPssPacketBoxItemFilter = 0x2F;  // 47 刪除／溶解名單
+constexpr DWORD kPacketBoxKarma = 87;            // S_PacketBox.KARMA，登入進世界
 
 // cave 呼叫：subtype 為 EAX。若為 PSS 子類型則解析並回傳非 0（吃掉這包）。
 extern "C" DWORD __cdecl PlaySupportSystem_OnPacketBox(DWORD subtype,

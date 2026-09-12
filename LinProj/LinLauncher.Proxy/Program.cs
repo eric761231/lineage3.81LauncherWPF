@@ -26,10 +26,12 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Windows.Forms;
 
 namespace LinLauncher.Proxy;
 
+[SupportedOSPlatform("windows")]
 internal static class Program
 {
     /// <summary>

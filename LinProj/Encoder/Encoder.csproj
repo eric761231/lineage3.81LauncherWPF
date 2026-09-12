@@ -17,9 +17,7 @@
     <ApplicationIcon>Assets\Encoder.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2420.47" />
-  </ItemGroup>
+  <!-- Encoder UI 本身不使用 WebView2；登入器範本內的 WebView 由 LinLauncher.Proxy 自行引用。 -->
 
   <!-- 無法使用 ProjectReference（Encoder 為自含式 WinExe 會觸發 NETSDK1150）；建置前先「發佈」
        LinLauncher.Proxy（必須是 Publish，不能只是 Build——PublishSingleFile 只在 publish 時生效，

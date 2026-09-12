@@ -23,6 +23,7 @@
 // data-driven instead of blanket.
 #include "stdafx.h"
 #include "HitFlinchPatch.h"
+#include "LauncherDll.h"
 #include <cstring>
 #include "detours.h"
 // stdafx.h defines WIN32_LEAN_AND_MEAN, which strips the RPC/OLE headers
@@ -44,33 +45,7 @@ namespace {
  * @param ... 可變參數
  */
 void HfLog(const char *fmt, ...) {
-  char exePath[MAX_PATH] = {0};
-  char logPath[MAX_PATH] = "./Core/launcher.log";
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
-    for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
-      if (exePath[i] == '\\' || exePath[i] == '/') {
-        exePath[i] = '\0';
-        break;
-      }
-    }
-    sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
-  }
-  FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) {
-    return;
-  }
-  SYSTEMTIME st;
-  GetLocalTime(&st);
-  char msg[512] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf_s(msg, fmt, args);
-  va_end(args);
-  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] [HitFlinch] %s\n",
-          st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-          st.wMilliseconds, (unsigned)GetCurrentProcessId(), (unsigned)GetCurrentThreadId(), msg);
-  fflush(fp);
-  fclose(fp);
+  (void)fmt;
 }
 
 typedef bool(__thiscall *ShouldSkipFlinch_t)(void *obj);
@@ -172,7 +147,7 @@ void InstallHitFlinchPatch() {
 
   const BYTE expected[6] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08};
   if (memcmp((void *)0x5ABE70, expected, 6) != 0) {
-    HfLog("0x5ABE70 prologue mismatch, skipping install");
+    launcherdll_hook_log("[Install] HitFlinch skip");
     return;
   }
 
@@ -180,5 +155,5 @@ void InstallHitFlinchPatch() {
   DetourUpdateThread(GetCurrentThread());
   DetourAttach(&(PVOID &)real_ShouldSkipFlinch, reinterpret_cast<PVOID>(Hook_ShouldSkipFlinch));
   LONG result = DetourTransactionCommit();
-  HfLog("SHOULD_SKIP_FLINCH hook install result=%ld", result);
+  launcherdll_hook_log("[Install] HitFlinch %s", result == 0 ? "ok" : "fail");
 }

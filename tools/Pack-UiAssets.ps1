@@ -1,7 +1,8 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 # UTF-8
 # Packs ALL of this project's self-made overlay assets (Mimir Power UI +
-# HitFlinchPatch's NpcFlinch.xml) into ONE shared ui.pak + ui.idx, since every
+# HitFlinchPatch's NpcFlinch.xml)
+# into ONE shared ui.pak + ui.idx, since every
 # caller uses OverlayAssets_Load("ui", "ui") — same folderName/pakBaseName, so
 # they hit the same cache entry and share one decrypted pak in memory instead
 # of each loading/decrypting its own separate .pak.
@@ -72,6 +73,18 @@ param(
         "NpcFlinch.xml"
     )
 )
+
+# 2026-09-09：自動喝水道具圖示（AutoPotionOverlay.cpp 的 GetItemIconBitmap，
+# 檔名規則 item_<gfxid>.png，見 docs/AutoPotionOverlay_現況與圖示交接.md）。
+# gfxid 集合會隨著白名單道具增減，不寫死清單——直接把 SourceFolder 裡所有
+# "item_*.png" 都收進來，新增/刪除圖檔不用改這支腳本。故意跟上面 Mimir 那組
+# 純數字檔名（7800.png 等）分開命名空間，避免 gfxid 剛好撞到 Mimir 的 icon id。
+$itemIconFiles = @(Get-ChildItem -LiteralPath $SourceFolder -Filter "item_*.png" -File -ErrorAction SilentlyContinue |
+    Sort-Object Name | ForEach-Object { $_.Name })
+if ($itemIconFiles) {
+    $Files = @($Files) + @($itemIconFiles)
+    Write-Host "Found $($itemIconFiles.Count) item_*.png icon(s) in $SourceFolder, adding to pack list." -ForegroundColor Cyan
+}
 
 $ErrorActionPreference = "Stop"
 

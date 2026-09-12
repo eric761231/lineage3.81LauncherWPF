@@ -27,9 +27,12 @@ static void ApCfgLog(const char *fmt, ...) {
 constexpr BYTE kOpcodePlaySupport = 75;  // 恢復（喝水／解析／面板）
 constexpr BYTE kOpcodeItemFilter = 128;  // 借位名稱沿用；實際含名單＋其他頁 flags
 constexpr BYTE kMagicUiVisible = 0x56;   // 僅 75：面板開／關
-constexpr BYTE kMagicItemFilterSync = 0x58;    // 僅 128：同步刪除／溶解 itemId
+constexpr BYTE kMagicItemFilterSync = 0x58;    // 僅 128：名單第一段（覆寫）
 constexpr BYTE kMagicItemFilterRequest = 0x59; // 僅 128：請 PacketBox 47 回推
-constexpr BYTE kMagicMiscFlags = 0x5A;         // 僅 128：其他頁打勾（勿與舊 75/0x57 搞混）
+constexpr BYTE kMagicMiscFlags = 0x5A;         // 僅 128：其他頁打勾
+constexpr BYTE kMagicItemFilterAppend = 0x5B;  // 僅 128：名單續段（追加，勿清）
+constexpr BYTE kMagicCraftFlags = 0x5C;        // 僅 128：提煉黑魔石四勾
+constexpr int kItemFilterChunk = 20;           // 每包最多 20 個 d；40 個分兩包，避免 164-byte 打亂加密
 
 typedef void(__cdecl *SendPacketDataFn)(const char *format, ...);
 const SendPacketDataFn SendPacketData = (SendPacketDataFn)0x580E50;
@@ -311,6 +314,11 @@ PssConfig PssConfig_Load() {
       cfg.whetstoneItemId = atoi(value.c_str());
     } else if (key == "client.showDamage") {
       cfg.showDamage = (atoi(value.c_str()) != 0);
+    } else if (key.rfind("craft.darkStone", 0) == 0 && key.size() == 16) {
+      int idx = key[15] - '0';
+      if (idx >= 0 && idx < 4) {
+        cfg.darkStone[idx] = (atoi(value.c_str()) != 0);
+      }
     } else if (key == "delete_ids") {
       deleteIds = value;
     } else if (key == "delete_gfx") {
@@ -403,6 +411,9 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
   fout << "status.eatMeatItemId=" << cfg.eatMeatItemId << "\n";
   fout << "status.whetstoneItemId=" << cfg.whetstoneItemId << "\n";
   fout << "client.showDamage=" << (cfg.showDamage ? 1 : 0) << "\n";
+  for (int i = 0; i < 4; i++) {
+    fout << "craft.darkStone" << i << "=" << (cfg.darkStone[i] ? 1 : 0) << "\n";
+  }
   fout << "delete_ids=" << JoinFilterIds(cfg.autoDelete) << "\n";
   fout << "delete_gfx=" << JoinFilterGfx(cfg.autoDelete) << "\n";
   fout << "delete_names=" << JoinFilterNames(cfg.autoDelete) << "\n";
@@ -473,6 +484,27 @@ void PssConfig_SendStatusToServer(const PssConfig &cfgIn) {
 }
 
 /**
+ * @brief 送提煉黑魔石四勾。
+ * opcode 128 + magic 0x5C + flags + pad = 4 bytes（≠ 城堡 5，也不加長 0x5A）。
+ * bit0～3＝一級～四級；沒勾的級跳過，不要隱含從一級一路煉上來。
+ */
+void PssConfig_SendCraftToServer(const PssConfig &cfgIn) {
+  PssConfig cfg = cfgIn;
+  ClampPssConfig(cfg);
+
+  BYTE flags = 0;
+  for (int i = 0; i < 4; i++) {
+    if (cfg.darkStone[i]) {
+      flags |= (BYTE)(1 << i);
+    }
+  }
+
+  SendPacketData("cccc", (int)kOpcodeItemFilter, (int)kMagicCraftFlags, (int)flags,
+                 0);
+  ApCfgLog("[Pss] send craft flags=0x%02X (128/0x5C 4-byte)", (unsigned)flags);
+}
+
+/**
  * @brief 發送道具解析請求至伺服器。
  * @param section 區塊 (0: heal, 1: mana)
  * @param slotIndex 欄位索引 (0~4)
@@ -502,33 +534,51 @@ void PssConfig_SendUiVisible(bool visible) {
 }
 
 /**
- * opcode 128 magic 0x58：固定送 n + 40 個 d（不足補 0）。listType 0=刪除 1=溶解。
- * 長度遠大於 5，C_SecurityStatus 不會當城堡。
+ * opcode 128：刪除／溶解名單。n=0 只送 4 bytes；n>0 只帶 n 個 d（n=1 為 8 bytes）。
+ * 不可固定 20 個 d：native SendPacketData 緩衝不夠時會打亂後續加密。
+ * 第一包 magic 0x58 覆寫，超過 20 筆第二包 0x5B 追加。
  */
-void PssConfig_SendItemFilterList(int listType, const ItemFilterList &listIn) {
-  int n = listIn.count;
-  if (n < 0) {
-    n = 0;
+static void SendItemFilterChunk(BYTE magic, int listType, int n, const int *ids) {
+  if (n <= 0) {
+    SendPacketData("cccc", (int)kOpcodeItemFilter, (int)magic, listType, 0);
+    return;
   }
-  if (n > kItemFilterMax) {
-    n = kItemFilterMax;
+  int a[kItemFilterChunk] = {};
+  if (n > kItemFilterChunk) {
+    n = kItemFilterChunk;
   }
-  int ids[kItemFilterMax] = {};
+  memcpy(a, ids, (size_t)n * sizeof(int));
+  char fmt[8 + kItemFilterChunk] = "cccc";
   for (int i = 0; i < n; i++) {
-    ids[i] = listIn.items[i].itemId;
+    fmt[4 + i] = 'd';
   }
-  SendPacketData(
-      "cccc"
-      "dddddddddd"
-      "dddddddddd"
-      "dddddddddd"
-      "dddddddddd",
-      (int)kOpcodeItemFilter, (int)kMagicItemFilterSync, listType, n, ids[0],
-      ids[1], ids[2], ids[3], ids[4], ids[5], ids[6], ids[7], ids[8], ids[9],
-      ids[10], ids[11], ids[12], ids[13], ids[14], ids[15], ids[16], ids[17],
-      ids[18], ids[19], ids[20], ids[21], ids[22], ids[23], ids[24], ids[25],
-      ids[26], ids[27], ids[28], ids[29], ids[30], ids[31], ids[32], ids[33],
-      ids[34], ids[35], ids[36], ids[37], ids[38], ids[39]);
+  fmt[4 + n] = 0;
+  // 多餘的 a[] 引數在 fmt 只有 n 個 d 時不會被寫進封包。
+  SendPacketData(fmt, (int)kOpcodeItemFilter, (int)magic, listType, n, a[0],
+                 a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10],
+                 a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18], a[19]);
+}
+
+void PssConfig_SendItemFilterList(int listType, const ItemFilterList &listIn) {
+  int ids[kItemFilterMax] = {};
+  int n = 0;
+  const int cap = listIn.count < kItemFilterMax ? listIn.count : kItemFilterMax;
+  for (int i = 0; i < cap; i++) {
+    if (listIn.items[i].itemId > 0) {
+      ids[n++] = listIn.items[i].itemId;
+    }
+  }
+  SendItemFilterChunk(kMagicItemFilterSync, listType,
+                      n < kItemFilterChunk ? n : kItemFilterChunk, ids);
+  int off = n < kItemFilterChunk ? n : kItemFilterChunk;
+  while (off < n) {
+    int chunk = n - off;
+    if (chunk > kItemFilterChunk) {
+      chunk = kItemFilterChunk;
+    }
+    SendItemFilterChunk(kMagicItemFilterAppend, listType, chunk, ids + off);
+    off += chunk;
+  }
   ApCfgLog("[Pss] send item-filter type=%d n=%d", listType, n);
 }
 

@@ -191,7 +191,6 @@ void InstallAttackDamageFeetHook() {
       memcmp((void *)kRemoteAddr, kRemoteOrig, kRemoteLen) != 0 ||
       memcmp((void *)kPostAc80Addr, kPostOrig, kPostLen) != 0 ||
       memcmp((void *)kAc80ResetAddr, kResetOrig, kResetLen) != 0) {
-    launcherdll_hook_log("[AttackDmgFeet][WARN] bytes mismatch, skip");
     return;
   }
 
@@ -199,7 +198,6 @@ void InstallAttackDamageFeetHook() {
   BYTE *cave = (BYTE *)VirtualAlloc(NULL, kCaveSize, MEM_COMMIT | MEM_RESERVE,
                                     PAGE_EXECUTE_READWRITE);
   if (!cave) {
-    launcherdll_hook_log("[AttackDmgFeet][WARN] VirtualAlloc failed");
     return;
   }
 
@@ -236,7 +234,4 @@ void InstallAttackDamageFeetHook() {
 
   // 5. 標記已成功安裝並輸出日誌
   g_installed = true;
-  launcherdll_hook_log(
-      "[AttackDmgFeet] installed cave=%p (remote=+0x%X local=+0x%X post=+0x%X reset=+0x%X)",
-      cave, remoteOff, localOff, postOff, resetOff);
 }

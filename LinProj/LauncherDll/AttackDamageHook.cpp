@@ -396,7 +396,7 @@ void InstallAttackDamageHook() {
   if (memcmp((void *)kAttackAddr, kAttackOrig, kAttackLen) != 0 ||
       memcmp((void *)kAoeAddr, kAoeOrig, kAoeLen) != 0 ||
       memcmp((void *)kMagicAoeAddr, kMagicAoeOrig, kMagicAoeLen) != 0) {
-    launcherdll_hook_log("[AttackDmg][WARN] site bytes mismatch, skip");
+    launcherdll_hook_log("[Install] AttackDmg skip");
     return;
   }
 
@@ -404,7 +404,7 @@ void InstallAttackDamageHook() {
   BYTE *cave = (BYTE *)VirtualAlloc(NULL, kCaveSize, MEM_COMMIT | MEM_RESERVE,
                                     PAGE_EXECUTE_READWRITE);
   if (!cave) {
-    launcherdll_hook_log("[AttackDmg][WARN] VirtualAlloc failed");
+    launcherdll_hook_log("[Install] AttackDmg skip");
     return;
   }
 
@@ -440,9 +440,7 @@ void InstallAttackDamageHook() {
   {
     PssConfig cfg = PssConfig_Load();
     g_enabled.store(cfg.showDamage, std::memory_order_relaxed);
-    launcherdll_hook_log(
-        "[AttackDmg] installed attack/aoe/magic cave=%p size=%d showDamage=%d",
-        cave, off, (int)cfg.showDamage);
+    launcherdll_hook_log("[Install] AttackDmg ok");
   }
 }
 
@@ -455,7 +453,6 @@ void AttackDamageHook_SetEnabled(bool enabled) {
   if (enabled) {
     g_accum = {};
   }
-  launcherdll_hook_log("[AttackDmg] enabled=%d", enabled ? 1 : 0);
 }
 
 /**

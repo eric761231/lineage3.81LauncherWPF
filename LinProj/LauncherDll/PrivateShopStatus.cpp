@@ -5,13 +5,6 @@
 #include <string.h>
 
 // ---------------------------------------------------------------------------
-// 全域除錯與 Log 計數器：限制高頻路徑的 Log 輸出次數，避免刷屏。
-// ---------------------------------------------------------------------------
-static int g_shBlobLogs = 0;   // PrivateShopPickStatus 的執行次數
-static int g_shTipLogs = 0;    // ShopTipDrawFmt 的執行次數
-static int g_shCloneLogs = 0;  // PrivateShopCopyBagFmt 的執行次數
-
-// ---------------------------------------------------------------------------
 // 遊戲主程式內的原生函式指標與固定記憶體位址。
 // ---------------------------------------------------------------------------
 // SplitFmt：將原始格式化字串依 0x17 切割成多行並填入偏移量。
@@ -77,6 +70,7 @@ static int VisLen(const char *s, int n) {
  * @return 計算出的 Tip 視窗寬度
  */
 extern "C" int __cdecl PrivateShopTipWidth(char *name, void *item) {
+  // 寬度取道具名稱與說明文字最長行的較大值；控制碼不應佔用可視寬度。
   int w = 0;
   // 先以道具名稱長度作為目前寬度下限，再與說明文字最長行比較。
   if (name) {
@@ -90,6 +84,7 @@ extern "C" int __cdecl PrivateShopTipWidth(char *name, void *item) {
     if (fmt && nlines > 0 && nlines <= 32) {
       const int flen = static_cast<int>(strlen(fmt));
       for (int i = 0; i < nlines; i++) {
+      // 每個 offset 指向一行起點；最後一行的結尾使用整個格式字串長度。
         int start = off[i];
         if (start < 0 || start > flen) {
           continue;
@@ -169,6 +164,7 @@ extern "C" int __cdecl PrivateShopTipHeight(void *item) {
  * @return 格式總行數
  */
 extern "C" int __cdecl PrivateShopCopyItemFmtFromBag(void *dst, void *srcItem) {
+  // 這個函式同時被個人商店與倉庫使用，因此只處理格式資料，不安裝任何 Hook。
   if (!dst || !srcItem || dst == srcItem) {
     return 0;
   }
@@ -183,6 +179,8 @@ extern "C" int __cdecl PrivateShopCopyItemFmtFromBag(void *dst, void *srcItem) {
   strncpy_s(buf, sizeof(buf), src, _TRUNCATE);
   int dummyOff[32];
   int dummyN = 0;
+  // SplitFmt 會回傳新的格式字串；dummyOff 只用來接收切割結果，真正的行偏移量
+  // 由 ApplyListFmtOffBag 依來源內容填入目標結構。
   char *copied = SplitFmt(buf, dummyOff, &dummyN);
   if (copied) {
     // 目標 +0x18 的行偏移量必須依來源字串重新計算，不能共用來源指標。
@@ -203,11 +201,9 @@ extern "C" int __cdecl PrivateShopCopyItemFmtFromBag(void *dst, void *srcItem) {
  * @param bag 背包道具指標
  */
 extern "C" void __cdecl PrivateShopCopyBagFmt(void *clone, void *bag) {
+  // 跳板只需要執行複製；正常成功不逐次記錄 Log，避免掛攤操作刷屏。
   const int n = PrivateShopCopyItemFmtFromBag(clone, bag);
-  if (n && g_shCloneLogs < 8) {
-    g_shCloneLogs++;
-    launcherdll_hook_log("[ShStatus] clone-fmt n=%d", n);
-  }
+  (void)n;
 }
 
 /**
@@ -218,6 +214,7 @@ extern "C" void __cdecl PrivateShopCopyBagFmt(void *clone, void *bag) {
  * @param color 文字顏色
  */
 extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
+  // 這是 Tooltip 的高頻繪製路徑，只負責逐行呼叫原生繪字函式，不輸出逐次 Log。
   if (!item) {
     return;
   }
@@ -230,10 +227,6 @@ extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
   // 取得遊戲全域字型物件，位址為 0x9A84E0。
   void *font = *reinterpret_cast<void **>(0x9A84E0);
   const int flen = static_cast<int>(strlen(fmt));
-  if (g_shTipLogs < 8) {
-    g_shTipLogs++;
-    launcherdll_hook_log("[ShStatus] tip n=%d y=%d flen=%d", nlines, y0, flen);
-  }
   // 逐行繪製，行距固定為 0xC；LineLen 會移除行尾控制字元。
   for (int i = 0; i < nlines; i++) {
     int start = off[i];
@@ -262,17 +255,13 @@ extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
  * @return 處理後的 blob 指標
  */
 extern "C" char *__cdecl PrivateShopPickStatus(char *blob, unsigned len) {
+  // Blob 入口同樣是高頻路徑；只切換額外換行狀態，不在正常資料流記錄內容。
   if (!len) {
     FmtExtraNlSet(0);
     return 0;
   }
   // 有狀態資料時開啟額外換行，讓後續 Tooltip 能保留狀態列。
   FmtExtraNlSet(1);
-  if (g_shBlobLogs < 16) {
-    g_shBlobLogs++;
-    launcherdll_hook_log("[ShStatus] blob len=%u first=%02X", len,
-                         (unsigned)(unsigned char)blob[0]);
-  }
   return blob;
 }
 
@@ -380,7 +369,7 @@ __declspec(naked) void Tramp_PrivateShopTipDraw() {
     push edx
     push dword ptr [ebp - 0x10]
     push ecx
-    call PrivateShopTipDrawFmt
+    call ShopTipDrawFmt
     add esp, 16
     push 0x5966A0
     ret
@@ -391,8 +380,8 @@ __declspec(naked) void Tramp_PrivateShopTipDraw() {
  * @brief 安裝商店狀態 Hook 函式。
  */
 void InstallPrivateShopStatusHook() {
-  // 實驗：商店列表第一行被砍，整組 JMP 先不打。要恢復把這段 return 拿掉即可。
-  launcherdll_hook_log("[ShStatus] install skipped (experiment)");
+  // 目前停用：整組修補曾造成商店列表第一行被截斷。失敗原因與重新啟用前的
+  // 驗證清單集中記錄於 docs/PrivateShopStatus_開發須知.md。
   return;
 
   // 各 Hook 目標位址：Blob、Tooltip 寬高、Tooltip 繪製與商品克隆。
@@ -413,8 +402,6 @@ void InstallPrivateShopStatusHook() {
   if (memcmp(pBlob, kShopPushStr, sizeof(kShopPushStr)) == 0) {
     PatchJmpN(pBlob, reinterpret_cast<void *>(Tramp_PrivateShopStatusPtr), 5);
     blobOk = 1;
-  } else {
-    launcherdll_hook_log("[ShStatus] 5423DD mismatch, skip blob");
   }
 
   int cloneOk = 0;
@@ -422,8 +409,6 @@ void InstallPrivateShopStatusHook() {
     PatchJmpN(pClone, reinterpret_cast<void *>(Tramp_PrivateShopCloneFmt),
               sizeof(kShopClone));
     cloneOk = 1;
-  } else {
-    launcherdll_hook_log("[ShStatus] 595736 clone mismatch, skip");
   }
 
   int widthOk = 0;
@@ -432,20 +417,15 @@ void InstallPrivateShopStatusHook() {
     PatchJmpN(pWidth, reinterpret_cast<void *>(Tramp_PrivateShopTipWidth),
               sizeof(kShopWidth));
     widthOk = 1;
-  } else {
-    launcherdll_hook_log("[ShStatus] 596053 width mismatch, skip");
   }
   if (memcmp(pDraw, kShopDraw, sizeof(kShopDraw)) == 0) {
     PatchJmpN(pDraw, reinterpret_cast<void *>(Tramp_PrivateShopTipDraw),
               sizeof(kShopDraw));
     drawOk = 1;
-  } else {
-    launcherdll_hook_log(
-        "[ShStatus] 596573 draw mismatch, skip 10=%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-        pDraw[0], pDraw[1], pDraw[2], pDraw[3], pDraw[4], pDraw[5], pDraw[6],
-        pDraw[7], pDraw[8], pDraw[9]);
   }
 
-  launcherdll_hook_log("[ShStatus] blob=%d width=%d draw=%d clone=%d",
+  // 只保留安裝結果摘要；正常成功時應為四條路徑全部為 1。
+  launcherdll_hook_log(
+      "[PrivateShopStatus] hook result blob=%d width=%d draw=%d clone=%d",
                        blobOk, widthOk, drawOk, cloneOk);
 }

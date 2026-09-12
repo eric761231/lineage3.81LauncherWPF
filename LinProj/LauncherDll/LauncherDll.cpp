@@ -15,13 +15,13 @@
 #include "WarehouseStatusHook.h"
 #include "TradeStatusHook.h"
 #include "PrivateShopStatus.h"
+#include "PatchUtil.h"
+#include "EquipUiPatch.h"
+#include "Login77Hook.h"
+#include "ItemStatusColorHook.h"
+#include "MorphPakInject.h"
 
 #include "VMProtectSDK.h"
-#include <map>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <intrin.h>
 #include <stdarg.h>
 
 #pragma comment(lib, "advapi32.lib")
@@ -36,39 +36,26 @@
 // =============================================================================
 // 全域變數宣告
 // =============================================================================
-constexpr int SERVER_LIST_RSA_XOR_N = 22345678;
-constexpr int SERVER_LIST_RSA_XOR_D = 32345678;
-
 // SHARE_INFO struct is now in ShareMemory.h
 HHOOK hhk = NULL;
 HHOOK h_hook = NULL;
 HINSTANCE hins;
 HANDLE g_hInitEvent = NULL;
 SHARE_INFO ShareInfo;
-BYTE *buffer = NULL;
-DWORD buffer_len = 0;
 char szTitle[32];
 HWND g_hGameWnd = NULL;
 bool g_dpiFixed = false;
-static bool g_hooked = false; // 是否已完成首次 Hook 安裝
-BYTE g_id[32];
-BYTE g_pwd[32];
-int g_pwd_pos = 0;
-
-// RSA 金鑰（由共享記憶體讀入，類型均在 DWORD 範圍內）
-
-
-// RSA 金鑰（由共享記憶體讀入，類型均在 DWORD 範圍內）
-
+static bool g_hooked = false;
 
 int _seed = 0;
 int _xorByte = 0;
 
-// RSA 金鑰（由共享記憶體讀入，類型均在 DWORD 範圍內）
 static DWORD _rsaD = 0;
 static DWORD _rsaN = 0;
 // 小數模冪：計算 base^exp mod mod（適用於 authdata ^ D mod N，皆為 DWORD）
 static DWORD modpow(unsigned long base, unsigned long exp, unsigned long mod) {
+  // 登入握手收到的 4-byte authdata 需要用 RSA 私鑰還原；這裡只處理協定使用的
+  // DWORD 範圍，不能把欄位誤當成任意精度資料。
   if (mod == 0)
     return 0;
   DWORDLONG result = 1;
@@ -83,37 +70,19 @@ static DWORD modpow(unsigned long base, unsigned long exp, unsigned long mod) {
 }
 
 bool inited = false;
-// =============================================================================
-// 前向宣告
-// =============================================================================
-static void launcherdll_net_log(const char *fmt, ...);
-void __dbg_print(const char *fmt, ...);
-bool __stdcall __fn1(DWORD tid);
 
-// =============================================================================
-// 亂數與封包加密
-// =============================================================================
 static int nextRand() {
+  // 與伺服器 RandomEnc 使用相同的 LCG；呼叫端必須持有送包鎖，避免金鑰流錯位。
   _seed = (214013 * _seed + 2531011) & 0x7FFFFFFF;
   return (int)(_seed >> 16) & 0xFF;
 }
 
-// __dbg_print: 跨檔案使用的除錯輸出函式 (不可設為 static)
-void __dbg_print(const char *fmt, ...) {
-  char buffer[8192] = {0};
-  va_list args;
-  va_start(args, fmt);
-  vsprintf_s(buffer, fmt, args);
-  va_end(args);
-  OutputDebugStringA(buffer);
-}
-
 static void launcherdll_vlog(const char *fmt, va_list args) {
-  // 暫時只留 SmoothRun／Pss 主要訊息（其他 DLL log 關閉）
+  // 只允許 PSS UI 診斷與安裝結果進入檔案，避免高頻封包／繪製路徑刷爆 Log。
   char msg[2048] = {0};
   vsprintf_s(msg, fmt, args);
-  if (strstr(msg, "[SmoothRun]") == NULL && strstr(msg, "[Pss]") == NULL &&
-      strstr(msg, "[PssUI]") == NULL)
+  if (strstr(msg, "[Pss]") == NULL && strstr(msg, "[PssUI]") == NULL &&
+      strstr(msg, "[Install]") == NULL)
     return;
 
   char exePath[MAX_PATH] = {0};
@@ -147,150 +116,21 @@ void launcherdll_hook_log(const char *fmt, ...) {
   va_end(args);
 }
 
-static void launcherdll_net_log(const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  launcherdll_vlog(fmt, args);
-  va_end(args);
-}
-
-static void bytes_to_hex_preview(const BYTE *data, int len, char *out,
-                                 size_t outSize, int maxBytes) {
-  if (out == NULL || outSize == 0)
-    return;
-  out[0] = '\0';
-  if (data == NULL || len <= 0)
-    return;
-  if (maxBytes <= 0)
-    maxBytes = len;
-  int n = (len < maxBytes) ? len : maxBytes;
-  size_t pos = 0;
-  for (int i = 0; i < n; i++) {
-    int w = sprintf_s(out + pos, outSize - pos, "%02X%s", data[i],
-                      (i == n - 1) ? "" : " ");
-    if (w <= 0 || (size_t)w >= outSize - pos)
-      break;
-    pos += (size_t)w;
-  }
-  if (len > n && pos + 5 < outSize)
-    strcat_s(out, outSize, " ...");
-}
-
-static void bytes_to_ascii_preview(const BYTE *data, int len, char *out,
-                                   size_t outSize, int maxBytes) {
-  if (out == NULL || outSize == 0)
-    return;
-  out[0] = '\0';
-  if (data == NULL || len <= 0)
-    return;
-  if (maxBytes <= 0)
-    maxBytes = len;
-  int n = (len < maxBytes) ? len : maxBytes;
-  int i = 0;
-  for (i = 0; i < n && i < (int)outSize - 1; i++) {
-    unsigned char c = data[i];
-    out[i] = (c >= 32 && c <= 126) ? (char)c : '.';
-  }
-  out[i] = '\0';
-  if (len > n && i < (int)outSize - 5)
-    strcat_s(out, outSize, "...");
-}
-
-static int find_subseq(const BYTE *haystack, int hayLen, const BYTE *needle,
-                       int needleLen) {
-  if (haystack == NULL || needle == NULL || hayLen <= 0 || needleLen <= 0 ||
-      needleLen > hayLen)
-    return -1;
-  for (int i = 0; i <= hayLen - needleLen; i++) {
-    bool match = true;
-    for (int j = 0; j < needleLen; j++) {
-      if (haystack[i + j] != needle[j]) {
-        match = false;
-        break;
-      }
-    }
-    if (match)
-      return i;
-  }
-  return -1;
-}
-
-
-// =============================================================================
-// 記憶體補丁與 Hook 安裝輔助函式（Patch / Hook）
-// =============================================================================
-static bool IsCodeDecrypt() {
-  __try {
-    DWORD val = *(volatile DWORD *)0x0058788B;
-    return val == 0x85C0B60F || val == 0x4D8D016A;
-  } __except (1) {
-  }
-  return false;
-}
-
-static void PatchCode(void *addr, void *code, int len) {
-  DWORD dwOldProtect;
-  VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, PAGE_READWRITE,
-                   &dwOldProtect);
-  memcpy(addr, code, len);
-  VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, dwOldProtect,
-                   &dwOldProtect);
-}
-
-static void HookCode(void *addr, void *func, int len) {
-  if (len < 5)
-    return;
-  DWORD dwOldProtect;
-  BYTE *patch = new BYTE[len];
-  memset(patch, 0x90, len);
-  patch[0] = 0xE9;
-  *(DWORD *)&patch[1] = (DWORD)((uintptr_t)func - (uintptr_t)addr - 5);
-  VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, PAGE_READWRITE,
-                   &dwOldProtect);
-  memcpy(addr, patch, len);
-  VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, dwOldProtect,
-                   &dwOldProtect);
-  delete[] patch;
-}
-
-// =============================================================================
-// Helper 輔助對話框鍵盤攔截
-// =============================================================================
+// WH_GETMESSAGE：主執行緒沖待送封包，並處理 PSS 熱鍵／點選道具。
 static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+  // 此 Hook 在遊戲主執行緒處理待送工作與 PSS UI；滑鼠事件必須等原生處理完成
+  // 後才讀取目前格子的道具。
   if (nCode >= 0) {
-    // 密米爾之泉：這個 WH_GETMESSAGE hook 跟 my_send 一樣穩定跑在遊戲主執行緒
-    // 上，但觸發頻率遠高於 send()（每次 GetMessage/PeekMessage(PM_REMOVE) 取到
-    // 訊息就觸發一次，不用等下一個真封包）。當第二個 flush 點：有待送出的選擇
-    // 就在這裡立刻送，沒有就是免費的 InterlockedExchange+早退（見
-    // MimirPowerHook.cpp）。不依賴 pMsg 內容，故意放在最前面，跟下面的除錯
-    // switch 完全獨立。
     MimirPowerHook_PumpPendingChoice();
     PssOverlay_PumpPendingSave();
     PssOverlay_PumpPendingUiNotify();
 
     MSG *pMsg = (MSG *)lParam;
-    // HOME／Insert：自動喝水 Mimir 式 overlay（toggle）。原本 HOME 這裡卡了
-    // `if (ShareInfo.usehelper)`，但這個旗標被 Encoder（BuildListEntryNative）
-    // 寫死成 false，不管伺服器設定怎麼勾都傳不到客戶端，等於 HOME 永遠沒反應
-    // ——2026-09-07 拿掉這個限制，兩個鍵都直接開，不用等 Encoder 那邊修好。
     if (pMsg->message == WM_KEYDOWN &&
         (pMsg->wParam == VK_HOME || pMsg->wParam == VK_INSERT)) {
       PssOverlay_Show();
     }
-    // 2026-09-08/09：「點格子→點背包道具」選道具流程（見
-    // docs/PssOverlay_點選道具計畫.md）。overlay 目前在等某個 section/
-    // slot 的選擇時，偵測到玩家點擊就去讀「剛被點的那個背包道具」，讀到就送
-    // 7-byte 解析請求給伺服器；伺服器查完回覆抵達後，overlay 自己直接寫入＋
-    // 自動存檔（不再有「確認中」中繼顯示，點道具就是最終確認動作）。沒點到
-    // 任何道具（例如點到背包空格）就什麼都不做，維持選擇中狀態。
-    // 2026-09-10：這裡掛的是 WH_GETMESSAGE，會在訊息從佇列被取出、但「還沒
-    // DispatchMessage 給遊戲自己的 WndProc」之前就先跑到。原本掛在
-    // WM_LBUTTONDOWN，代表我們讀 unknow2 旗標時，遊戲自己這次點擊的處理邏輯
-    // 根本還沒執行——讀到的其實是「上一次點擊」殘留的舊旗標，導致連續點兩個
-    // 不同道具時，第二次讀到的還是第一次的結果（回報：「第2格選的是另一種
-    // 藥水卻送跟其他格一樣的資料」）。改成在 WM_LBUTTONUP 才讀：同一次點擊的
-    // WM_LBUTTONDOWN 這時候已經走完一輪完整的 DispatchMessage（遊戲已經處理
-    // 過這次點擊、旗標理論上已經更新），確保讀到的是「這次」點的道具。
+    // WM_LBUTTONUP：遊戲已處理完這次點擊，才能讀到當格道具。
     if (pMsg->message == WM_LBUTTONUP) {
       int pickSection = -1, pickSlot = -1;
       if (PssOverlay_IsPicking(&pickSection, &pickSlot)) {
@@ -301,165 +141,12 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
       }
     }
-    // 血盟推薦除錯用 log（WM_LBUTTONDOWN/UP、WM_CHAR、WM_KEYDOWN）：懷疑遊戲
-    // 視窗關閉時的長時間卡頓跟 log 寫太多有關（NetLog 每次呼叫都是
-    // fopen+fwrite+fflush+fclose，頻繁的 UI 操作 log 疊加封包 log，磁碟 I/O
-    // 量不小），先暫時整段註解掉測試是否為肇因。確認完可以整段刪掉或恢復。
-    /*
-    switch (pMsg->message) {
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-      launcherdll_net_log(
-          "[MatchMakingDbg] hwnd=0x%p %s pos=(%d,%d)", pMsg->hwnd,
-          pMsg->message == WM_LBUTTONDOWN ? "LBUTTONDOWN" : "LBUTTONUP",
-          (int)(short)LOWORD(pMsg->lParam), (int)(short)HIWORD(pMsg->lParam));
-      break;
-    case WM_CHAR:
-      launcherdll_net_log(
-          "[MatchMakingDbg] hwnd=0x%p WM_CHAR code=0x%04X ('%c')", pMsg->hwnd,
-          (unsigned)pMsg->wParam,
-          (pMsg->wParam >= 0x20 && pMsg->wParam < 0x7F) ? (char)pMsg->wParam
-                                                         : '?');
-      break;
-    case WM_KEYDOWN:
-      if (pMsg->wParam != VK_HOME) // VK_HOME 上面已經記過一次，避免重複
-        launcherdll_net_log("[MatchMakingDbg] hwnd=0x%p WM_KEYDOWN vk=0x%02X",
-                             pMsg->hwnd, (unsigned)pMsg->wParam);
-      break;
-    default:
-      break;
-    }
-    */
   }
   return CallNextHookEx(h_hook ? h_hook : hhk, nCode, wParam, lParam);
 }
 
 // =============================================================================
-// File Replacement Bare Hook
-// =============================================================================
-const DWORD USER_HOOK_ADDR = 0x0077317D;
-const DWORD USER_RETN_ADDR = 0x00773183;
-
-static void __stdcall UserNameHandler(void *p) {
-  memcpy(g_id, p, 32);
-  g_id[31] = 0; // ensure C-string termination
-}
-
-__declspec(naked) void GetUsername(void) {
-  __asm
-  {
-		lea eax, dword ptr ss:[ebp-0x98]
-		pushad
-		push eax
-		call UserNameHandler
-		popad
-		jmp USER_RETN_ADDR
-  }
-}
-
-const DWORD PASS_HOOK_ADDR = 0x004AA38E;
-const DWORD PASS_RETN_ADDR = 0x004AA395;
-const DWORD PASS_CALL_ADDR = 0x00402800;
-
-static void __stdcall PasswordHandler(BYTE PassByte) {
-  // 退格／刪除：否則只會一直 append，畫面上刪除也無法同步到 g_pwd，登入仍用舊密碼
-  if (PassByte == '\b' || PassByte == 0x7F) {
-    if (g_pwd_pos > 0) {
-      g_pwd_pos--;
-      g_pwd[g_pwd_pos] = 0;
-    }
-    return;
-  }
-  if (g_pwd_pos == 0)
-    memset(g_pwd, 0, 32);
-  if (g_pwd_pos < 31) {
-    g_pwd[g_pwd_pos++] = PassByte;
-    g_pwd[g_pwd_pos] = 0; // keep zero-terminated
-  }
-}
-
-__declspec(naked) void GetPassword(void) {
-  __asm
-  {
-		mov edx, dword ptr ss:[ebp - 0x0C]
-		mov ecx, dword ptr ds:[edx + ecx * 4 + 0x3C]
-		pushad
-		mov eax, 0x00402800
-		call eax
-		push eax
-		call PasswordHandler
-		popad
-		jmp PASS_RETN_ADDR
-  }
-}
-
-// Login77：對齊 Rust login.rs（Login.dll 相容 opcode 0x77 / cssddddddd）
-// 取代舊 path_code opcode 0xD2 @ 0x00772BA0 + SetIdPass。
-const DWORD LOGIN77_HOOK_ADDR = 0x00772E07;
-const DWORD LOGIN77_RETN_ADDR = 0x00772E77;
-const DWORD LOGIN77_HOOK_SIZE = 10;
-const DWORD SEND_PACKET_DATA = 0x00580E50;
-static const char LOGIN77_FORMAT[] = "cssddddddd";
-static bool g_loginHooksInstalled = false;
-
-// SendPacketData("cssddddddd", 0x77, id, pwd, 127.0.0.1, 0,0,0,0,0, 0x1F)
-__declspec(naked) void Login77(void) {
-  __asm
-  {
-		push 0x1F
-		push 0
-		push 0
-		push 0
-		push 0
-		push 0
-		push 0x0100007F
-		lea eax, g_pwd
-		push eax
-		lea eax, g_id
-		push eax
-		push 0x77
-		lea eax, LOGIN77_FORMAT
-		push eax
-		mov eax, SEND_PACKET_DATA
-		call eax
-		add esp, 0x2C
-		mov g_pwd_pos, 0
-		jmp LOGIN77_RETN_ADDR
-  }
-}
-
-// 對齊 Rust login.rs::install_login_hooks：USER + PASS + Login77（無 path_code）
-static void InstallLogin77Hooks() {
-  if (g_loginHooksInstalled)
-    return;
-  g_loginHooksInstalled = true;
-
-  HookCode((void *)USER_HOOK_ADDR, (void *)GetUsername,
-           USER_RETN_ADDR - USER_HOOK_ADDR);
-  HookCode((void *)PASS_HOOK_ADDR, (void *)GetPassword,
-           PASS_RETN_ADDR - PASS_HOOK_ADDR);
-  HookCode((void *)LOGIN77_HOOK_ADDR, (void *)Login77, LOGIN77_HOOK_SIZE);
-
-  launcherdll_net_log(
-      "[Login77] hooks installed: User@0x%08X Pass@0x%08X Login77@0x%08X "
-      "(opcode 0x77 cssddddddd)",
-      (unsigned)USER_HOOK_ADDR, (unsigned)PASS_HOOK_ADDR,
-      (unsigned)LOGIN77_HOOK_ADDR);
-}
-
-__declspec(naked) void GetFileData(void) {
-  __asm {
-		mov eax, buffer_len
-		mov dword ptr ss:[ebp - 0x14], eax
-		mov eax, buffer
-		mov edx, dword ptr ss:[ebp - 0x23C]
-		mov dword ptr ds:[edx + 0x08], eax
-		mov eax, 0x0058794F
-		jmp eax
-  }
-}
-// =============================================================================
-// API Hook 區（Network, Window, Time, Credential）
+// API Hook 區（Network, Window）
 // =============================================================================
 int(WINAPI *real_connect)(SOCKET s, const struct sockaddr *name,
                           int namelen) = connect;
@@ -467,14 +154,10 @@ int(WINAPI *real_send)(SOCKET s, const char *buf, int len, int flag) = send;
 int(WINAPI *real_recv)(SOCKET s, char *buf, int len, int flag) = recv;
 
 static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen) {
+  // 將共享記憶體的伺服器位址套到原生 connect；解析失敗時保留原始 sockaddr。
   if (name == NULL || namelen < (int)sizeof(sockaddr_in))
     return real_connect(s, name, namelen);
   VMProtectBegin;
-  const sockaddr_in *sa = (const sockaddr_in *)name;
-  launcherdll_net_log(
-      "[connect] original dst=%u.%u.%u.%u:%d", sa->sin_addr.S_un.S_un_b.s_b1,
-      sa->sin_addr.S_un.S_un_b.s_b2, sa->sin_addr.S_un.S_un_b.s_b3,
-      sa->sin_addr.S_un.S_un_b.s_b4, ntohs(sa->sin_port));
   sockaddr_in mappedAddr = *(const sockaddr_in *)name;
   bool hasMappedHost = false;
   char host[64] = {0};
@@ -519,22 +202,13 @@ static int WINAPI my_connect(SOCKET s, const struct sockaddr *name, int namelen)
   return real_connect(s, name, namelen);
 }
 
-// my_send 會被遊戲主執行緒（正常封包）跟我們自己另外開的執行緒（例如
-// MimirPowerOverlay 的視窗訊息迴圈按下確認鈕時）同時呼叫。_xorByte/_seed
-// （nextRand 用）是全域共用狀態，client/server 兩邊都靠它按「封包送出的順序」
-// 逐步往前推進金鑰流，兩個執行緒沒有互斥的話：(a) _seed 的讀-改-寫本身不是原子
-// 操作，(b) 就算沒真的資料損毀，兩個 real_send() 呼叫的順序也可能跟兩份資料各自
-// 編碼時採用的金鑰流位置對不上，導致 server 端解密狀態永久對不齊、後面任何一包
-// 都可能解出垃圾資料（實測就是這樣：送出偽裝的確認選擇封包後，下一個完全無關的
-// 聊天封包在 server 端解析直接噴例外、玩家斷線）。用一個全域 critical section
-// 把「編碼＋送出」這整段包成不可切分的單位，不管呼叫端是哪個執行緒都保證順序
-// 正確。
+// 編碼與送出共用 _seed/_xorByte，必須同一把鎖串行，否則與 server 金鑰流錯位。
 struct SendLock {
   CRITICAL_SECTION cs;
   SendLock() { InitializeCriticalSection(&cs); }
 };
 static SendLock &GetSendLock() {
-  static SendLock lock; // C++11 magic statics：保證只初始化一次、執行緒安全
+  static SendLock lock;
   return lock;
 }
 struct SendLockGuard {
@@ -543,57 +217,10 @@ struct SendLockGuard {
   ~SendLockGuard() { LeaveCriticalSection(&cs); }
 };
 
-// 血盟推薦除錯用：讀取一段記憶體到自己的緩衝區，SEH 保護，讀失敗就回傳 false。
-// 沒有需要解構的 C++ 區域變數，符合 __try 不能跟需要堆疊回溯的物件放同一個函式
-// 這條限制（error C2712），跟這次除錯過程其他地方用的手法一致。
-static bool SafeCopyBytesForDbg(const void *src, void *dst, size_t n) {
-  __try {
-    memcpy(dst, src, n);
-    return true;
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
-    return false;
-  }
-}
-
-// 血盟推薦除錯用：從目前堆疊往上掃，把看起來像「落在主程式模組程式碼範圍內」的
-// DWORD 值印出來（很可能是呼叫端的返回位址），藉此找出是哪段 client 程式碼呼叫
-// send() 送出這個封包。用的是密米爾之泉除錯時同一套手法（掃堆疊找 return
-// address），這次不用真的裝硬體中斷點，直接在 my_send 裡順手掃、比較安全。
-// 確認找到目標位址之後可以拿掉。
-static void LogPossibleReturnAddrs() {
-  HMODULE mainMod = GetModuleHandle(NULL);
-  DWORD_PTR base = (DWORD_PTR)mainMod;
-  DWORD stackVals[256];
-  DWORD_PTR approxEsp = (DWORD_PTR)&stackVals; // 用自己的區域變數位址當堆疊掃描起點
-  if (!SafeCopyBytesForDbg((const void *)approxEsp, stackVals, sizeof(stackVals)))
-    return;
-  for (int i = 0; i < 256; i++) {
-    DWORD v = stackVals[i];
-    if (v >= 0x00400000u && v < 0x00800000u) {
-      BYTE around[24];
-      if (SafeCopyBytesForDbg((const void *)((DWORD_PTR)v - 16), around, sizeof(around))) {
-        char hex[64] = {0};
-        char *w = hex;
-        for (int j = 0; j < 24; j++)
-          w += sprintf_s(w, sizeof(hex) - (w - hex), "%02X", around[j]);
-        launcherdll_net_log(
-            "[PledgeRecommendDbg] stack[%d]=0x%08X (module base=0x%p rva=0x%08X) bytes-16..+8: %s",
-            i, v, (void *)base, (unsigned)((DWORD_PTR)v - base), hex);
-      } else {
-        launcherdll_net_log(
-            "[PledgeRecommendDbg] stack[%d]=0x%08X (module base=0x%p rva=0x%08X) bytes: <fault>",
-            i, v, (void *)base, (unsigned)((DWORD_PTR)v - base));
-      }
-    }
-  }
-}
-
 static int my_send(SOCKET s, const char *buf, int len, int flag) {
+  // send 與 MimirSendEncoded 共用金鑰流，複製、編碼與 real_send 必須串行化。
   if (buf == NULL || len <= 0)
     return real_send(s, buf, len, flag);
-  // 密米爾之泉除錯用（功能已確認穩定，暫時關掉避免跟其他問題的 log 混在一起，
-  // 要恢復就取消註解）：
-  // launcherdll_net_log("[MimirPower] my_send buf=0x%p len=%d", (void *)buf, len);
   SendLockGuard lockGuard(GetSendLock().cs);
   BYTE stackBuffer[4096];
   BYTE *buffer_ptr = stackBuffer;
@@ -603,10 +230,7 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
     useHeap = true;
   }
   memcpy(buffer_ptr, buf, len);
-  // 封包加密：依 Encoder UI / LinEncoder.ini 寫進 list 的 RandKey（ShareInfo.randenc）。
-  //   randenc=0 → xorByte = (plain % 255) + 1，C2S 固定 XOR
-  //   randenc=1 → 明文當 LCG 種子，C2S 逐 byte nextRand()
-  // 須與後端 RandomEnc 開關一致。
+  // randenc=0：固定 XOR；randenc=1：逐 byte nextRand()。須與 server RandomEnc 一致。
   if (ShareInfo.encrypt && inited) {
     if (ShareInfo.randenc) {
       for (int i = 0; i < len; i++)
@@ -619,22 +243,15 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
   int ret = real_send(s, (const char *)buffer_ptr, len, flag);
   if (useHeap)
     delete[] buffer_ptr;
-  // 密米爾之泉：這裡呼叫安全，PumpPendingChoice 內部改成呼叫下面的
-  // MimirSendEncoded（直接送、不經過 send()），不會再遞迴繞回 my_send。
   MimirPowerHook_PumpPendingChoice();
   PssOverlay_PumpPendingSave();
   PssOverlay_PumpPendingUiNotify();
   return ret;
 }
 
-// 密米爾之泉專用：外層 XOR 編碼＋直接呼叫 real_send，刻意不透過 send()（會被鉤子
-// 導回 my_send）。原本讓 MimirPowerHook_PumpPendingChoice 呼叫 send() 送出偽裝
-// 封包，不管放在 my_recv 還是 my_send 結尾呼叫，都會造成鉤子巢狀呼叫自己（my_send
-// 呼叫 PumpPendingChoice，裡面又呼叫 send() 導回 my_send）。實測跑出兩種不同的
-// 當機（0xC0000005 存取違規、0xC0000409 /GS 堆疊保護觸發），都跟這層巢狀呼叫脫不了
-// 關係，不管加密邏輯怎麼改都一樣會撞上，因為問題根本不在加密。這裡直接複製 my_send
-// 需要的外層編碼邏輯，跳過 send()／my_send 這一整層，從根本避免巢狀呼叫。
+// 密米爾待送封包：與 my_send 同編碼，直接 real_send，避免再進 my_send。
 int MimirSendEncoded(SOCKET s, const BYTE *body, int len) {
+  // Mimir 封包不能再次進入 my_send，否則會被重複編碼；此處直接呼叫 real_send。
   if (body == NULL || len <= 0)
     return real_send(s, (const char *)body, len, 0);
   SendLockGuard lockGuard(GetSendLock().cs);
@@ -658,11 +275,11 @@ int MimirSendEncoded(SOCKET s, const BYTE *body, int len) {
   int ret = real_send(s, (const char *)buffer_ptr, len, 0);
   if (useHeap)
     delete[] buffer_ptr;
-  // launcherdll_net_log("[MimirPower] MimirSendEncoded len=%d ret=%d", len, ret);
   return ret;
 }
 
 static int my_recv(SOCKET s, char *buf, int len, int flag) {
+  // 首次加密接收先消耗 RSA authdata，建立 XOR 或 RandomEnc 狀態後再透傳資料。
   if (ShareInfo.encrypt && !inited) {
     char buffer[32];
     memset(buffer, 0, sizeof(buffer));
@@ -683,11 +300,8 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
       unsigned long plain = modpow(*(unsigned long *)buffer, _rsaD, _rsaN);
       if (ShareInfo.randenc) {
         _seed = (int)plain;
-        launcherdll_net_log("[my_recv] randenc=1 LCG seed=%d", _seed);
       } else {
         _xorByte = (unsigned char)((plain % 255) + 1);
-        launcherdll_net_log("[my_recv] randenc=0 xorByte=0x%02X plain=%lu",
-                            (unsigned)_xorByte, plain);
       }
     }
     inited = true;
@@ -696,51 +310,11 @@ static int my_recv(SOCKET s, char *buf, int len, int flag) {
   if (ret <= 0) {
     int err = (ret < 0) ? WSAGetLastError() : 0;
     if (ret < 0 && err == WSAEWOULDBLOCK) {
-      // Non-blocking socket with nothing available yet; not a disconnect.
       return ret;
     }
-    launcherdll_net_log(
-        "[my_recv] socket=%u ret=%d WSAGetLastError=%d (connection closed/error)",
-        (unsigned)s, ret, err);
     return ret;
   }
-  if (ret > 0) {
-    unsigned char opcode = (unsigned char)buf[0];
-    char hex[512] = {0};
-    char ascii[128] = {0};
-    bytes_to_hex_preview((const BYTE *)buf, ret, hex, sizeof(hex), 64);
-    bytes_to_ascii_preview((const BYTE *)buf, ret, ascii, sizeof(ascii), 32);
-
-    unsigned decodedLen = 0xFFFFFFFFu;
-    bool lenMismatch = false;
-    char decodedHex[512] = {0};
-
-    if (ShareInfo.encrypt && !ShareInfo.randenc && inited && ret >= 2) {
-      BYTE decoded[4096];
-      int decodeCount = (ret < (int)sizeof(decoded)) ? ret : (int)sizeof(decoded);
-      for (int i = 0; i < decodeCount; i++)
-        decoded[i] = (BYTE)((BYTE)buf[i] ^ (BYTE)_xorByte);
-      decodedLen = (unsigned)decoded[0] | ((unsigned)decoded[1] << 8);
-      lenMismatch = (decodedLen != (unsigned)ret);
-      bytes_to_hex_preview(decoded, decodeCount, decodedHex, sizeof(decodedHex), 64);
-    }
-
-    // 抓封包除錯用 log：每個 recv() 都會觸發，懷疑遊戲視窗關閉時的長時間卡頓跟
-    // log 寫太多有關（NetLog 每次呼叫都是 fopen+fwrite+fflush+fclose），先暫時
-    // 註解掉測試是否為肇因。
-    // if (opcode == 0x0A && ret > 10) {
-    //   launcherdll_net_log(
-    //       "[my_recv] *** SERVER MSG 0x0A (len=%d) hex=[%s] ascii=[%s]", ret,
-    //       hex, ascii);
-    // } else {
-    //   launcherdll_net_log(
-    //       "[my_recv] socket=%u ret=%d opcode=0x%02X inited=%d encrypt=%d randenc=%d "
-    //       "xorByte=0x%02X decodedLen=%u %s decodedHex=[%s] rawHex=[%s]",
-    //       (unsigned)s, ret, (unsigned)opcode, (int)inited,
-    //       (int)ShareInfo.encrypt, (int)ShareInfo.randenc, (unsigned)_xorByte, decodedLen,
-    //       lenMismatch ? "*** MISMATCH ***" : "(match)", decodedHex, hex);
-    // }
-  }
+  // 逐包 hex dump 已拿掉：每個 recv 寫 launcher.log 會讓關窗卡死。
   return ret;
 }
 
@@ -761,12 +335,10 @@ HWND(WINAPI *real_CreateWindowExW)(DWORD, LPCWSTR, LPCWSTR, DWORD, int, int,
 
 // 遊戲主窗 class "Lineage" 首次建立：只裝 UI 側（登入／PATCHCODE1 已移出）。
 static void OnLineageWindowCreating() {
+  // 主窗只安裝一次 WH_GETMESSAGE；登入、解密與程式碼 Patch 由延遲執行緒負責。
   if (g_hooked)
     return;
   g_hooked = true;
-  launcherdll_net_log(
-      "[Hook] CreateWindowEx(Lineage): title/helper only (GetFileData moved "
-      "to DelayedDetourThread, must wait for code decryption first)");
 
   if (!h_hook) {
     h_hook = SetWindowsHookEx(WH_GETMESSAGE, (HOOKPROC)HookProc, hins,
@@ -775,6 +347,7 @@ static void OnLineageWindowCreating() {
 }
 
 static void MakeRandomTitleA(char *out, size_t outLen) {
+  // 產生 4 個英文字母加 4 個數字的標題，避免多開客戶端使用相同視窗標題。
   srand(GetTickCount());
   char randomStr[16]{};
   for (int i = 0; i < 8; i++) {
@@ -792,6 +365,7 @@ static HWND WINAPI my_CreateWindowEx(DWORD dwExStyle, LPCSTR lpClassName,
                               int nWidth, int nHeight, HWND hWndParent,
                               HMENU hMenu, HINSTANCE hInstance,
                               LPVOID lpParam) {
+  // 只攔截 class="Lineage" 的主窗；其他視窗完整透傳原生參數與回傳值。
   bool isLineage = false;
   if (lpClassName && HIWORD(lpClassName) != 0 &&
       _stricmp(lpClassName, "Lineage") == 0) {
@@ -814,6 +388,7 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
                                int y, int nWidth, int nHeight, HWND hWndParent,
                                HMENU hMenu, HINSTANCE hInstance,
                                LPVOID lpParam) {
+  // Unicode 版本採相同策略，標題先以 ANSI 產生再轉成寬字元。
   bool isLineage = false;
   static wchar_t szTitleW[32];
   if (lpClassName && HIWORD(lpClassName) != 0 &&
@@ -833,368 +408,24 @@ static HWND WINAPI my_CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
   return hWnd;
 }
 
-// 設定檔解密 / 檔案讀取（純 XOR 還原 + 虛擬編譯模式）
-// =============================================================================
-
-/* [暫時停用] ConvertTxtToBinary 函式實體
-BYTE* ConvertTxtToBinary(BYTE* txtData, unsigned int txtLen, DWORD& outLen) {
-    ... (內容已註解)
-    return NULL;
-}
-*/
-
-// -----------------------------------------------------------------------------
-// NakedLoaderHook (0x58228A)
-// 目的：修正遊戲引擎在處理 Action 4 (走路) 時的索引計算偏移。
-//       原始引擎可能只預留了 4 個 Action 的空間，以此 Hook 強制平衡堆疊與暫存器。
-// -----------------------------------------------------------------------------
-/* [暫時停用] NakedLoaderHook 函式實體
-void __declspec(naked) NakedLoaderHook() {
-    __asm {
-        // 原始碼大約是：mov eax, [esi+ebx*4+0Ch]
-        // 我們在這裡確保 ebx (ActionIndex) 如果是 4，能正確對應到我們虛擬編譯出的 20 bytes 空間
-        mov eax, [esp + 0x10] // 取得目前的處理物件
-        push ecx
-        mov ecx, [eax + 0x08] // 檢查 ActionCount
-        pop ecx
-        
-        // 恢復原始指令並跳回
-        mov eax, [edi + 0x438] 
-        push 0x00582290 // 跳回原始指令下一行
-        ret
-    }
-}
-*/
-
-// 這是「變身檔」（ShareInfo.bdfile/usebd）的讀取邏輯，最終會透過 GetFileData()
-// 那段 naked function shellcode（見下方 0x0058788B 那個 HookCode）直接把
-// buffer/buffer_len 寫進遊戲原生的變身檔資料結構裡，完全略過遊戲自己讀
-// TW13081901.pak 用的那個未知加密演算法——不需要、也不去猜那個演算法。
-// 這裡的檔案格式是我們自己的 Encoder 產生的（跟遊戲原生的 TW13081901.pak
-// 檔案格式無關，也不用一致）：[orig_len:4 LE][key:16][zlib 壓縮 +
-// AES-128-ECB+XOR table 加密過的內容]，對齊 L1J3.8Launcher(RUST)參考
-// inject.rs::load_inject_file 的格式（只是我們這邊 GetFileData 用的是
-// buffer 本身、不像 Rust 版還要 +1 跳過 'S' 前綴，所以這裡解出來的內容
-// 不能加那個前綴 byte，否則會整個位移一個 byte）。
-static BYTE *GetFileBuffer() {
-  FILE *fp = NULL;
-  unsigned int len = 0;
-  buffer_len = 0;
-  launcherdll_net_log("[GetFileBuffer] bdfile='%S'", ShareInfo.bdfile);
-
-  if (_wfopen_s(&fp, ShareInfo.bdfile, L"rb") == 0 && fp != NULL) {
-    fseek(fp, 0, SEEK_END);
-    len = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    launcherdll_net_log("[GetFileBuffer] file opened, len=%u", len);
-
-    if (len < 20) { fclose(fp); return NULL; }
-
-    BYTE *file_data = new BYTE[len];
-    fread(file_data, 1, len, fp);
-    fclose(fp);
-
-    VMProtectBegin;
-
-    launcherdll_net_log("[GetFileBuffer] Decrypting %u bytes with embedded key (AES-128-ECB+XOR)...", len);
-    config_decrypt(&file_data[4], &file_data[20], len - 20);
-
-    DWORD un_len = *(DWORD *)file_data;
-    uLongf destLen = un_len;
-    BYTE *un_buffer = new BYTE[un_len + 1];
-    int ret = uncompress(un_buffer, &destLen, &file_data[20], len - 20);
-    un_buffer[destLen] = 0;
-    delete[] file_data;
-    VMProtectEnd;
-
-    launcherdll_net_log("[GetFileBuffer] uncompress ret=%d un_len=%u actual=%lu", ret,
-                        un_len, destLen);
-
-    if (ret == Z_OK) {
-      buffer_len = destLen;
-      return un_buffer;
-    }
-
-    delete[] un_buffer;
-  }
-  return NULL;
-}
-
-// =============================================================================
-// Equipment slot expansion (14->31, additive layout). Ported line-by-line from
-// the Rust reference (src/equip_ui.rs); AOB signatures, lookup table and
-// shellcode assembly match the Rust version byte-for-byte.
-// =============================================================================
-namespace EquipUiPatch {
-  // 2026-09-10：暫時關閉 EquipUI 相關 launcher.log（功能仍安裝）
-  static void EquipUiLog(const char *, ...) {}
-
-  constexpr uintptr_t SCAN_START_ADDR = 0x00790000;
-  constexpr uintptr_t SCAN_END_ADDR = 0x007A0000;
-  constexpr uintptr_t SURF_BOUNDS_CHECK = 0x004387DB;
-
-  // server_index(0-31) -> UI slot / child index（0=無效），對齊 Rust EQUIP_LOOKUP_TABLE
-  static const BYTE EQUIP_LOOKUP_TABLE[32] = {
-      0,
-      2, 5, 4, 6, 11, 7, 9, 14, 16, 3, 8, 1,
-      0, 0, 0, 0, 0,
-      10, 12, 13, 15, 17, 18, 19, 16,
-      46, 47, 48, 49, 50, 51,
-  };
-
-  // pattern 用 -1 代表萬用字元（對齊 Rust memory::scan_pattern 的 Option<u8>）
-  static BYTE *FindPattern(BYTE *start, BYTE *end, const int *pattern, int patLen) {
-    for (BYTE *p = start; p + patLen <= end; ++p) {
-      bool match = true;
-      for (int i = 0; i < patLen; ++i) {
-        if (pattern[i] != -1 && p[i] != (BYTE)pattern[i]) { match = false; break; }
-      }
-      if (match) return p;
-    }
-    return nullptr;
-  }
-
-  // 從指定位址向前搜尋函數入口（55 8B EC prologue），對齊 Rust find_func_entry
-  static BYTE *FindFuncEntryBackward(BYTE *from, size_t maxBack) {
-    BYTE *start = from - maxBack;
-    for (BYTE *p = from - 3; p >= start; --p) {
-      if (p[0] == 0x55 && p[1] == 0x8B && p[2] == 0xEC) return p;
-    }
-    return nullptr;
-  }
-
-  // Patch A: ServerIndex_to_UISlot codecave 替換（AOB定位 + 14->31 動態映射表）
-  static void PatchServerIndexToUiSlot() {
-    static const int AOB[] = {
-        0x83, 0xE9, 0x01, 0x89, 0x4D, 0xF4, 0x83, 0x7D, 0xF4, 0x15,
-        0x0F, 0x87, -1, -1, -1, -1,
-        0x8B, 0x55, 0xF4, 0xFF, 0x24, 0x95};
-    BYTE *hit = FindPattern((BYTE *)SCAN_START_ADDR, (BYTE *)SCAN_END_ADDR, AOB, 22);
-    if (!hit) {
-      EquipUiLog("[EquipUI][WARN] Patch A: ServerIndex_to_UISlot AOB not found, skipping");
-      return;
-    }
-    BYTE *funcEntry = FindFuncEntryBackward(hit, 0x30);
-    if (!funcEntry) {
-      EquipUiLog("[EquipUI][WARN] Patch A: function entry not found, skipping");
-      return;
-    }
-    if (funcEntry[0] == 0xE9) {
-      EquipUiLog("[EquipUI] Patch A: already hooked, skipping");
-      return;
-    }
-
-    BYTE *cave = (BYTE *)VirtualAlloc(NULL, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!cave) {
-      EquipUiLog("[EquipUI][WARN] Patch A: codecave allocation failed");
-      return;
-    }
-    BYTE *tableAddr = cave + 32;
-
-    BYTE sc[32];
-    int i = 0;
-    sc[i++] = 0x55; sc[i++] = 0x8B; sc[i++] = 0xEC;             // push ebp; mov ebp, esp
-    sc[i++] = 0x8B; sc[i++] = 0x45; sc[i++] = 0x08;             // mov eax, [ebp+8]
-    sc[i++] = 0x83; sc[i++] = 0xF8; sc[i++] = 0x1F;             // cmp eax, 31
-    sc[i++] = 0x77; sc[i++] = 0x0F;                             // ja .ret_zero
-    sc[i++] = 0x85; sc[i++] = 0xC0;                             // test eax, eax
-    sc[i++] = 0x74; sc[i++] = 0x0B;                             // jz .ret_zero
-    sc[i++] = 0x0F; sc[i++] = 0xB6; sc[i++] = 0x80;             // movzx eax, byte [eax + table]
-    *(DWORD *)&sc[i] = (DWORD)(uintptr_t)tableAddr; i += 4;
-    sc[i++] = 0x5D; sc[i++] = 0xC2; sc[i++] = 0x04; sc[i++] = 0x00; // pop ebp; ret 4
-    sc[i++] = 0x31; sc[i++] = 0xC0; sc[i++] = 0x5D; sc[i++] = 0xC2; sc[i++] = 0x04; sc[i++] = 0x00; // .ret_zero
-    if (i != 32) {
-      EquipUiLog("[EquipUI][WARN] Patch A: codecave length mismatch (%d != 32), aborting", i);
-      VirtualFree(cave, 0, MEM_RELEASE);
-      return;
-    }
-    memcpy(cave + 32, EQUIP_LOOKUP_TABLE, 32);
-    PatchCode(cave, sc, 32);
-
-    BYTE jmp5[5];
-    jmp5[0] = 0xE9;
-    *(int *)&jmp5[1] = (int)((intptr_t)cave - (intptr_t)funcEntry - 5);
-    PatchCode(funcEntry, jmp5, 5);
-
-    EquipUiLog("[EquipUI] Patch A OK: ServerIndex_to_UISlot @0x%p -> codecave 0x%p", funcEntry, cave);
-  }
-
-  // Patch B: SetupSlots 雙 Hook — 附加式佈局（不改迴圈上限，新 slot 在 child 46-51）
-  static void PatchSetupSlotsHooks() {
-    static const int AOB[] = {
-        0xC7, 0x45, 0xF8, 0x01, 0x00, 0x00, 0x00,
-        0xEB, 0x09,
-        0x8B, 0x4D, 0xF8,
-        0x83, 0xC1, 0x01,
-        0x89, 0x4D, 0xF8,
-        0x83, 0x7D, 0xF8, -1};
-    BYTE *hit = FindPattern((BYTE *)SCAN_START_ADDR, (BYTE *)SCAN_END_ADDR, AOB, 22);
-    if (!hit) {
-      EquipUiLog("[EquipUI][WARN] Patch B: SetupSlots AOB not found, skipping");
-      return;
-    }
-
-    BYTE *exitAddr = hit + 0x2E;
-    BYTE *callAddr = hit + 0x27;
-    BYTE *bgCalcAddr = hit + 0xBB8;
-
-    if (exitAddr[0] == 0xE9) {
-      EquipUiLog("[EquipUI] Patch B: already hooked, skipping");
-      return;
-    }
-    static const BYTE expectedExit[5] = {0x8B, 0xE5, 0x5D, 0xC3, 0xCC};
-    if (memcmp(exitAddr, expectedExit, 5) != 0) {
-      EquipUiLog("[EquipUI][WARN] Patch B1: exit bytes mismatch @0x%p, skipping", exitAddr);
-      return;
-    }
-    if (callAddr[0] != 0xE8) {
-      EquipUiLog("[EquipUI][WARN] Patch B: call instruction mismatch (0x%02X), skipping", callAddr[0]);
-      return;
-    }
-    int rel32 = *(int *)&callAddr[1];
-    BYTE *helperAddr = callAddr + 5 + rel32;
-
-    static const BYTE expectedBg[7] = {0x8B, 0x4D, 0x0C, 0x83, 0xC1, 0x1A, 0x51};
-    if (memcmp(bgCalcAddr, expectedBg, 7) != 0) {
-      EquipUiLog("[EquipUI][WARN] Patch B2: bg bytes mismatch @0x%p, skipping", bgCalcAddr);
-      return;
-    }
-
-    BYTE *cave = (BYTE *)VirtualAlloc(NULL, 128, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!cave) {
-      EquipUiLog("[EquipUI][WARN] Patch B: codecave allocation failed");
-      return;
-    }
-    BYTE *caveB1 = cave;
-    BYTE *caveB2 = cave + 80;
-
-    // --- 組裝 Hook B1（函數出口追加 6 次 helper 呼叫，child 46-51）---
-    BYTE b1[80];
-    int n = 0;
-    b1[n++] = 0xC7; b1[n++] = 0x45; b1[n++] = 0xF8; b1[n++] = 0x00; b1[n++] = 0x00; b1[n++] = 0x00; b1[n++] = 0x00; // mov [ebp-8],0
-    int loopTop = n;
-    b1[n++] = 0x83; b1[n++] = 0x7D; b1[n++] = 0xF8; b1[n++] = 0x06; // cmp [ebp-8],6
-    b1[n++] = 0x7D; int jgeRel8Pos = n; b1[n++] = 0x00;             // jge .done (placeholder)
-    b1[n++] = 0x6A; b1[n++] = 0x00;                                 // push 0 (visible)
-    b1[n++] = 0x6A; b1[n++] = 0x00;                                 // push 0 (equip_data)
-    b1[n++] = 0x8B; b1[n++] = 0x55; b1[n++] = 0xF8;                 // mov edx,[ebp-8]
-    b1[n++] = 0x83; b1[n++] = 0xC2; b1[n++] = 0x2E;                 // add edx,46
-    b1[n++] = 0x52;                                                 // push edx
-    b1[n++] = 0x8B; b1[n++] = 0x45; b1[n++] = 0xFC;                 // mov eax,[ebp-4]
-    b1[n++] = 0x50;                                                 // push eax
-    b1[n++] = 0x8B; b1[n++] = 0x4D; b1[n++] = 0xF4;                 // mov ecx,[ebp-0xC]
-    b1[n++] = 0xE8;                                                 // call helper
-    {
-      BYTE *callSite = caveB1 + n;
-      int helperRel = (int)((intptr_t)helperAddr - (intptr_t)(callSite + 4));
-      *(int *)&b1[n] = helperRel;
-      n += 4;
-    }
-    b1[n++] = 0xFF; b1[n++] = 0x45; b1[n++] = 0xF8; // inc [ebp-8]
-    {
-      int jmpRel = loopTop - (n + 2);
-      b1[n++] = 0xEB; b1[n++] = (BYTE)jmpRel; // jmp .loop
-    }
-    int donePos = n;
-    b1[jgeRel8Pos] = (BYTE)(donePos - jgeRel8Pos - 1);
-    b1[n++] = 0x8B; b1[n++] = 0xE5; b1[n++] = 0x5D; b1[n++] = 0xC3; // mov esp,ebp; pop ebp; ret
-
-    // --- 組裝 Hook B2（bg index 條件修正：>=46 時 +6，否則沿用原本 +0x1A）---
-    BYTE b2[16];
-    int m = 0;
-    b2[m++] = 0x8B; b2[m++] = 0x4D; b2[m++] = 0x0C;               // mov ecx,[ebp+0xC]
-    b2[m++] = 0x83; b2[m++] = 0xF9; b2[m++] = 0x2E;               // cmp ecx,46
-    b2[m++] = 0x7C; b2[m++] = 0x04;                               // jl .normal
-    b2[m++] = 0x83; b2[m++] = 0xC1; b2[m++] = 0x06; b2[m++] = 0xC3; // add ecx,6; ret
-    b2[m++] = 0x83; b2[m++] = 0xC1; b2[m++] = 0x1A; b2[m++] = 0xC3; // .normal: add ecx,0x1A; ret
-
-    PatchCode(caveB1, b1, n);
-    PatchCode(caveB2, b2, m);
-
-    BYTE hookB1[5];
-    hookB1[0] = 0xE9;
-    *(int *)&hookB1[1] = (int)((intptr_t)caveB1 - (intptr_t)(exitAddr + 5));
-    PatchCode(exitAddr, hookB1, 5);
-
-    BYTE hookB2[7];
-    hookB2[0] = 0xE8;
-    *(int *)&hookB2[1] = (int)((intptr_t)caveB2 - (intptr_t)(bgCalcAddr + 5));
-    hookB2[5] = 0x51; // push ecx
-    hookB2[6] = 0x90; // nop
-    PatchCode(bgCalcAddr, hookB2, 7);
-
-    EquipUiLog("[EquipUI] Patch B OK: helper@0x%p, exit@0x%p->0x%p, bg@0x%p->0x%p",
-                        helperAddr, exitAddr, caveB1, bgCalcAddr, caveB2);
-  }
-
-  // Patch D: Surf ID bounds check — 固定位址（已用正式執行期 dump 逐 byte 驗證過）
-  static void PatchSurfBoundsCheck() {
-    BYTE *addr = (BYTE *)SURF_BOUNDS_CHECK;
-    if (addr[0] == 0x81 && addr[1] == 0xFA) {
-      EquipUiLog("[EquipUI] Patch D: already applied, skipping");
-      return;
-    }
-    static const BYTE expected[6] = {0x3B, 0x15, 0xB0, 0xD0, 0xC2, 0x00};
-    if (memcmp(addr, expected, 6) != 0) {
-      EquipUiLog("[EquipUI][WARN] Patch D: instruction mismatch @0x%p, skipping", addr);
-      return;
-    }
-    BYTE patched[6] = {0x81, 0xFA, 0x33, 0x75, 0x00, 0x00}; // cmp edx, 30003
-    PatchCode(addr, patched, 6);
-    EquipUiLog("[EquipUI] Patch D OK: Surf bounds check -> cmp edx,30003");
-  }
-
-  static void InstallAll() {
-    EquipUiLog("[EquipUI] Installing equip slot expansion patch (A+B+D, AOB dynamic locate, 14->31)");
-    PatchServerIndexToUiSlot();
-    PatchSetupSlotsHooks();
-    PatchSurfBoundsCheck();
-    EquipUiLog("[EquipUI] Equip slot expansion A+B+D finished");
-  }
-} // namespace EquipUiPatch
-
-// =============================================================================
-// PatchThread：對齊 Rust patch.rs::wait_and_patch（進程內版）
-//   1) 0x004E204E：JNZ → NOP+JMP（ConditionalPatch）
-//   2) 0x00722761 ← 0x859001B0（PATCHCODE1）
-//   之後：EquipUI / SmoothRun / ShowClock / AttackDamage
-// 時序：DelayedDetourThread 解殼並裝完 API/Detours hook 後，同執行緒呼叫本函式。
-// （先前 CreateThread 另開執行緒實測從未出現 [Patch] log，改 inline。）
-//
-// 閘門對齊 Rust classify_decrypt_marker_value：
-//   0x0097850F = Ready（尚未補丁）
-//   0x0097E990 = AlreadyPatched（可直接裝後續 hook）
-//   其他 = 尚未解密；每 5 秒打一次目前 dword，120 秒逾時放棄。
-// =============================================================================
+// 等 0x004E204E 變 Ready 或已補丁後寫 ConditionalPatch / PATCHCODE1，
+// 再裝裝備欄、順跑、時鐘、傷害顯示。逾時 120 秒放棄。
 static DWORD WINAPI PatchThread(void *p) {
+  // 等待解密標記進入可修補狀態，再套用 ConditionalPatch、PATCHCODE1 與其餘
+  // UI／戰鬥 Patch；保護殼尚未完成時寫入會被覆蓋。
   constexpr DWORD kDecryptAddr = 0x004E204E;
-  constexpr DWORD kDecryptReady = 0x0097850F;      // JNZ +0x97（原始）
-  constexpr DWORD kDecryptPatched = 0x0097E990;    // NOP+JMP（已補丁）
+  constexpr DWORD kDecryptReady = 0x0097850F;
+  constexpr DWORD kDecryptPatched = 0x0097E990;
   constexpr int kTimeoutMs = 120000;
-  constexpr int kPollLogMs = 5000;
-
-  launcherdll_net_log("[Patch] PatchThread started, waiting for 0x%08X marker...",
-                      (unsigned)kDecryptAddr);
 
   __try {
     const DWORD t0 = GetTickCount();
-    DWORD lastLog = t0;
     bool alreadyPatched = false;
 
     while (true) {
       const DWORD elapsed = GetTickCount() - t0;
       if (elapsed >= (DWORD)kTimeoutMs) {
-        DWORD cur = 0;
-        __try {
-          cur = *(volatile DWORD *)kDecryptAddr;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-          cur = 0xFFFFFFFF;
-        }
-        launcherdll_net_log(
-            "[Patch][WARN] TIMEOUT %ds, 0x%08X=0x%08X (expect Ready=0x%08X or "
-            "Patched=0x%08X) — SmoothRun/ShowClock/AttackDamage/EquipUI 未安裝",
-            kTimeoutMs / 1000, (unsigned)kDecryptAddr, (unsigned)cur,
-            (unsigned)kDecryptReady, (unsigned)kDecryptPatched);
+        launcherdll_hook_log("[Install] PatchThread timeout");
         return 0;
       }
 
@@ -1213,222 +444,46 @@ static DWORD WINAPI PatchThread(void *p) {
         alreadyPatched = true;
         break;
       }
-
-      if (GetTickCount() - lastLog >= (DWORD)kPollLogMs) {
-        lastLog = GetTickCount();
-        launcherdll_net_log(
-            "[Patch] poll %ds: 0x%08X=0x%08X (waiting Ready/Patched)",
-            (int)(elapsed / 1000), (unsigned)kDecryptAddr, (unsigned)marker);
-      }
       Sleep(1);
     }
-
-    launcherdll_net_log(
-        "[Patch] 核心解密完成（%s），開始執行記憶體補丁程序...",
-        alreadyPatched ? "already patched" : "ready");
-    launcherdll_net_log("[Patch] 目前基準位址: 0x%p ", (void *)0x400000);
 
     if (!alreadyPatched) {
       DWORD kernelPatch = kDecryptPatched;
       PatchCode((void *)kDecryptAddr, &kernelPatch, sizeof(DWORD));
-      launcherdll_net_log("[Patch] 1. ConditionalPatch @0x%08X ",
-                          (unsigned)kDecryptAddr);
-    } else {
-      launcherdll_net_log("[Patch] 1. ConditionalPatch already applied, skip write");
     }
 
-    // ↔ Rust PATCHCODE1_ADDR / PATCHCODE1_VAL
     DWORD patchCode1 = 0x859001B0;
     PatchCode((void *)0x00722761, &patchCode1, sizeof(DWORD));
-    launcherdll_net_log("[Patch] 2. PATCHCODE1 @0x00722761 = 0x859001B0 ");
-
-    // 裝備欄擴展 A+B+D（AOB 動態定位，14->31，對照 Rust src/equip_ui.rs）。
     EquipUiPatch::InstallAll();
-
-    // 變身跑步（順跑）hook；對照 Rust smooth_run_hook.rs（fail-soft）。
-    // 需變身表 slot 98/99；2026-09-10 暫不檢查加速（有 98 即切腳）。
     InstallSmoothRunPatch();
-
-    // 2026-09-10：暫時停用——原本的「call ReadH 再自己記錄」trampoline
-    // 設計有 bug：巢狀 call 會在 ReadH 自己的 [ebp+8] 定址前多插入一層
-    // stack frame，導致 ReadH 讀到垃圾指標，實測選完角色進世界就斷線/
-    // 疑似當機。修好前（改成直接複製 ReadH 真實 bytes、在它自己的
-    // epilogue 前插入 capture code，不要巢狀 call）先關掉，不要帶著已知
-    // 會炸的 hook 上線。見 VitalsPacketHook.cpp 開頭說明。
-    // InstallVitalsPacketHook();
-
-    // A2：時鐘常駐顯示（純 NOP 一個條件跳轉，fail-soft）。對照 RUST 參考
-    // src/aux/show_clock_patch.rs。
+    // VitalsPacketHook 進世界會斷線，不安裝。
     InstallShowClockPatch();
-
-    // 攻擊傷害顯示（普攻／單體）：codecave @0x5295D9，預設 OFF，
-    // Overlay「其他→顯示傷害」再開。對照 attack_damage_hook.rs。
     InstallAttackDamageHook();
-
-    launcherdll_net_log("[Patch] PatchThread finished OK");
   } __except (1) {
-    launcherdll_net_log("[Patch] *** CRITICAL *** 補丁執行例外。 ");
+    launcherdll_hook_log("[Install] PatchThread exception");
   }
   return 0;
 }
 
-// 畫面上看得到字面 \f4 ⇒ 沒走 46E0F0 的色碼掃描（那條會把 5C 66 34 吃掉）。
-// 改攔不解析 \f 的 46FEC0（6 參：font,str,len,x,y,color）與 46D420 生字。
-typedef void(__cdecl *ItemUiDraw6Fn)(void *font, const char *str, int x, int y,
-                                    DWORD color, DWORD flag);
-static ItemUiDraw6Fn real_ItemUiDraw6 = (ItemUiDraw6Fn)0x46E0F0;
-
-typedef void(__cdecl *ItemUiDrawFecFn)(void *font, const char *str, int len, int x,
-                                      int y, DWORD color);
-static ItemUiDrawFecFn real_ItemUiDrawFec = (ItemUiDrawFecFn)0x46FEC0;
-
-typedef int(__cdecl *ItemUiGlyphFn)(void *font, const char *start, int len, int unk,
-                                   int x, int y, DWORD color);
-static ItemUiGlyphFn real_ItemUiGlyph = (ItemUiGlyphFn)0x46D420;
-
-static bool ItemBufHasFColor(const char *s, int len) {
-  if (!s) {
-    return false;
-  }
-  const int n = (len > 0) ? len : 256;
-  for (int i = 0; i + 1 < n && s[i]; ++i) {
-    if (static_cast<unsigned char>(s[i]) == 0x5C &&
-        static_cast<unsigned char>(s[i + 1]) == 0x66) {
-      return true;
-    }
-  }
-  return false;
-}
-
-static void __cdecl Hook_ItemUiDraw6(void *font, const char *str, int x, int y,
-                                    DWORD color, DWORD flag) {
-  const bool hasF = ItemBufHasFColor(str, 0);
-  real_ItemUiDraw6(font, str, x, y, color, hasF ? 0 : flag);
-}
-
-static void __cdecl Hook_ItemUiDrawFec(void *font, const char *str, int len, int x,
-                                      int y, DWORD color) {
-  if (!str || len <= 0 || !ItemBufHasFColor(str, len)) {
-    real_ItemUiDrawFec(font, str, len, x, y, color);
-    return;
-  }
-  // 不可轉呼叫 46E6B0：它常再 call 46FEC0 畫剩餘字，會在同一幀重入、畫面卡住。
-  char tmp[512];
-  int out = 0;
-  DWORD col = color;
-  const int n = (len < 511) ? len : 511;
-  for (int i = 0; i < n && str[i] && out < 511;) {
-    if (i + 2 < n && static_cast<unsigned char>(str[i]) == 0x5C &&
-        static_cast<unsigned char>(str[i + 1]) == 0x66) {
-      const unsigned char ch = static_cast<unsigned char>(str[i + 2]);
-      if (ch >= 0x30 && ch < 0x7D) {
-        col = *reinterpret_cast<DWORD *>(0x95FA78 + ch * 4);
-        i += 3;
-        continue;
-      }
-    }
-    tmp[out++] = str[i++];
-  }
-  tmp[out] = 0;
-  real_ItemUiDrawFec(font, tmp, out, x, y, col);
-}
-
-static int __cdecl Hook_ItemUiGlyph(void *font, const char *start, int len, int unk,
-                                   int x, int y, DWORD color) {
-  if (start && len >= 3 && static_cast<unsigned char>(start[0]) == 0x5C &&
-      static_cast<unsigned char>(start[1]) == 0x66) {
-    const unsigned char ch = static_cast<unsigned char>(start[2]);
-    if (ch >= 0x30 && ch < 0x7D) {
-      color = *reinterpret_cast<DWORD *>(0x95FA78 + ch * 4);
-      start += 3;
-      len -= 3;
-    }
-  }
-  return real_ItemUiGlyph(font, start, len, unk, x, y, color);
-}
-
-static void InstallItemStatusColorHook() {
-  static const BYTE expF0[6] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x10};
-  static const BYTE expFec[5] = {0x55, 0x8B, 0xEC, 0x81, 0x3D};
-  static const BYTE expGlyph[5] = {0x55, 0x8B, 0xEC, 0x51, 0x83};
-  if (memcmp(reinterpret_cast<void *>(0x46E0F0), expF0, sizeof(expF0)) != 0 ||
-      memcmp(reinterpret_cast<void *>(0x46FEC0), expFec, sizeof(expFec)) != 0 ||
-      memcmp(reinterpret_cast<void *>(0x46D420), expGlyph, sizeof(expGlyph)) != 0) {
-    launcherdll_net_log("[ItemStatusColor] prologue mismatch, skipping");
-    return;
-  }
-  DetourTransactionBegin();
-  DetourUpdateThread(GetCurrentThread());
-  DetourAttach(&(PVOID &)real_ItemUiDraw6, reinterpret_cast<PVOID>(Hook_ItemUiDraw6));
-  DetourAttach(&(PVOID &)real_ItemUiDrawFec, reinterpret_cast<PVOID>(Hook_ItemUiDrawFec));
-  DetourAttach(&(PVOID &)real_ItemUiGlyph, reinterpret_cast<PVOID>(Hook_ItemUiGlyph));
-  const LONG result = DetourTransactionCommit();
-  launcherdll_net_log("[ItemStatusColor] 46FEC0/46D420/46E0F0 result=%ld", result);
-}
-
-// 延遲安裝 Detours 的執行緒：等保護殼解密完成後才安裝所有 hook
-// 稽核發現：系統時鐘偽造機制（SetFakeSystemTime/RestoreSystemTime +
-// timeController.cpp 的 5 個時間 API hook）會動到整台機器的真實時鐘，且
-// GetTickCount/timeGetTime 被寫死回傳常數、永遠不遞增，是先前「跑一段時間後
-// 斷線/當機」的可疑根因，已確認移除；PatchThread 的 decrypt-gate 補丁已足夠
-// 讓保護殼正常解密，不需要另外偽造系統時間。
+// 等保護殼解密後再裝 hook（解殼前 patch 會被蓋掉）。
 static DWORD WINAPI DelayedDetourThread(void *p) {
-  launcherdll_net_log("[DelayedDetour] waiting for code decryption...");
+  // 所有需要解密後程式碼的 Hook 統一由此執行緒安裝；這裡只保留整體 Detours
+  // 失敗與必要的初始化錯誤，細節由各模組自行回報成功結果。
   int waitCount = 0;
-  DWORD lastVal = 0xFFFFFFFF;
   while (!IsCodeDecrypt() && waitCount < 12000) {
     Sleep(10);
     waitCount++;
-    if (waitCount % 500 == 0) {
-      DWORD curVal = 0xDEADDEAD;
-      __try {
-        curVal = *(volatile DWORD *)0x0058788B;
-      } __except (1) {
-        curVal = 0xDEADDEAD;
-      }
-      MEMORY_BASIC_INFORMATION mbi = {};
-      VirtualQuery((PVOID)0x0058788B, &mbi, sizeof(mbi));
-      launcherdll_net_log(
-          "[DelayedDetour] poll %ds: code@58788B=0x%08X %s (protect=0x%X)",
-          waitCount / 100, curVal,
-          (curVal != lastVal) ? "(CHANGED!)" : "(unchanged)",
-          (unsigned)mbi.Protect);
-      lastVal = curVal;
-    }
   }
   if (!IsCodeDecrypt()) {
-    DWORD finalVal = 0xDEADDEAD;
-    __try {
-      finalVal = *(volatile DWORD *)0x0058788B;
-    } __except (1) {
-    }
-    launcherdll_net_log(
-        "[DelayedDetour] TIMEOUT 120s, code@58788B=0x%08X (expect 0x4D8D016A)",
-        finalVal);
+    launcherdll_hook_log("[Install] decrypt timeout, hooks not installed");
     return 1;
   }
-  launcherdll_net_log(
-      "[DelayedDetour] code decrypted (waited %d ms), installing ALL hooks...",
-      waitCount * 10);
 
-  // 「變身檔」FileHook：對齊 L1J3.8Launcher(RUST)參考 inject.rs 的時序——一定要
-  // 等 0x0058788B 那段程式碼真的解密完成（也就是這裡，IsCodeDecrypt() 已經為
-  // true）才能 patch，之前放在 OnLineageWindowCreating()（視窗建立當下，遠早於
-  // 解密完成）會被遊戲自己的解殼流程蓋掉/覆寫，這正是先前不管 pak 內容對不對
-  // 都照樣在同一個位址當機的原因。buffer/buffer_len 在更早的 init() 階段就已經
-  // 由 GetFileBuffer() 決定好了，這裡只是延後安裝時機。
-  if (buffer != NULL) {
-    HookCode((void *)0x0058788B, (void *)GetFileData, 5);
-    launcherdll_net_log(
-        "[DelayedDetour] Core Pak loading (GetFileData) hook installed "
-        "post-decrypt, buffer_len=%u", (unsigned)buffer_len);
-  }
+  MorphPak_InstallHook();
 
-  // 解殼完成：安裝所有 Detours hook（API，不再含時間 hook——見上方稽核註記）
   DetourRestoreAfterWith();
   DetourTransactionBegin();
   DetourUpdateThread(GetCurrentThread());
-  // API hook
   DetourAttach(&(PVOID &)real_connect, reinterpret_cast<PVOID>(my_connect));
   DetourAttach(&(PVOID &)real_send, reinterpret_cast<PVOID>(my_send));
   DetourAttach(&(PVOID &)real_recv, reinterpret_cast<PVOID>(my_recv));
@@ -1437,49 +492,19 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   DetourAttach(&(PVOID &)real_CreateWindowExW,
                reinterpret_cast<PVOID>(my_CreateWindowExW));
   LONG detourResult = DetourTransactionCommit();
-  launcherdll_net_log("[DelayedDetour] DetourTransactionCommit result=%ld",
-                      detourResult);
+  if (detourResult != NO_ERROR) {
+    launcherdll_hook_log("[Install] Winsock/CreateWindow detours fail=%ld",
+                         detourResult);
+  }
 
-  // 對齊 Rust login.rs：解殼後立刻裝 USER/PASS/Login77（不綁 CreateWindowEx）
   InstallLogin77Hooks();
-
-  // 密米爾之泉：ProcessPacket 分派 cave（S_PledgeWatch/200 sentinel 攔截）
   InstallMimirPowerHook();
-
-  // 血盟推薦登錄：選類別（Killer/Hunter/Talker）後把對應說明文字也寫進
-  // Intro_Edit，不然介紹欄位一直是空的、Register 一律靜默失敗
   InstallMatchMakingHook();
-
-  // 內建瀏覽器導向自訂網址，取代原廠客服頁
   InstallWebNavigateHook();
-
-  // 怪物被打卡在僵直不受身：依 ui.pak 內 NpcFlinch.xml 資料表決定每種怪物該
-  // 不該跳過受身，玩家角色（含 PK 對手）的受身反應不受影響（內含 LoadCombatConfig()）
   InstallHitFlinchPatch();
-
-  // 隊伍快捷列「編號標記」：已移至 parked_hooks/NumberingMarkerHook（同 LightStamp）
-
-  // 物品詳細資料列：46FEC0 就地剝 \f、46D420 跳過三字、46E0F0 flag=0
   InstallItemStatusColorHook();
-
-  // 倉庫清單名稱後的 L1ItemStatus：官方不解；hook 吃 blob 再掛上詳細
   InstallWarehouseStatusHook();
-
-  // 交易視窗、個人商店分開裝：一邊 mismatch 不影響另一邊
   InstallTradeStatusHook();
-  // 實驗：商店列表會把第一行砍掉，先整組不裝（blob／寬高／畫線／595736 克隆）
-  // InstallPrivateShopStatusHook();
-  launcherdll_hook_log("[ShStatus] skipped (experiment: list first-line clip)");
-
-  // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動
-  // HookCode((void *)0x58228A, (void *)NakedLoaderHook, 6);
-
-  launcherdll_net_log("[DelayedDetour] all hooks installed successfully");
-
-  // wait_and_patch（ConditionalPatch + PATCHCODE1）+ EquipUI/SmoothRun/ShowClock/AttackDamage
-  // 改為同執行緒直接跑：實測 CreateThread(PatchThread) 從未出現任何 [Patch] log
-  //（整份 launcher.log 零筆），疑似被殼／環境吞掉；同執行緒可確定會跑到。
-  launcherdll_net_log("[DelayedDetour] entering PatchThread (inline)...");
   PatchThread(NULL);
 
   return 0;
@@ -1487,66 +512,33 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
 
 // init: DLL 初始化進入點，供外部 Launcher 呼叫 (不可設為 static)
 void init() {
+  // 外部 Launcher 的初始化入口：讀共享設定、準備加密狀態，再啟動延遲安裝執行緒。
   VMProtectBegin;
-  launcherdll_net_log("[init] DLL init started, PID=%u",
-                      (unsigned)GetCurrentProcessId());
   SHARE_INFO *pShareInfo = get_shm(GetCurrentProcessId(), false);
   if (pShareInfo == NULL) {
-    launcherdll_net_log("[init] get_shm failed, calling ExitProcess");
+    launcherdll_hook_log("[Install] init get_shm failed");
     ExitProcess(0);
     return;
   }
-  launcherdll_net_log("[init] get_shm OK, pShareInfo=%p, waiting for magic...",
-                      pShareInfo);
   int timeout = 0;
   while (*(volatile DWORD *)&pShareInfo->magic != 0x12345678 && timeout < 50) {
     Sleep(100);
     timeout++;
   }
-  launcherdll_net_log("[init] magic wait done, timeout=%d, magic=0x%08X",
-                      timeout, (unsigned)pShareInfo->magic);
   memcpy(&ShareInfo, pShareInfo, sizeof(SHARE_INFO));
   pShareInfo->read = true;
 
-  // 安全拷貝帳密並確保 null-terminated
-  memset(g_id, 0, 32);
-  memset(g_pwd, 0, 32);
-  memcpy(g_id, ShareInfo.Account, 32);
-  memcpy(g_pwd, ShareInfo.Password, 32);
-  g_id[31] = '\0';
-  g_pwd[31] = '\0';
-  g_pwd_pos = (int)strlen((const char*)g_pwd);
+  Login77Hook_SetAccount(ShareInfo.Account, ShareInfo.Password);
 
-  launcherdll_net_log("[init] ShareInfo size=%u (expected 653)", (unsigned)sizeof(SHARE_INFO));
-
-  launcherdll_net_log("[init] ShareInfo copied: ip=%.31s, port=%d, encrypt=%d, randenc=%d",
-                      (const char *)ShareInfo.ip, ShareInfo.port, (int)ShareInfo.encrypt,
-                      (int)ShareInfo.randenc);
-
-  // RSA 金鑰改回從 ShareMemory 動態讀取。先前硬編碼是因為 bdfile[32] 與 C# 端
-  // (LaunchService.cs) 假設的 bdfile[260] 不一致，導致 SHARE_INFO 只有 197 bytes、
-  // RSA_N/RSA_D 這幾個欄位讀到的其實是 bdfile 字串中段的垃圾值。已修正 ShareMemory.h
-  // 把 bdfile 對齊成 [260]（sizeof(SHARE_INFO)=653），欄位偏移現在跟 C# 端一致，
-  // 動態讀取可以正常運作了。
   _rsaD = ShareInfo.RSA_D;
   _rsaN = ShareInfo.RSA_N;
-  launcherdll_net_log("[init] RSA keys from ShareMemory: N=0x%08X, D=0x%08X", _rsaN, _rsaD);
   free_shm();
-  launcherdll_net_log("[init] free_shm done");
-  if (ShareInfo.usebd) {
-    launcherdll_net_log("[init] Loading BD file...");
-    buffer = GetFileBuffer();
-    launcherdll_net_log("[init] GetFileBuffer result: buffer=%p, len=%u",
-                        buffer, (unsigned)buffer_len);
-  }
+  if (ShareInfo.usebd)
+    MorphPak_Load();
   encdec_init_key(ShareInfo.key);
-  launcherdll_net_log("[init] encdec_init_key done");
 
-  // 所有 hook（API）延遲到保護殼解密後安裝
   CreateThread(NULL, 0, DelayedDetourThread, NULL, 0, NULL);
 
-  launcherdll_net_log("[init] init completed, DelayedDetourThread started");
-  // 通知 Launcher init() 已完成，可以 ResumeThread
   if (g_hInitEvent) {
     SetEvent(g_hInitEvent);
     CloseHandle(g_hInitEvent);
@@ -1557,6 +549,7 @@ void init() {
 
 // __fn1: 外部 Hook 安裝進入點 (不可設為 static)
 bool __stdcall __fn1(DWORD tid) {
+  // 外部注入流程提供的訊息 Hook 入口；回傳值只表示 SetWindowsHookEx 是否成功。
   VMProtectBegin;
   h_hook = SetWindowsHookEx(WH_GETMESSAGE, HookProc, hins, tid);
   VMProtectEnd;
