@@ -38,10 +38,11 @@ std::map<int, SpriteConfig> g_SpriteConfigs;
 
 namespace {
 
-// Each translation unit in this project owns its own tiny logger (see
-// NetLog in DisconnectHook.cpp, ImGuiLog in ImGuiHook.cpp) - the
-// launcherdll_net_log in LauncherDll.cpp is `static` (internal linkage) and
-// isn't linkable from here.
+/**
+ * @brief 寫入受身動作 Patch 專屬的 Log 紀錄。
+ * @param fmt 格式化字串
+ * @param ... 可變參數
+ */
 void HfLog(const char *fmt, ...) {
   char exePath[MAX_PATH] = {0};
   char logPath[MAX_PATH] = "./Core/launcher.log";
@@ -55,7 +56,9 @@ void HfLog(const char *fmt, ...) {
     sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) return;
+  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) {
+    return;
+  }
   SYSTEMTIME st;
   GetLocalTime(&st);
   char msg[512] = {0};
@@ -73,14 +76,17 @@ void HfLog(const char *fmt, ...) {
 typedef bool(__thiscall *ShouldSkipFlinch_t)(void *obj);
 ShouldSkipFlinch_t real_ShouldSkipFlinch = (ShouldSkipFlinch_t)0x5ABE70;
 
-// MSVC won't let a free function be defined with __thiscall directly (see
-// MatchMakingHook.cpp's Hook_SetTypeLabel for the same trick already used
-// twice this session) - __fastcall's first two params land in ECX/EDX,
-// binary-compatible with how a thiscall caller puts `this` in ECX; the
-// unused edx parameter just absorbs whatever thiscall didn't put there.
+/**
+ * @brief Hook 攔截受身判斷函式 SHOULD_SKIP_FLINCH。
+ * @param obj 目標實體物件指標
+ * @param edx __fastcall 佔位 EDX
+ * @return true 代表跳過受身/後仰動畫 (改播噴血特效)，false 代表維持播放受身動畫
+ */
 bool __fastcall Hook_ShouldSkipFlinch(void *obj, void * /*edx*/) {
   BYTE isPc = *((BYTE *)obj + 0x27);
-  if (isPc != 0) return false; // 玩家（含PK對手）一律維持原本受身，不查表
+  if (isPc != 0) {
+    return false; // 玩家（含PK對手）一律維持原本受身，不查表
+  }
 
   // 2026-09-02: 拿掉 suppressFlinch 布林值，presence 本身就是旗標 - 有列在
   // NpcFlinch.xml 裡（不管 no_damage 是多少，寫進去的都代表「這隻要跳過受身」）
@@ -91,6 +97,9 @@ bool __fastcall Hook_ShouldSkipFlinch(void *obj, void * /*edx*/) {
 
 } // namespace
 
+/**
+ * @brief 從 ui.pak 中的 NpcFlinch.xml 讀取並載入精靈戰鬥/受身組態設定。
+ */
 void LoadCombatConfig() {
   // NpcFlinch.xml is packed into the shared ui.pak (see Pack-UiAssets.ps1 /
   // tools\ui_sample\NpcFlinch.xml) rather than a loose disk file - same
@@ -116,11 +125,13 @@ void LoadCombatConfig() {
   size_t pos = 0;
   while (pos < len) {
     size_t lineEnd = pos;
-    while (lineEnd < len && data[lineEnd] != '\n')
+    while (lineEnd < len && data[lineEnd] != '\n') {
       lineEnd++;
+    }
     size_t lineLen = lineEnd - pos;
-    if (lineLen > 500)
+    if (lineLen > 500) {
       lineLen = 500;
+    }
     char line[512] = {0};
     memcpy(line, data + pos, lineLen);
     line[lineLen] = 0;
@@ -134,12 +145,14 @@ void LoadCombatConfig() {
       int bloodEffectID = 10770; // 預設血液特效 ID
       // 解析 id 屬性
       char *pId = strstr(line, "id=\"");
-      if (pId)
+      if (pId) {
         sscanf_s(pId + 4, "%d", &spriteId);
+      }
       // 解析 bloodEffect 屬性
       char *pBlood = strstr(line, "bloodEffect=\"");
-      if (pBlood)
+      if (pBlood) {
         sscanf_s(pBlood + 13, "%d", &bloodEffectID);
+      }
       if (spriteId != -1) {
         SpriteConfig cfg{};
         cfg.bloodEffect = bloodEffectID;
@@ -151,6 +164,9 @@ void LoadCombatConfig() {
   HfLog("[CombatFix] Loaded %d monster configs from ui.pak(NpcFlinch.xml)", count);
 }
 
+/**
+ * @brief 安裝受身動畫判斷的 Detours Hook。
+ */
 void InstallHitFlinchPatch() {
   LoadCombatConfig();
 

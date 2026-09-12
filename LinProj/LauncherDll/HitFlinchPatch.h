@@ -10,26 +10,22 @@
 #pragma once
 #include <map>
 
-// 精靈戰鬥組態設定（Combat Config）。Owned here since HitFlinchPatch.cpp is
-// now the only real consumer; GetSuppressFlinch/GetBloodEffect in
-// LauncherDll.cpp (still linked into NakedFlinchHook.cpp/NakedBloodHook.cpp,
-// which install-time confirm their own target addresses are stale for this
-// build and never actually attach) read the same map through this header.
+/**
+ * @struct SpriteConfig
+ * @brief 精靈戰鬥組態設定（例如受身與血液特效 ID）。
+ */
 struct SpriteConfig {
-  int bloodEffect;
+  int bloodEffect; // 噴血特效 ID
 };
 
 extern std::map<int, SpriteConfig> g_SpriteConfigs;
 
-// Reads NpcFlinch.xml (packed into the shared ui.pak, see Pack-UiAssets.ps1)
-// into g_SpriteConfigs. Safe to call even when the pak/entry doesn't exist
-// (logs and leaves the map empty).
+/**
+ * @brief 從 ui.pak 中讀取 NpcFlinch.xml 設定至 g_SpriteConfigs。
+ */
 void LoadCombatConfig();
 
-// Loads the sprite config table, then hooks SHOULD_SKIP_FLINCH (VA 0x5ABE70)
-// to consult it: player characters always keep their real flinch reaction;
-// monsters skip flinch (blood effect only) exactly when their sprite ID is
-// listed in the table - not listed means keep the real flinch/stagger
-// animation. Call from a background thread after the game's code section is
-// decrypted (see DelayedDetourThread in LauncherDll.cpp).
+/**
+ * @brief 載入精靈設定表並 Hook SHOULD_SKIP_FLINCH 函式。
+ */
 void InstallHitFlinchPatch();

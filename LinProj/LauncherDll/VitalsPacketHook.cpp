@@ -48,6 +48,12 @@ constexpr size_t CAVE_SIZE = 128; // 4 個 trampoline，每個 12 bytes，留足
 int g_lastCurHp = 0;
 int g_lastCurMp = 0;
 
+/**
+ * @brief 修改指定記憶體位址的 Code (修正記憶體保護屬性後寫入)。
+ * @param addr 目標記憶體位址
+ * @param code 欲寫入的指令資料
+ * @param len 資料長度
+ */
 void PatchCode(void *addr, void *code, int len) {
   DWORD dwOldProtect;
   VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, PAGE_READWRITE, &dwOldProtect);
@@ -55,7 +61,11 @@ void PatchCode(void *addr, void *code, int len) {
   VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, dwOldProtect, &dwOldProtect);
 }
 
-// 讀目前這個 call site 的目標位址（假設是標準 E8 rel32），格式不符回傳 0。
+/**
+ * @brief 讀取指定 Call 指令 (E8 rel32) 的跳轉目標位址。
+ * @param callAddr Call 指令位址
+ * @return 跳轉目標位址，非 Call 指令或讀取失敗回傳 0
+ */
 DWORD ReadCallTarget(DWORD callAddr) {
   BYTE buf[5];
   __try {
@@ -63,24 +73,45 @@ DWORD ReadCallTarget(DWORD callAddr) {
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     return 0;
   }
-  if (buf[0] != 0xE8)
+  if (buf[0] != 0xE8) {
     return 0;
+  }
   int rel = 0;
   memcpy(&rel, buf + 1, 4);
   return (DWORD)((int)callAddr + 5 + rel);
 }
 
+/**
+ * @brief 當前 HP 解包抓取回呼。
+ */
 void __stdcall OnCurHpCaptured(int v) { g_lastCurHp = v; }
+
+/**
+ * @brief 最大 HP 解包抓取回呼，同時更新至 AutoPotionOverlay。
+ */
 void __stdcall OnMaxHpCaptured(int v) {
   AutoPotionOverlay_OnHpUpdate(g_lastCurHp, v);
 }
+
+/**
+ * @brief 當前 MP 解包抓取回呼。
+ */
 void __stdcall OnCurMpCaptured(int v) { g_lastCurMp = v; }
+
+/**
+ * @brief 最大 MP 解包抓取回呼，同時更新至 AutoPotionOverlay。
+ */
 void __stdcall OnMaxMpCaptured(int v) {
   AutoPotionOverlay_OnMpUpdate(g_lastCurMp, v);
 }
 
-// 產生單一 trampoline：call ReadH; push eax; call captureFunc(__stdcall); ret
-// 回傳寫入的 byte 數（固定 12）。
+/**
+ * @brief 產生單一 trampoline 機器碼：call ReadH; push eax; call captureFunc(__stdcall); ret
+ * @param out 輸出緩衝區
+ * @param outAddr Trampoline 於記憶體中的實際位址
+ * @param captureFunc 抓取數值用的回呼函式指標
+ * @return 寫入的位元組數（固定 12）
+ */
 int BuildTrampoline(BYTE *out, DWORD outAddr, void *captureFunc) {
   int n = 0;
   // call ReadH
@@ -104,6 +135,10 @@ int BuildTrampoline(BYTE *out, DWORD outAddr, void *captureFunc) {
   return n;
 }
 
+/**
+ * @struct HookSite
+ * @brief 紀錄 Hook 位址與對應 capture 回呼之對照結構。
+ */
 struct HookSite {
   const char *name;
   DWORD callAddr;
@@ -119,6 +154,9 @@ const HookSite kSites[4] = {
 
 } // namespace
 
+/**
+ * @brief 安裝 HP/MP 血魔條封包讀取 Hook。
+ */
 void InstallVitalsPacketHook() {
   BYTE *cave = (BYTE *)VirtualAlloc(NULL, CAVE_SIZE, MEM_COMMIT | MEM_RESERVE,
                                     PAGE_EXECUTE_READWRITE);

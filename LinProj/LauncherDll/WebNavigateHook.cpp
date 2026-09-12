@@ -12,10 +12,11 @@
 
 namespace {
 
-// Each translation unit in this project owns its own tiny logger (see
-// NetLog in DisconnectHook.cpp, ImGuiLog in ImGuiHook.cpp) - the
-// launcherdll_net_log in LauncherDll.cpp is `static` (internal linkage) and
-// isn't linkable from here.
+/**
+ * @brief 寫入內建瀏覽器導向 Hook 專屬的日誌記錄。
+ * @param fmt 格式化字串
+ * @param ... 可變參數
+ */
 void WebLog(const char *fmt, ...) {
   char exePath[MAX_PATH] = {0};
   char logPath[MAX_PATH] = "./Core/launcher.log";
@@ -29,7 +30,9 @@ void WebLog(const char *fmt, ...) {
     sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) return;
+  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) {
+    return;
+  }
   SYSTEMTIME st;
   GetLocalTime(&st);
   char msg[512] = {0};
@@ -49,14 +52,12 @@ typedef void(__thiscall *Navigate_t)(void *self, const char *url);
 Navigate_t real_Navigate = (Navigate_t)0x610D70;
 const char kRedirectUrl[] = "http://localhost:8082/index.html";
 
-// MSVC won't let a free function be defined with __thiscall directly (only
-// member functions and function-pointer types may use it - real_Navigate
-// above is fine as a typedef'd pointer, but this definition needs the
-// standard __fastcall-with-a-dummy-EDX-slot trick: __fastcall passes its
-// first two params in ECX/EDX, which is binary-compatible with how a
-// thiscall caller already puts `this` in ECX; the unused edx parameter just
-// absorbs whatever thiscall didn't put there, and `url` still arrives via
-// the stack exactly like a thiscall stack argument would.
+/**
+ * @brief CWebWindow::Navigate 的 Hook 攔截函式，將導向目標重定向至本機網址。
+ * @param self CWebWindow 物件指標 (this)
+ * @param edx __fastcall 佔位 EDX
+ * @param url 原始欲開啟的網址
+ */
 void __fastcall Hook_Navigate(void *self, void * /*edx*/, const char *url) {
   WebLog("intercepted url=[%s] -> redirecting to %s", url ? url : "(null)", kRedirectUrl);
   real_Navigate(self, kRedirectUrl);
@@ -64,6 +65,9 @@ void __fastcall Hook_Navigate(void *self, void * /*edx*/, const char *url) {
 
 } // namespace
 
+/**
+ * @brief 安裝遊戲內建 Web 瀏覽器導向 Hook。
+ */
 void InstallWebNavigateHook() {
   BYTE prologue[3];
   memcpy(prologue, (void *)0x610D70, 3);

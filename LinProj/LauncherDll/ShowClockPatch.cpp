@@ -20,11 +20,18 @@
 
 namespace {
 
+// 遊戲時間繪製檢查判斷點之記憶體位址與比對用位元組
 constexpr DWORD CLOCK_GATE_ADDR = 0x0078AD50;
 constexpr int PATCH_LEN = 6;
 const BYTE EXPECTED_BYTES[PATCH_LEN] = {0x0F, 0x84, 0xA1, 0x00, 0x00, 0x00};
 const BYTE PATCHED_BYTES[PATCH_LEN] = {0x90, 0x90, 0x90, 0x90, 0x90, 0x90};
 
+/**
+ * @brief 修改指定記憶體位址的 Code (修正記憶體保護屬性後寫入)。
+ * @param addr 目標記憶體位址
+ * @param code 欲寫入的指令資料
+ * @param len 資料長度
+ */
 void PatchCode(void *addr, const void *code, int len) {
   DWORD dwOldProtect;
   VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, PAGE_READWRITE, &dwOldProtect);
@@ -34,6 +41,9 @@ void PatchCode(void *addr, const void *code, int len) {
 
 } // namespace
 
+/**
+ * @brief 安裝時鐘常駐顯示修補（將 hover 判斷的條件跳轉指令 NOP 掉）。
+ */
 void InstallShowClockPatch() {
   BYTE *addr = (BYTE *)CLOCK_GATE_ADDR;
   if (memcmp(addr, PATCHED_BYTES, PATCH_LEN) == 0) {
