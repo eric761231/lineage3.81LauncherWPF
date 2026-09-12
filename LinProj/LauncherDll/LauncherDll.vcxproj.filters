@@ -54,9 +54,6 @@
     <ClCompile Include="ShowClockPatch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BroadcastToPledgeHook.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="AutoPotionOverlay.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -110,9 +107,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ShowClockPatch.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="BroadcastToPledgeHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="AutoPotionOverlay.h">

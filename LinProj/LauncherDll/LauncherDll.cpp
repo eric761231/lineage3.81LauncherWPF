@@ -9,7 +9,6 @@
 #include "VitalsPacketHook.h"
 #include "ShowClockPatch.h"
 #include "AttackDamageHook.h"
-#include "BroadcastToPledgeHook.h"
 #include "AutoPotionOverlay.h"
 #include "AutoPotionConfig.h"
 #include "InventoryDebugHook.h"
@@ -1459,9 +1458,6 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   InstallHitFlinchPatch();
 
   // 隊伍快捷列「編號標記」：已移至 parked_hooks/NumberingMarkerHook（同 LightStamp）
-
-  // 血盟「成員登入訊息」快捷：接管 Action_BrodcastToPledge，確保送出 opcode 75
-  InstallBroadcastToPledgeHook();
 
   // 物品詳細資料列：46FEC0 就地剝 \f、46D420 跳過三字、46E0F0 flag=0
   InstallItemStatusColorHook();
