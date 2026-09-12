@@ -8,7 +8,7 @@
 #include "stdafx.h"
 #include "AttackDamageHook.h"
 #include "AttackDamageFeetHook.h"
-#include "AutoPotionConfig.h"
+#include "PssConfig.h"
 #include "LauncherDll.h"
 #include <atomic>
 #include <cstdio>
@@ -438,7 +438,7 @@ void InstallAttackDamageHook() {
   g_installed = true;
   // 從本機 cfg 還原開關（不開 Overlay 也生效）
   {
-    AutoPotionConfig cfg = AutoPotionConfig_Load();
+    PssConfig cfg = PssConfig_Load();
     g_enabled.store(cfg.showDamage, std::memory_order_relaxed);
     launcherdll_hook_log(
         "[AttackDmg] installed attack/aoe/magic cave=%p size=%d showDamage=%d",

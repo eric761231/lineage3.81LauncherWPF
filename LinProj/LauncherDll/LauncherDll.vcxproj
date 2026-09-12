@@ -142,7 +142,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="AutoPotionConfig.cpp">
+    <ClCompile Include="PssConfig.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -174,7 +174,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="AutoPotionOverlay.cpp">
+    <ClCompile Include="PlaySupportSystem.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PssOverlay.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -190,7 +194,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ShopStatusHook.cpp">
+    <ClCompile Include="PrivateShopStatus.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -209,7 +213,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="MatchMakingHook.h" />
-    <ClInclude Include="AutoPotionConfig.h" />
+    <ClInclude Include="PssConfig.h" />
     <ClInclude Include="WebNavigateHook.h" />
     <ClInclude Include="HitFlinchPatch.h" />
     <ClInclude Include="SmoothRunPatch.h" />
@@ -217,11 +221,12 @@
     <ClInclude Include="ShowClockPatch.h" />
     <ClInclude Include="AttackDamageHook.h" />
     <ClInclude Include="AttackDamageFeetHook.h" />
-    <ClInclude Include="AutoPotionOverlay.h" />
+    <ClInclude Include="PlaySupportSystem.h" />
+    <ClInclude Include="PssOverlay.h" />
     <ClInclude Include="InventoryDebugHook.h" />
     <ClInclude Include="WarehouseStatusHook.h" />
     <ClInclude Include="TradeStatusHook.h" />
-    <ClInclude Include="ShopStatusHook.h" />
+    <ClInclude Include="PrivateShopStatus.h" />
     <ClInclude Include="packet.h" />
     <ClInclude Include="OverlayAssets.h" />
     <ClInclude Include="MimirPowerHook.h" />

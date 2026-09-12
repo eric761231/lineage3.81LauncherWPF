@@ -1,8 +1,8 @@
-// AutoPotionOverlay.cpp: see AutoPotionOverlay.h.
+// PssOverlay.cpp: see PssOverlay.h.
 //
 // 比照 MimirPowerOverlay：獨立長駐 UI 執行緒 + WS_EX_LAYERED + hWndOwner=g_hGameWnd，
 // UpdateLayeredWindow 自繪。本階段無美術圖，GDI+ 幾何＋文字對齊 mockup。
-// 儲存只排隊，真正 Save/Send 由 AutoPotionOverlay_PumpPendingSave（遊戲主執行緒）做。
+// 儲存只排隊，真正 Save/Send 由 PssOverlay_PumpPendingSave（遊戲主執行緒）做。
 #include <winsock2.h>
 #include <windows.h>
 #include <windowsx.h>
@@ -12,8 +12,8 @@
 #include <string.h>
 #include <mutex>
 #include <atomic>
-#include "AutoPotionOverlay.h"
-#include "AutoPotionConfig.h"
+#include "PssOverlay.h"
+#include "PssConfig.h"
 #include "OverlayAssets.h"
 #include "AttackDamageHook.h"
 
@@ -26,11 +26,12 @@ extern HINSTANCE hins;
 
 namespace {
 
-const wchar_t *kClassName = L"LauncherDllAutoPotionOverlay";
-constexpr UINT WM_SHOW_AUTOPOTION = WM_USER + 300;
-constexpr UINT WM_HIDE_AUTOPOTION = WM_USER + 301;
-constexpr UINT WM_AUTOPOTION_RESOLVE_REPLY = WM_USER + 303;
-constexpr UINT WM_AUTOPOTION_SLOT_COUNTS = WM_USER + 304;
+const wchar_t *kClassName = L"LauncherDllPssOverlay";
+constexpr UINT WM_SHOW_PSS = WM_USER + 300;
+constexpr UINT WM_HIDE_PSS = WM_USER + 301;
+constexpr UINT WM_PSS_RESOLVE_REPLY = WM_USER + 303;
+constexpr UINT WM_PSS_SLOT_COUNTS = WM_USER + 304;
+constexpr UINT WM_PSS_ITEM_FILTER = WM_USER + 305;
 
 // 設計座標系——集中在這裡調，之後可改讀 XML。
 // 視窗與四宮格比例可改這些常數重新分配布局（不必改繪圖邏輯）。
@@ -53,6 +54,10 @@ constexpr int kSlotGap = 6;
 
 enum TabId { Tab_Buff = 0, Tab_Item = 1, Tab_Teleport = 2, Tab_Misc = 3, Tab_Count = 4 };
 int g_activeTab = Tab_Buff;
+int g_itemSubTab = 0; // 0=刪除 1=溶解
+int g_filterSel = -1;
+int g_pressedSubTab = -1;
+int g_pressedRemove = 0;
 int g_pressedTab = -1;
 int g_pressedEnable = 0;
 constexpr int TIMER_CARET = 2;
@@ -95,23 +100,25 @@ std::atomic<bool> g_visible{false};
 bool g_userMoved = false;
 double g_scaleX = 1.0, g_scaleY = 1.0;
 
-AutoPotionConfig g_cfg;
+PssConfig g_cfg;
 ULONG_PTR g_gdiplusToken = 0;
 bool g_gdiplusStarted = false;
 
 // 2026-09-09：道具格子圖示。跟 MimirPowerOverlay.cpp 共用同一組 ui.pak/idx
 // （OverlayAssets_Load 用 folderName+"|"+pakBaseName 當 cache key，兩邊傳
 // "ui"/"ui" 會命中同一份已解密好的 pak，不會重複載入）。檔名規則見
-// AutoPotionOverlay_現況與圖示交接.md：item_<gfxid>.png。找不到就退回
+// PssOverlay_現況與圖示交接.md：item_<gfxid>.png。找不到就退回
 // DrawItemPlaceholderIcon 那個瓶子造型佔位圖，不會整個畫面空白。
 OverlayAssetSet *g_assets = nullptr;
 
+/** 延遲載入 ui 圖示包；失敗則 g_assets 維持 null，格子改畫佔位瓶。 */
 void EnsureAssetsLoaded() {
   if (g_assets)
     return;
   g_assets = OverlayAssets_Load("ui", "ui");
 }
 
+/** 依 gfxid 取 item_<id>.png；沒檔回 null。 */
 Gdiplus::Bitmap *GetItemIconBitmap(int gfxid) {
   if (gfxid <= 0)
     return nullptr;
@@ -135,10 +142,10 @@ int g_hoverDec = -1, g_hoverInc = -1; // 0=heal 1=mana
 // 2026-09-08：「點格子→點背包道具」選道具狀態。跟 g_editMode/g_editSlot 同時
 // 設起來（點任一槽都會同時進入這兩種狀態），玩家可以繼續打字用鍵盤輸入（既有
 // 流程不變），也可以改成去點背包道具（新流程）。用 atomic 是因為
-// AutoPotionOverlay_IsPicking 會被遊戲主執行緒（非 overlay 自己的執行緒）讀取。
+// PssOverlay_IsPicking 會被遊戲主執行緒（非 overlay 自己的執行緒）讀取。
 // 2026-09-09：拿掉「確認中」中繼顯示（點道具後幾乎立刻有回覆＋自動存檔，不需要
 // 額外的暫時名稱狀態），連帶拿掉 g_pickPendingName / PickCandidateMsg /
-// AutoPotionOverlay_OnPickCandidate 這整條只服務那個顯示的機制。
+// PssOverlay_OnPickCandidate 這整條只服務那個顯示的機制。
 std::atomic<int> g_pickSection{-1};
 std::atomic<int> g_pickSlot{-1};
 
@@ -162,16 +169,26 @@ struct SlotCountsBatchMsg {
   } items[20];
 };
 
-volatile LONG g_pendingSave = 0;
-AutoPotionConfig g_pendingCfg;
+struct ItemFilterListMsg {
+  int listType;
+  int n;
+  int itemIds[kItemFilterMax];
+  int gfxids[kItemFilterMax];
+  wchar_t names[kItemFilterMax][64];
+};
 
-// 2026-09-10：道具名稱/數量現在是 AutoPotionSlot 自己的欄位（見
-// AutoPotionConfig.h），跟著設定檔一起存讀——進遊戲剛開視窗時直接顯示上次
+volatile LONG g_pendingSave = 0;
+volatile LONG g_pendingFilterRequest = -1;
+PssConfig g_pendingCfg;
+
+// 2026-09-10：道具名稱/數量現在是 PssSlot 自己的欄位（見
+// PssConfig.h），跟著設定檔一起存讀——進遊戲剛開視窗時直接顯示上次
 // 存檔當下的名稱/數量（不是即時背包庫存），只有真的重新點選（伺服器回覆
 // 成功）才會更新。不再需要獨立的 session-only 快取陣列。
 
 int g_hoverSection = -1, g_hoverSlot = -1;
 
+/** Overlay 執行緒寫 Core\\launcher.log；部分高頻字串直接丢掉。 */
 void ApLog(const char *fmt, ...) {
   // 只留主要 UI 訊息；resolve／slot-count／pump 等略過
   if (fmt == NULL)
@@ -202,7 +219,7 @@ void ApLog(const char *fmt, ...) {
   va_start(args, fmt);
   vsprintf_s(msg, fmt, args);
   va_end(args);
-  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] [AutoPotionUI] %s\n",
+  fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d.%03d][PID=%u][TID=%u] [PssUI] %s\n",
           st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
           st.wMilliseconds, (unsigned)GetCurrentProcessId(),
           (unsigned)GetCurrentThreadId(), msg);
@@ -210,6 +227,7 @@ void ApLog(const char *fmt, ...) {
   fclose(fp);
 }
 
+/** 設計座標 (kBaseW×kBaseH) 乘 g_scale 轉成視窗像素。 */
 RECT ScaleRc(int x, int y, int w, int h) {
   RECT rc;
   rc.left = (int)(x * g_scaleX + 0.5);
@@ -219,10 +237,12 @@ RECT ScaleRc(int x, int y, int w, int h) {
   return rc;
 }
 
+/** 半開區間 [left,right)×[top,bottom)。 */
 bool PtIn(const RECT &rc, int x, int y) {
   return x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom;
 }
 
+/** 依遊戲客戶區對 kRefW/H 算縮放，夾在 0.5~1.5。 */
 void UpdateScale() {
   g_scaleX = 1.0;
   g_scaleY = 1.0;
@@ -246,12 +266,14 @@ void UpdateScale() {
   }
 }
 
+/** 套縮放後的 overlay 寬高。 */
 void ComputeWinSize(int *outW, int *outH) {
   UpdateScale();
   *outW = (int)(kBaseW * g_scaleX + 0.5);
   *outH = (int)(kBaseH * g_scaleY + 0.5);
 }
 
+/** 第一次顯示置中遊戲視窗；g_userMoved 後不再改位置。 */
 void PositionWindow(HWND hwnd, int winW, int winH) {
   if (g_userMoved)
     return;
@@ -271,11 +293,13 @@ void PositionWindow(HWND hwnd, int winW, int winH) {
 RECT TitleBarRc() { return ScaleRc(0, 0, kBaseW, kTitleH); }
 RECT CloseXRc() { return ScaleRc(kBaseW - 28, 4, 22, 20); }
 
+/** 分頁列下方、底欄上方的內容區。 */
 RECT ContentOuterRc() {
   return ScaleRc(kPad, kTitleH + kTabH + 4, kBaseW - kPad * 2,
                  kBaseH - kTitleH - kTabH - kFooterH - 8);
 }
 
+/** BUFF 頁四宮格；指標可 null。kSplitX/Y 是比例。 */
 void ContentQuads(RECT *tl, RECT *tr, RECT *bl, RECT *br) {
   RECT o = ContentOuterRc();
   const int ow = o.right - o.left;
@@ -309,6 +333,7 @@ void ContentQuads(RECT *tl, RECT *tr, RECT *bl, RECT *br) {
   }
 }
 
+/** 頂部分頁：0 BUFF／1 道具／2 傳送／3 其他。 */
 RECT TabRc(int index) {
   const int tabW = 72;
   const int x = kPad + index * (tabW + 4);
@@ -329,8 +354,70 @@ RECT FooterYBase() { return ScaleRc(0, kBaseH - kFooterH, kBaseW, kFooterH); }
 RECT SaveBtnRc() { return ScaleRc(kPad, kBaseH - kFooterH + 8, 90, 28); }
 RECT EnableBtnRc() { return ScaleRc(kPad + 100, kBaseH - kFooterH + 8, 90, 28); }
 RECT CloseBtnRc() { return ScaleRc(kBaseW - kPad - 90, kBaseH - kFooterH + 8, 90, 28); }
+/** 底欄提示文字（啟動鈕右側）。 */
 RECT HintBarRc() {
   return ScaleRc(kPad + 200, kBaseH - kFooterH + 12, kBaseW - kPad * 2 - 300, 20);
+}
+
+/** 道具頁「刪除／溶解」子標籤。 */
+RECT ItemSubTabRc(int index) {
+  RECT o = ContentOuterRc();
+  const int w = (int)(88 * g_scaleX);
+  const int h = (int)(24 * g_scaleY);
+  const int x = o.left + (int)(8 * g_scaleX) + index * (w + (int)(6 * g_scaleX));
+  RECT rc = {x, o.top + (int)(6 * g_scaleY), x + w, o.top + (int)(6 * g_scaleY) + h};
+  return rc;
+}
+
+/** 道具頁右下「移除」。 */
+RECT FilterRemoveRc() {
+  RECT o = ContentOuterRc();
+  const int w = (int)(72 * g_scaleX);
+  const int h = (int)(24 * g_scaleY);
+  RECT rc;
+  rc.right = o.right - (int)(10 * g_scaleX);
+  rc.left = rc.right - w;
+  rc.bottom = o.bottom - (int)(8 * g_scaleY);
+  rc.top = rc.bottom - h;
+  return rc;
+}
+
+/** 道具頁 5 欄宮格第 index 格（0 起算）。 */
+RECT FilterCellRc(int index) {
+  RECT o = ContentOuterRc();
+  const int cols = 5;
+  const int subH = (int)(34 * g_scaleY);
+  const int botH = (int)(36 * g_scaleY);
+  const int pad = (int)(10 * g_scaleX);
+  const int gap = (int)(4 * g_scaleX);
+  int gridL = o.left + pad;
+  int gridT = o.top + subH;
+  int gridW = (o.right - o.left) - pad * 2;
+  int gridH = (o.bottom - o.top) - subH - botH;
+  int cell = (gridW - gap * (cols - 1)) / cols;
+  if (cell > (int)(40 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY)))
+    cell = (int)(40 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
+  if (cell < 20)
+    cell = 20;
+  int col = index % cols;
+  int row = index / cols;
+  RECT rc;
+  rc.left = gridL + col * (cell + gap);
+  rc.top = gridT + row * (cell + gap);
+  rc.right = rc.left + cell;
+  rc.bottom = rc.top + cell;
+  if (rc.bottom > o.bottom - botH)
+    rc.bottom = o.bottom - botH;
+  return rc;
+}
+
+/** 依目前子標籤回傳 autoDelete 或 autoDissolve。 */
+ItemFilterList &CurrentFilterList(PssConfig &cfg) {
+  return (g_itemSubTab == 0) ? cfg.autoDelete : cfg.autoDissolve;
+}
+
+const ItemFilterList &CurrentFilterList(const PssConfig &cfg) {
+  return (g_itemSubTab == 0) ? cfg.autoDelete : cfg.autoDissolve;
 }
 
 // section 0=heal / 1=mana，落在左下「恢復道具設定」宮格內
@@ -342,6 +429,7 @@ RECT HealBoxRc() {
   rc.bottom = bl.top + hh;
   return rc;
 }
+/** 左下宮格下半：補魔五格。 */
 RECT ManaBoxRc() {
   RECT bl;
   ContentQuads(nullptr, nullptr, &bl, nullptr);
@@ -351,6 +439,7 @@ RECT ManaBoxRc() {
   return rc;
 }
 
+/** 治療／補魔第 index 格（0~4）。 */
 RECT SlotRc(int section /*0 heal 1 mana*/, int index) {
   RECT box = (section == 0) ? HealBoxRc() : ManaBoxRc();
   // 標題列約 20px，再留一點給 HP/MP 示意條，槽列往上靠
@@ -369,6 +458,7 @@ RECT SlotRc(int section /*0 heal 1 mana*/, int index) {
   return rc;
 }
 
+/** 格子下方百分比文字／編輯區。 */
 RECT SlotLabelRc(int section, int index) {
   RECT s = SlotRc(section, index);
   RECT rc;
@@ -400,6 +490,7 @@ void CancelPick() {
   g_pickSlot.store(-1);
 }
 
+/** 打字＋點背包選擇一起清掉（換格／Esc）。 */
 void ClearEdit() {
   CancelTextEdit();
   CancelPick();
@@ -409,15 +500,16 @@ void ClearEdit() {
 // 避免 hover tooltip／格子內數量顯示舊道具留下來的名稱/數量，跟格子裡實際的
 // 新內容對不上。呼叫端必須已經持有 g_lock（直接改 g_cfg，不自己上鎖）。
 void ClearSlotCache(int section, int slot) {
-  AutoPotionSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
+  PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
   sec.slots[slot].name[0] = 0;
   sec.slots[slot].count = 0;
 }
 
+/** 排到遊戲主執行緒：寫 cfg、送 75 喝水＋128 flags／名單。 */
 void QueueSave() {
   // enabled 只由「啟動／停止」按鈕決定，對應伺服器 C_PlaySupport 的
   // pc.autoPotionEnabled = readC() != 0；存檔／選道具不要擅自改這個旗標。
-  AutoPotionConfig cfg;
+  PssConfig cfg;
   {
     std::lock_guard<std::mutex> lock(g_lock);
     cfg = g_cfg;
@@ -425,6 +517,11 @@ void QueueSave() {
   }
   InterlockedExchange(&g_pendingSave, 1);
   ApLog("save queued enabled=%d", (int)cfg.enabled);
+}
+
+/** 排 128/0x59 請回推名單（開面板時）。 */
+void QueueFilterRequest(int listType) {
+  InterlockedExchange(&g_pendingFilterRequest, listType);
 }
 
 // 編輯中游標：閃爍的「｜」（全形較好認）；關掉時只顯示已打的字。
@@ -435,6 +532,7 @@ void FormatEditCaret(wchar_t *out, size_t outChars, const wchar_t *buf) {
     swprintf_s(out, outChars, L"%s", buf && buf[0] ? buf : L"");
 }
 
+/** 血魔條顯示用：cur/max 不為負，cur 不超過 max。 */
 void ClampVital(int *cur, int *maxv) {
   if (*cur < 0)
     *cur = 0;
@@ -444,15 +542,18 @@ void ClampVital(int *cur, int *maxv) {
     *cur = *maxv;
 }
 
+/** overlay 可見才標 dirty，避免關著還 Invalidate。 */
 void MarkVitalsDirtyIfVisible() {
   if (g_visible.load())
     g_vitalsDirty.store(true);
 }
 
+/** 排 75/0x56 面板開／關；主執行緒 PumpPendingUiNotify。 */
 void QueueUiNotify(bool visible) {
   InterlockedExchange(&g_pendingUiNotify, visible ? 1L : 0L);
 }
 
+/** 圓角用矩形近似（目前 Fill/Draw Rectangle）。 */
 void DrawRoundRect(Gdiplus::Graphics &g, const RECT &rc, Gdiplus::Color fill,
                    Gdiplus::Color stroke, float penW = 1.5f) {
   Gdiplus::SolidBrush br(fill);
@@ -464,6 +565,7 @@ void DrawRoundRect(Gdiplus::Graphics &g, const RECT &rc, Gdiplus::Color fill,
   g.DrawRectangle(&pen, r);
 }
 
+/** 正黑體；fontPt 會乘 min(scaleX,scaleY)。 */
 void DrawTextIn(Gdiplus::Graphics &g, const RECT &rc, const wchar_t *text,
                 Gdiplus::Color color, int fontPt, bool bold, bool center) {
   Gdiplus::FontFamily fam(L"Microsoft JhengHei");
@@ -514,7 +616,8 @@ void DrawItemPlaceholderIcon(Gdiplus::Graphics &g, const RECT &rc, bool isSkill)
   g.FillPath(&bodyBr, &path);
 }
 
-void DrawSlot(Gdiplus::Graphics &g, int section, int index, const AutoPotionSlot &slot) {
+/** 單一藥水格：圖示／佔位、選取框、下方 %。 */
+void DrawSlot(Gdiplus::Graphics &g, int section, int index, const PssSlot &slot) {
   RECT rc = SlotRc(section, index);
   // g_editMode: 0/1=heal/mana 道具編號輸入，2/3=heal/mana 百分比輸入（畫在
   // SlotLabelRc 那一行，見下面），都用同一個 g_editSlot 記是哪一槽。
@@ -528,7 +631,7 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const AutoPotionSlot
   Gdiplus::Color stroke(255, 160, 130, 70);
   if (editing || picking)
     stroke = Gdiplus::Color(255, 255, 220, 120);
-  else if (slot.kind != AutoPotionSlot_None)
+  else if (slot.kind != PssSlot_None)
     stroke = Gdiplus::Color(255, 200, 170, 90);
   DrawRoundRect(g, rc, fill, stroke, (editing || picking) ? 2.5f : 1.5f);
 
@@ -536,7 +639,7 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const AutoPotionSlot
     wchar_t line[64] = {};
     FormatEditCaret(line, _countof(line), g_editBuf);
     DrawTextIn(g, rc, line, Gdiplus::Color(255, 240, 230, 200), 12, false, true);
-  } else if (slot.kind != AutoPotionSlot_None && slot.id > 0) {
+  } else if (slot.kind != PssSlot_None && slot.id > 0) {
     // 2026-09-09：優先畫真的道具圖示（item_<gfxid>.png，來自 Sprite.pak 離線
     // 轉出來的靜態圖，見交接文件第 6 節），找不到（法術槽 gfxid 目前一定是 0、
     // 或這個道具還沒轉圖）才退回瓶子造型佔位圖。
@@ -566,7 +669,7 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const AutoPotionSlot
       int dy = rc.top + ((rc.bottom - rc.top) - ih) / 2;
       g.DrawImage(icon, dx, dy, iw, ih);
     } else {
-      DrawItemPlaceholderIcon(g, rc, slot.kind == AutoPotionSlot_Skill);
+      DrawItemPlaceholderIcon(g, rc, slot.kind == PssSlot_Skill);
     }
 
     // 數量：開面板／用盡由伺服器推送寫入 slot.count；平常不即時刷新
@@ -612,18 +715,19 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const AutoPotionSlot
   }
 }
 
-void DrawHoverTooltip(Gdiplus::Graphics &g, const AutoPotionConfig &cfg) {
+/** 滑鼠停在已填格子上時顯示名稱。 */
+void DrawHoverTooltip(Gdiplus::Graphics &g, const PssConfig &cfg) {
   if (g_hoverSection < 0 || g_hoverSlot < 0)
     return;
-  const AutoPotionSection &sec = (g_hoverSection == 0) ? cfg.heal : cfg.mana;
-  const AutoPotionSlot &slot = sec.slots[g_hoverSlot];
-  if (slot.kind == AutoPotionSlot_None || slot.id <= 0)
+  const PssSection &sec = (g_hoverSection == 0) ? cfg.heal : cfg.mana;
+  const PssSlot &slot = sec.slots[g_hoverSlot];
+  if (slot.kind == PssSlot_None || slot.id <= 0)
     return;
 
   wchar_t text[96] = {};
   if (slot.name[0]) {
     swprintf_s(text, L"%s", slot.name);
-  } else if (slot.kind == AutoPotionSlot_Skill) {
+  } else if (slot.kind == PssSlot_Skill) {
     swprintf_s(text, L"法術 #%d", slot.id);
   } else {
     swprintf_s(text, L"道具 #%d", slot.id);
@@ -665,7 +769,8 @@ void DrawPickingTooltip(Gdiplus::Graphics &g) {
   DrawTextIn(g, tipRc, L"請點背包道具", Gdiplus::Color(255, 255, 220, 120), 11, false, true);
 }
 
-void DrawSection(Gdiplus::Graphics &g, int section, const AutoPotionSection &sec,
+/** 治療或補魔整塊：標題、HP/MP 條、五格。 */
+void DrawSection(Gdiplus::Graphics &g, int section, const PssSection &sec,
                  const wchar_t *title, Gdiplus::Color barColor, int cur, int maxv) {
   RECT box = (section == 0) ? HealBoxRc() : ManaBoxRc();
   DrawRoundRect(g, box, Gdiplus::Color(255, 48, 36, 30),
@@ -714,10 +819,11 @@ void DrawSection(Gdiplus::Graphics &g, int section, const AutoPotionSection &sec
     wcscpy_s(vit, L"\u2014/\u2014"); // —/—
   DrawTextIn(g, numRc, vit, Gdiplus::Color(255, 230, 220, 200), 10, false, false);
 
-  for (int i = 0; i < kAutoPotionSlotsPerSection; i++)
+  for (int i = 0; i < kPssSlotsPerSection; i++)
     DrawSlot(g, section, i, sec.slots[i]);
 }
 
+/** 尚未接線的宮格（BUFF-固定／自訂）空格佔位。 */
 void DrawPlaceholderQuad(Gdiplus::Graphics &g, const RECT &box, const wchar_t *title,
                          int cols, int rows, bool crossLayout) {
   DrawRoundRect(g, box, Gdiplus::Color(255, 48, 36, 30),
@@ -768,7 +874,8 @@ void DrawPlaceholderQuad(Gdiplus::Graphics &g, const RECT &box, const wchar_t *t
   }
 }
 
-void DrawBuffPage(Gdiplus::Graphics &g, const AutoPotionConfig &cfg) {
+/** BUFF 頁：左上／右上佔位、左下恢復、右下變身。 */
+void DrawBuffPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   RECT tl, tr, br;
   ContentQuads(&tl, &tr, nullptr, &br);
   DrawPlaceholderQuad(g, tl, L"BUFF-固定", 0, 0, true);
@@ -821,14 +928,63 @@ void DrawBuffPage(Gdiplus::Graphics &g, const AutoPotionConfig &cfg) {
   }
 }
 
-void DrawItemPage(Gdiplus::Graphics &g) {
+/** 道具頁：刪除／溶解子標籤 + 宮格。 */
+void DrawItemPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   RECT o = ContentOuterRc();
   DrawRoundRect(g, o, Gdiplus::Color(255, 48, 36, 30),
                 Gdiplus::Color(255, 120, 95, 55), 1.5f);
-  DrawTextIn(g, o, L"道具頁面（規劃中）", Gdiplus::Color(255, 200, 180, 140), 16, true,
-             true);
+
+  const wchar_t *subNames[2] = {L"刪除", L"溶解"};
+  for (int i = 0; i < 2; i++) {
+    RECT rc = ItemSubTabRc(i);
+    const bool active = (g_itemSubTab == i);
+    const bool pressed = (g_pressedSubTab == i);
+    DrawRoundRect(g, rc,
+                  active ? Gdiplus::Color(255, 70, 110, 50)
+                         : (pressed ? Gdiplus::Color(255, 60, 48, 40)
+                                    : Gdiplus::Color(255, 45, 36, 30)),
+                  active ? Gdiplus::Color(255, 140, 200, 90)
+                         : Gdiplus::Color(255, 120, 95, 55),
+                  active ? 2.0f : 1.2f);
+    DrawTextIn(g, rc, subNames[i], Gdiplus::Color(255, 240, 230, 200), 12, active,
+               true);
+  }
+
+  const ItemFilterList &list = CurrentFilterList(cfg);
+  for (int i = 0; i < kItemFilterMax; i++) {
+    RECT rc = FilterCellRc(i);
+    if (rc.bottom - rc.top < 12)
+      break;
+    const bool sel = (g_filterSel == i && i < list.count);
+    Gdiplus::Color fill(255, 40, 32, 28);
+    Gdiplus::Color stroke =
+        sel ? Gdiplus::Color(255, 255, 220, 120) : Gdiplus::Color(255, 90, 75, 50);
+    DrawRoundRect(g, rc, fill, stroke, sel ? 2.2f : 1.0f);
+    if (i < list.count && list.items[i].itemId > 0) {
+      Gdiplus::Bitmap *icon = GetItemIconBitmap(list.items[i].gfxid);
+      if (icon) {
+        int pad = (int)(3 * g_scaleX);
+        Gdiplus::RectF ir((Gdiplus::REAL)(rc.left + pad), (Gdiplus::REAL)(rc.top + pad),
+                          (Gdiplus::REAL)(rc.right - rc.left - pad * 2),
+                          (Gdiplus::REAL)(rc.bottom - rc.top - pad * 2));
+        g.DrawImage(icon, ir);
+      } else {
+        DrawItemPlaceholderIcon(g, rc, false);
+      }
+    }
+  }
+
+  if (g_filterSel >= 0 && g_filterSel < list.count) {
+    RECT rm = FilterRemoveRc();
+    DrawRoundRect(g, rm,
+                  g_pressedRemove ? Gdiplus::Color(255, 140, 50, 40)
+                                  : Gdiplus::Color(255, 90, 40, 35),
+                  Gdiplus::Color(255, 220, 140, 80), 2.0f);
+    DrawTextIn(g, rm, L"移除", Gdiplus::Color(255, 255, 240, 200), 12, true, true);
+  }
 }
 
+/** 傳送頁暫用佔位。 */
 void DrawBackPage(Gdiplus::Graphics &g) {
   RECT o = ContentOuterRc();
   DrawRoundRect(g, o, Gdiplus::Color(255, 48, 36, 30),
@@ -839,7 +995,7 @@ void DrawBackPage(Gdiplus::Graphics &g) {
 
 // 2026-09-10：「其他」分頁。「自動修理武器」「自動吃肉」讀 cfg；
 // 「顯示傷害」讀 AttackDamageHook；其餘 g_miscToggle。
-void DrawMiscPage(Gdiplus::Graphics &g, const AutoPotionConfig &cfg) {
+void DrawMiscPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   RECT o = ContentOuterRc();
   DrawRoundRect(g, o, Gdiplus::Color(255, 48, 36, 30),
                 Gdiplus::Color(255, 120, 95, 55), 1.5f);
@@ -876,6 +1032,7 @@ void DrawMiscPage(Gdiplus::Graphics &g, const AutoPotionConfig &cfg) {
   }
 }
 
+/** 頂部分頁列。 */
 void DrawTabs(Gdiplus::Graphics &g) {
   for (int i = 0; i < Tab_Count; i++) {
     RECT rc = TabRc(i);
@@ -893,6 +1050,7 @@ void DrawTabs(Gdiplus::Graphics &g) {
   }
 }
 
+/** 整窗自繪：框、標題、分頁、內容、底欄。 */
 void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
   Gdiplus::Graphics g(hdc);
   g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
@@ -917,7 +1075,7 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
 
   DrawTabs(g);
 
-  AutoPotionConfig cfg;
+  PssConfig cfg;
   {
     std::lock_guard<std::mutex> lock(g_lock);
     cfg = g_cfg;
@@ -928,7 +1086,7 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
     DrawHoverTooltip(g, cfg);
     DrawPickingTooltip(g);
   } else if (g_activeTab == Tab_Item) {
-    DrawItemPage(g);
+    DrawItemPage(g, cfg);
   } else if (g_activeTab == Tab_Teleport) {
     DrawBackPage(g); // 傳送頁內容（暫用既有 DrawBackPage）
   } else if (g_activeTab == Tab_Misc) {
@@ -938,7 +1096,9 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
   DrawTextIn(g, HintBarRc(),
              g_activeTab == Tab_Buff
                  ? L"點格子選背包道具；點格子下方 % 設門檻｜啟動對應 autoPotionEnabled"
-                 : L"",
+                 : (g_activeTab == Tab_Item
+                        ? L"本機刪除／溶解會加入名單；點格子後按移除"
+                        : L""),
              Gdiplus::Color(255, 140, 130, 110), 10, false, false);
 
   RECT save = SaveBtnRc();
@@ -970,6 +1130,7 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
   DrawTextIn(g, closeB, L"關閉", Gdiplus::Color(255, 255, 240, 200), 13, true, true);
 }
 
+/** UpdateLayeredWindow；alpha 全設 0xFF。 */
 void PaintLayered(HWND hwnd) {
   int winW, winH;
   ComputeWinSize(&winW, &winH);
@@ -1026,6 +1187,7 @@ void HideWindow(HWND hwnd) {
   QueueUiNotify(false); // 伺服器停止推 vitals
 }
 
+/** 把編輯緩衝寫回格子；asSkill 僅手動打字時用（點背包走 resolve）。接著 QueueSave。 */
 void CommitEdit(bool asSkill) {
   if (g_editMode < 0)
     return;
@@ -1042,14 +1204,14 @@ void CommitEdit(bool asSkill) {
   {
     std::lock_guard<std::mutex> lock(g_lock);
     if (g_editMode == 0 || g_editMode == 1) {
-      AutoPotionSection &sec = (g_editMode == 0) ? g_cfg.heal : g_cfg.mana;
-      if (g_editSlot >= 0 && g_editSlot < kAutoPotionSlotsPerSection) {
+      PssSection &sec = (g_editMode == 0) ? g_cfg.heal : g_cfg.mana;
+      if (g_editSlot >= 0 && g_editSlot < kPssSlotsPerSection) {
         if (val <= 0) {
-          sec.slots[g_editSlot].kind = AutoPotionSlot_None;
+          sec.slots[g_editSlot].kind = PssSlot_None;
           sec.slots[g_editSlot].id = 0;
         } else {
           sec.slots[g_editSlot].kind =
-              asSkill ? AutoPotionSlot_Skill : AutoPotionSlot_Item;
+              asSkill ? PssSlot_Skill : PssSlot_Item;
           sec.slots[g_editSlot].id = val;
         }
         // 手動打字輸入沒有名稱/數量可以快取，清掉這格舊的快取，避免 hover 顯示
@@ -1059,12 +1221,12 @@ void CommitEdit(bool asSkill) {
     } else if (g_editMode == 2 || g_editMode == 3) {
       // 2026-09-10：每槽各自的百分比門檻（g_editSlot 指是哪一槽），不再是整個
       // 分類共用一個值。
-      AutoPotionSection &sec = (g_editMode == 2) ? g_cfg.heal : g_cfg.mana;
+      PssSection &sec = (g_editMode == 2) ? g_cfg.heal : g_cfg.mana;
       if (val < 0)
         val = 0;
       if (val > 100)
         val = 100;
-      if (g_editSlot >= 0 && g_editSlot < kAutoPotionSlotsPerSection)
+      if (g_editSlot >= 0 && g_editSlot < kPssSlotsPerSection)
         sec.slots[g_editSlot].thresholdPercent = val;
     }
   } // 釋放鎖，QueueSave() 內部自己也會上鎖，兩邊不能疊在一起
@@ -1075,6 +1237,7 @@ void CommitEdit(bool asSkill) {
   QueueSave();
 }
 
+/** 按下：分頁、格子選取、其他頁打勾、儲存／啟動／關閉。 */
 void OnLButtonDown(HWND hwnd, int x, int y) {
   if (g_editMode >= 0 && g_editBuf[0] != 0) {
     bool asSkill = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
@@ -1112,8 +1275,7 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
     for (int i = 0; i < kMiscToggleCount; i++) {
       if (PtIn(MiscToggleRc(i), x, y)) {
         if (i == kMiscIdx_Whetstone || i == kMiscIdx_EatMeat) {
-          // 真後端：改 cfg 並直接存檔＋送 12-byte status 包（QueueSave 內部
-          // 已經包含 SendStatusToServer，見 AutoPotionOverlay_PumpPendingSave）。
+          // 改 cfg 後 QueueSave：寫檔 + 75 喝水包 + 128 flags（吃肉／修武）+ 名單。
           {
             std::lock_guard<std::mutex> lock(g_lock);
             if (i == kMiscIdx_Whetstone)
@@ -1140,19 +1302,58 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
     return;
   }
 
+  if (g_activeTab == Tab_Item) {
+    for (int i = 0; i < 2; i++) {
+      if (PtIn(ItemSubTabRc(i), x, y)) {
+        g_pressedSubTab = i;
+        PaintLayered(hwnd);
+        return;
+      }
+    }
+    {
+      std::lock_guard<std::mutex> lock(g_lock);
+      const ItemFilterList &list = CurrentFilterList(g_cfg);
+      if (g_filterSel >= 0 && g_filterSel < list.count &&
+          PtIn(FilterRemoveRc(), x, y)) {
+        g_pressedRemove = 1;
+        PaintLayered(hwnd);
+        return;
+      }
+    }
+    for (int i = 0; i < kItemFilterMax; i++) {
+      RECT rc = FilterCellRc(i);
+      if (rc.bottom - rc.top < 12)
+        break;
+      if (!PtIn(rc, x, y))
+        continue;
+      int count = 0;
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        count = CurrentFilterList(g_cfg).count;
+      }
+      if (i < count)
+        g_filterSel = i;
+      else
+        g_filterSel = -1;
+      PaintLayered(hwnd);
+      return;
+    }
+    return;
+  }
+
   // 僅 BUFF 頁的恢復槽可互動
   if (g_activeTab != Tab_Buff)
     return;
 
   for (int s = 0; s < 2; s++) {
-    for (int i = 0; i < kAutoPotionSlotsPerSection; i++) {
+    for (int i = 0; i < kPssSlotsPerSection; i++) {
       if (PtIn(SlotLabelRc(s, i), x, y)) {
         CancelTextEdit();
         g_editMode = s + 2;
         g_editSlot = i;
         {
           std::lock_guard<std::mutex> lock(g_lock);
-          const AutoPotionSlot &slot =
+          const PssSlot &slot =
               (s == 0) ? g_cfg.heal.slots[i] : g_cfg.mana.slots[i];
           swprintf_s(g_editBuf, L"%d", slot.thresholdPercent);
         }
@@ -1160,15 +1361,15 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
         return;
       }
     }
-    for (int i = 0; i < kAutoPotionSlotsPerSection; i++) {
+    for (int i = 0; i < kPssSlotsPerSection; i++) {
       if (!PtIn(SlotRc(s, i), x, y))
         continue;
-      AutoPotionSlot slot;
+      PssSlot slot;
       {
         std::lock_guard<std::mutex> lock(g_lock);
         slot = (s == 0) ? g_cfg.heal.slots[i] : g_cfg.mana.slots[i];
       }
-      if (slot.kind != AutoPotionSlot_None && slot.id > 0) {
+      if (slot.kind != PssSlot_None && slot.id > 0) {
         ClearEdit();
         g_pickSection.store(s);
         g_pickSlot.store(i);
@@ -1186,6 +1387,7 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
   }
 }
 
+/** 放開：切分頁、移除名單、確認儲存／啟動／關閉。 */
 void OnLButtonUp(HWND hwnd, int x, int y) {
   if (g_pressedTab >= 0) {
     int t = g_pressedTab;
@@ -1194,7 +1396,40 @@ void OnLButtonUp(HWND hwnd, int x, int y) {
       // 四個分頁一律切換；關閉只用 X／關閉鈕（舊 Tab_Back 點了會 HideWindow，
       // 但標籤文字已改成「傳送」，造成點傳送就關窗）。
       g_activeTab = t;
+      g_filterSel = -1;
       CancelTextEdit();
+      if (t == Tab_Item)
+        QueueFilterRequest(g_itemSubTab);
+    }
+    PaintLayered(hwnd);
+    return;
+  }
+  if (g_pressedSubTab >= 0) {
+    int t = g_pressedSubTab;
+    g_pressedSubTab = -1;
+    if (PtIn(ItemSubTabRc(t), x, y)) {
+      g_itemSubTab = t;
+      g_filterSel = -1;
+      QueueFilterRequest(t);
+    }
+    PaintLayered(hwnd);
+    return;
+  }
+  if (g_pressedRemove) {
+    g_pressedRemove = 0;
+    if (PtIn(FilterRemoveRc(), x, y) && g_filterSel >= 0) {
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        ItemFilterList &list = CurrentFilterList(g_cfg);
+        if (g_filterSel < list.count) {
+          for (int i = g_filterSel; i < list.count - 1; i++)
+            list.items[i] = list.items[i + 1];
+          list.items[list.count - 1] = ItemFilterEntry();
+          list.count--;
+        }
+      }
+      g_filterSel = -1;
+      QueueSave();
     }
     PaintLayered(hwnd);
     return;
@@ -1242,11 +1477,12 @@ void OnLButtonUp(HWND hwnd, int x, int y) {
   }
 }
 
+/** 更新 hover 槽，供 tooltip。 */
 void OnMouseMove(HWND hwnd, int x, int y) {
   int newSection = -1, newSlot = -1;
   if (g_activeTab == Tab_Buff) {
     for (int s = 0; s < 2 && newSection < 0; s++) {
-      for (int i = 0; i < kAutoPotionSlotsPerSection; i++) {
+      for (int i = 0; i < kPssSlotsPerSection; i++) {
         if (PtIn(SlotRc(s, i), x, y)) {
           newSection = s;
           newSlot = i;
@@ -1266,16 +1502,17 @@ void OnMouseMove(HWND hwnd, int x, int y) {
   TrackMouseEvent(&tme);
 }
 
+/** Overlay 視窗程序；自訂 WM_PSS_* 從遊戲執行緒 PostMessage 進來。 */
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   switch (msg) {
-  case WM_SHOW_AUTOPOTION: {
-    AutoPotionConfig loaded = AutoPotionConfig_Load();
+  case WM_SHOW_PSS: {
+    PssConfig loaded = PssConfig_Load();
     {
       std::lock_guard<std::mutex> lock(g_lock);
       g_cfg = loaded;
     }
     AttackDamageHook_SetEnabled(loaded.showDamage);
-    // 2026-09-10：名稱/數量現在跟著設定檔一起讀（AutoPotionSlot.name/count），
+    // 2026-09-10：名稱/數量現在跟著設定檔一起讀（PssSlot.name/count），
     // 不用再清空重置——剛開視窗就能看到上次存檔當下的名稱/數量，不用等重新
     // 點選才有東西可顯示。
     ClearEdit();
@@ -1291,7 +1528,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     ApLog("shown");
     return 0;
   }
-  case WM_HIDE_AUTOPOTION:
+  case WM_HIDE_PSS:
     KillTimer(hwnd, TIMER_CARET);
     KillTimer(hwnd, TIMER_VITALS);
     HideWindow(hwnd);
@@ -1314,7 +1551,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       return 0;
     }
     return 0;
-  case WM_AUTOPOTION_RESOLVE_REPLY: {
+  case WM_PSS_RESOLVE_REPLY: {
     ResolveReplyMsg *m = (ResolveReplyMsg *)lp;
     if (m) {
       if (g_pickSection.load() == m->section && g_pickSlot.load() == m->slot) {
@@ -1322,18 +1559,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
           bool changed = false;
           {
             std::lock_guard<std::mutex> lock(g_lock);
-            AutoPotionSection &sec = (m->section == 0) ? g_cfg.heal : g_cfg.mana;
-            AutoPotionSlot &dst = sec.slots[m->slot];
+            PssSection &sec = (m->section == 0) ? g_cfg.heal : g_cfg.mana;
+            PssSlot &dst = sec.slots[m->slot];
             // 2026-09-10：選到的道具（含數量）只要跟目前存檔內容有任何差異
             // 就要存檔——點同一瓶但數量因為玩家中途用掉/撿到而不同，也要更新
             // 存檔裡的數量快照，不然下次進遊戲顯示的還是舊數字。
-            changed = (dst.kind != AutoPotionSlot_Item) ||
+            changed = (dst.kind != PssSlot_Item) ||
                       (dst.id != m->templateItemId) ||
                       (dst.gfxid != m->gfxid) ||
                       (dst.count != m->count) ||
                       (wcscmp(dst.name, m->name) != 0);
             if (changed) {
-              dst.kind = AutoPotionSlot_Item;
+              dst.kind = PssSlot_Item;
               dst.id = m->templateItemId;
               dst.gfxid = m->gfxid;
               wcscpy_s(dst.name, m->name);
@@ -1360,7 +1597,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     }
     return 0;
   }
-  case WM_AUTOPOTION_SLOT_COUNTS: {
+  case WM_PSS_SLOT_COUNTS: {
     SlotCountsBatchMsg *m = (SlotCountsBatchMsg *)lp;
     if (m) {
       {
@@ -1370,15 +1607,43 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
           int slot = m->items[i].slot;
           if (section < 0 || section > 1 || slot < 0 || slot >= 5)
             continue;
-          AutoPotionSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
-          AutoPotionSlot &dst = sec.slots[slot];
-          if (dst.kind == AutoPotionSlot_Item && dst.id > 0) {
+          PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
+          PssSlot &dst = sec.slots[slot];
+          if (dst.kind == PssSlot_Item && dst.id > 0) {
             dst.count = m->items[i].count;
             ApLog("slot-count section=%d slot=%d count=%d", section, slot,
                   m->items[i].count);
           }
         }
       }
+      delete m;
+      if (g_visible.load())
+        PaintLayered(hwnd);
+    }
+    return 0;
+  }
+  case WM_PSS_ITEM_FILTER: {
+    ItemFilterListMsg *m = (ItemFilterListMsg *)lp;
+    if (m) {
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        ItemFilterList &dst =
+            (m->listType == kItemFilterListDissolve) ? g_cfg.autoDissolve
+                                                     : g_cfg.autoDelete;
+        dst.count = 0;
+        for (int i = 0; i < m->n && dst.count < kItemFilterMax; i++) {
+          if (m->itemIds[i] <= 0)
+            continue;
+          dst.items[dst.count].itemId = m->itemIds[i];
+          dst.items[dst.count].gfxid = m->gfxids[i];
+          wcsncpy_s(dst.items[dst.count].name, m->names[i],
+                    _countof(dst.items[dst.count].name) - 1);
+          dst.count++;
+        }
+        g_pendingCfg = g_cfg;
+      }
+      g_filterSel = -1;
+      InterlockedExchange(&g_pendingSave, 1);
       delete m;
       if (g_visible.load())
         PaintLayered(hwnd);
@@ -1465,6 +1730,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   }
 }
 
+/** Overlay 專用 UI 執行緒：Gdiplus + 訊息圈。 */
 DWORD WINAPI OverlayThreadProc(void *) {
   if (!g_gdiplusStarted) {
     Gdiplus::GdiplusStartupInput input;
@@ -1507,6 +1773,7 @@ DWORD WINAPI OverlayThreadProc(void *) {
   return 0;
 }
 
+/** 只建一次 overlay 執行緒。 */
 bool StartThread() {
   if (g_thread)
     return true;
@@ -1522,7 +1789,7 @@ bool StartThread() {
 
 } // namespace
 
-void AutoPotionOverlay_Show() {
+void PssOverlay_Show() {
   HWND hwnd = NULL;
   bool visible = false;
   {
@@ -1540,12 +1807,12 @@ void AutoPotionOverlay_Show() {
     return;
   }
   if (visible)
-    PostMessageW(hwnd, WM_HIDE_AUTOPOTION, 0, 0);
+    PostMessageW(hwnd, WM_HIDE_PSS, 0, 0);
   else
-    PostMessageW(hwnd, WM_SHOW_AUTOPOTION, 0, 0);
+    PostMessageW(hwnd, WM_SHOW_PSS, 0, 0);
 }
 
-bool AutoPotionOverlay_HitTestSlot(int screenX, int screenY, int *outSection,
+bool PssOverlay_HitTestSlot(int screenX, int screenY, int *outSection,
                                    int *outIndex) {
   HWND hwnd = NULL;
   bool visible = false;
@@ -1563,7 +1830,7 @@ bool AutoPotionOverlay_HitTestSlot(int screenX, int screenY, int *outSection,
   ScreenToClient(hwnd, &pt);
 
   for (int s = 0; s < 2; s++) {
-    for (int i = 0; i < kAutoPotionSlotsPerSection; i++) {
+    for (int i = 0; i < kPssSlotsPerSection; i++) {
       if (PtIn(SlotRc(s, i), pt.x, pt.y)) {
         if (outSection)
           *outSection = s;
@@ -1576,7 +1843,7 @@ bool AutoPotionOverlay_HitTestSlot(int screenX, int screenY, int *outSection,
   return false;
 }
 
-bool AutoPotionOverlay_IsPicking(int *outSection, int *outSlot) {
+bool PssOverlay_IsPicking(int *outSection, int *outSlot) {
   if (!g_visible.load())
     return false;
   int section = g_pickSection.load();
@@ -1590,7 +1857,7 @@ bool AutoPotionOverlay_IsPicking(int *outSection, int *outSlot) {
   return true;
 }
 
-void AutoPotionOverlay_OnResolveReply(bool success, int section, int slot,
+void PssOverlay_OnResolveReply(bool success, int section, int slot,
                                       int templateItemId, int gfxid, int count,
                                       const wchar_t *name) {
   HWND hwnd = NULL;
@@ -1610,43 +1877,53 @@ void AutoPotionOverlay_OnResolveReply(bool success, int section, int slot,
   m->name[0] = 0;
   if (name)
     wcsncpy_s(m->name, name, _countof(m->name) - 1);
-  PostMessageW(hwnd, WM_AUTOPOTION_RESOLVE_REPLY, 0, (LPARAM)m);
+  PostMessageW(hwnd, WM_PSS_RESOLVE_REPLY, 0, (LPARAM)m);
 }
 
-void AutoPotionOverlay_PumpPendingSave() {
+void PssOverlay_PumpPendingSave() {
+  LONG req = InterlockedExchange(&g_pendingFilterRequest, -1);
+  if (req >= 0) {
+    PssConfig_RequestItemFilterList((int)req);
+  }
   if (InterlockedExchange(&g_pendingSave, 0) == 0)
     return;
-  AutoPotionConfig cfg;
+  PssConfig cfg;
   {
     std::lock_guard<std::mutex> lock(g_lock);
     cfg = g_pendingCfg;
   }
   ApLog("PumpPendingSave flush");
-  AutoPotionConfig_Save(cfg);
-  // 兩包分開：62-byte 喝水 + 12-byte 吃肉／修武（伺服器用長度分流）
-  AutoPotionConfig_SendToServer(cfg);
-  AutoPotionConfig_SendStatusToServer(cfg);
+  PssConfig_Save(cfg);
+  // 75 喝水（62）+ 128 flags 吃肉／修武（4）+ 128 名單。必須遊戲主執行緒。
+  PssConfig_SendToServer(cfg);
+  PssConfig_SendStatusToServer(cfg);
+  PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
+  PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
 }
 
-void AutoPotionOverlay_PumpPendingUiNotify() {
+void PssOverlay_PumpPendingUiNotify() {
   LONG v = InterlockedExchange(&g_pendingUiNotify, -1);
   if (v < 0)
     return;
   ApLog("PumpPendingUiNotify visible=%ld", v);
-  // 開面板：先灌 cfg 再通知 UI，讓伺服器推數量時 State 已是最新
+  // 開面板：先灌 75 喝水、128 flags／名單，再 75/0x56 通知 UI（vitals）
   if (v != 0) {
-    AutoPotionConfig cfg;
+    PssConfig cfg;
     {
       std::lock_guard<std::mutex> lock(g_lock);
       cfg = g_cfg;
     }
-    AutoPotionConfig_SendToServer(cfg);
-    AutoPotionConfig_SendStatusToServer(cfg);
+    PssConfig_SendToServer(cfg);
+    PssConfig_SendStatusToServer(cfg);
+    PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
+    PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
+    PssConfig_RequestItemFilterList(kItemFilterListDelete);
+    PssConfig_RequestItemFilterList(kItemFilterListDissolve);
   }
-  AutoPotionConfig_SendUiVisible(v != 0);
+  PssConfig_SendUiVisible(v != 0);
 }
 
-void AutoPotionOverlay_OnHpUpdate(int cur, int max) {
+void PssOverlay_OnHpUpdate(int cur, int max) {
   ClampVital(&cur, &max);
   {
     std::lock_guard<std::mutex> lock(g_lock);
@@ -1657,7 +1934,7 @@ void AutoPotionOverlay_OnHpUpdate(int cur, int max) {
   MarkVitalsDirtyIfVisible();
 }
 
-void AutoPotionOverlay_OnMpUpdate(int cur, int max) {
+void PssOverlay_OnMpUpdate(int cur, int max) {
   ClampVital(&cur, &max);
   {
     std::lock_guard<std::mutex> lock(g_lock);
@@ -1668,7 +1945,7 @@ void AutoPotionOverlay_OnMpUpdate(int cur, int max) {
   MarkVitalsDirtyIfVisible();
 }
 
-void AutoPotionOverlay_OnVitalsUpdate(int curHp, int maxHp, int curMp, int maxMp) {
+void PssOverlay_OnVitalsUpdate(int curHp, int maxHp, int curMp, int maxMp) {
   ClampVital(&curHp, &maxHp);
   ClampVital(&curMp, &maxMp);
   {
@@ -1683,12 +1960,12 @@ void AutoPotionOverlay_OnVitalsUpdate(int curHp, int maxHp, int curMp, int maxMp
   MarkVitalsDirtyIfVisible();
 }
 
-void AutoPotionOverlay_OnSlotCounts(int section, int slot, int count) {
+void PssOverlay_OnSlotCounts(int section, int slot, int count) {
   // 單筆入口；批次由 OnSlotCountsBatch 處理（MimirPowerHook 開面板）
-  AutoPotionOverlay_OnSlotCountsBatch(1, &section, &slot, &count);
+  PssOverlay_OnSlotCountsBatch(1, &section, &slot, &count);
 }
 
-void AutoPotionOverlay_OnSlotCountsBatch(int n, const int *sections, const int *slots,
+void PssOverlay_OnSlotCountsBatch(int n, const int *sections, const int *slots,
                                          const int *counts) {
   if (n <= 0 || !sections || !slots || !counts)
     return;
@@ -1707,5 +1984,46 @@ void AutoPotionOverlay_OnSlotCountsBatch(int n, const int *sections, const int *
     m->items[m->n].count = counts[i];
     m->n++;
   }
-  PostMessageW(hwnd, WM_AUTOPOTION_SLOT_COUNTS, 0, (LPARAM)m);
+  PostMessageW(hwnd, WM_PSS_SLOT_COUNTS, 0, (LPARAM)m);
+}
+
+void PssOverlay_OnItemFilterList(int listType, int n, const int *itemIds,
+                                        const int *gfxids, const wchar_t names[][64]) {
+  if (n < 0)
+    n = 0;
+  if (n > kItemFilterMax)
+    n = kItemFilterMax;
+  HWND hwnd = NULL;
+  {
+    std::lock_guard<std::mutex> lock(g_lock);
+    hwnd = g_threadHwnd;
+  }
+  ItemFilterListMsg *m = new ItemFilterListMsg();
+  m->listType = listType;
+  m->n = n;
+  for (int i = 0; i < n; i++) {
+    m->itemIds[i] = itemIds ? itemIds[i] : 0;
+    m->gfxids[i] = gfxids ? gfxids[i] : 0;
+    m->names[i][0] = 0;
+    if (names)
+      wcsncpy_s(m->names[i], names[i], _countof(m->names[i]) - 1);
+  }
+  if (!hwnd) {
+    {
+      std::lock_guard<std::mutex> lock(g_lock);
+      ItemFilterList &dst = (listType == kItemFilterListDissolve) ? g_cfg.autoDissolve
+                                                                 : g_cfg.autoDelete;
+      dst.count = n;
+      for (int i = 0; i < n; i++) {
+        dst.items[i].itemId = m->itemIds[i];
+        dst.items[i].gfxid = m->gfxids[i];
+        wcsncpy_s(dst.items[i].name, m->names[i], _countof(dst.items[i].name) - 1);
+      }
+      g_pendingCfg = g_cfg;
+    }
+    InterlockedExchange(&g_pendingSave, 1);
+    delete m;
+    return;
+  }
+  PostMessageW(hwnd, WM_PSS_ITEM_FILTER, 0, (LPARAM)m);
 }

@@ -9,12 +9,12 @@
 #include "VitalsPacketHook.h"
 #include "ShowClockPatch.h"
 #include "AttackDamageHook.h"
-#include "AutoPotionOverlay.h"
-#include "AutoPotionConfig.h"
+#include "PssOverlay.h"
+#include "PssConfig.h"
 #include "InventoryDebugHook.h"
 #include "WarehouseStatusHook.h"
 #include "TradeStatusHook.h"
-#include "ShopStatusHook.h"
+#include "PrivateShopStatus.h"
 
 #include "VMProtectSDK.h"
 #include <map>
@@ -109,11 +109,11 @@ void __dbg_print(const char *fmt, ...) {
 }
 
 static void launcherdll_vlog(const char *fmt, va_list args) {
-  // 暫時只留 SmoothRun／AutoPotion 主要訊息（其他 DLL log 關閉）
+  // 暫時只留 SmoothRun／Pss 主要訊息（其他 DLL log 關閉）
   char msg[2048] = {0};
   vsprintf_s(msg, fmt, args);
-  if (strstr(msg, "[SmoothRun]") == NULL && strstr(msg, "[AutoPotion]") == NULL &&
-      strstr(msg, "[AutoPotionUI]") == NULL)
+  if (strstr(msg, "[SmoothRun]") == NULL && strstr(msg, "[Pss]") == NULL &&
+      strstr(msg, "[PssUI]") == NULL)
     return;
 
   char exePath[MAX_PATH] = {0};
@@ -265,8 +265,8 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // MimirPowerHook.cpp）。不依賴 pMsg 內容，故意放在最前面，跟下面的除錯
     // switch 完全獨立。
     MimirPowerHook_PumpPendingChoice();
-    AutoPotionOverlay_PumpPendingSave();
-    AutoPotionOverlay_PumpPendingUiNotify();
+    PssOverlay_PumpPendingSave();
+    PssOverlay_PumpPendingUiNotify();
 
     MSG *pMsg = (MSG *)lParam;
     // HOME／Insert：自動喝水 Mimir 式 overlay（toggle）。原本 HOME 這裡卡了
@@ -275,10 +275,10 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // ——2026-09-07 拿掉這個限制，兩個鍵都直接開，不用等 Encoder 那邊修好。
     if (pMsg->message == WM_KEYDOWN &&
         (pMsg->wParam == VK_HOME || pMsg->wParam == VK_INSERT)) {
-      AutoPotionOverlay_Show();
+      PssOverlay_Show();
     }
     // 2026-09-08/09：「點格子→點背包道具」選道具流程（見
-    // docs/AutoPotionOverlay_點選道具計畫.md）。overlay 目前在等某個 section/
+    // docs/PssOverlay_點選道具計畫.md）。overlay 目前在等某個 section/
     // slot 的選擇時，偵測到玩家點擊就去讀「剛被點的那個背包道具」，讀到就送
     // 7-byte 解析請求給伺服器；伺服器查完回覆抵達後，overlay 自己直接寫入＋
     // 自動存檔（不再有「確認中」中繼顯示，點道具就是最終確認動作）。沒點到
@@ -293,10 +293,10 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     // 過這次點擊、旗標理論上已經更新），確保讀到的是「這次」點的道具。
     if (pMsg->message == WM_LBUTTONUP) {
       int pickSection = -1, pickSlot = -1;
-      if (AutoPotionOverlay_IsPicking(&pickSection, &pickSlot)) {
+      if (PssOverlay_IsPicking(&pickSection, &pickSlot)) {
         ClickedItemInfo clicked;
         if (InventoryDebug_FindJustClickedItem(&clicked)) {
-          AutoPotionConfig_SendResolveItemRequest(pickSection, pickSlot,
+          PssConfig_SendResolveItemRequest(pickSection, pickSlot,
                                                   clicked.objId);
         }
       }
@@ -622,8 +622,8 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
   // 密米爾之泉：這裡呼叫安全，PumpPendingChoice 內部改成呼叫下面的
   // MimirSendEncoded（直接送、不經過 send()），不會再遞迴繞回 my_send。
   MimirPowerHook_PumpPendingChoice();
-  AutoPotionOverlay_PumpPendingSave();
-  AutoPotionOverlay_PumpPendingUiNotify();
+  PssOverlay_PumpPendingSave();
+  PssOverlay_PumpPendingUiNotify();
   return ret;
 }
 
@@ -1468,7 +1468,7 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   // 交易視窗、個人商店分開裝：一邊 mismatch 不影響另一邊
   InstallTradeStatusHook();
   // 實驗：商店列表會把第一行砍掉，先整組不裝（blob／寬高／畫線／595736 克隆）
-  // InstallShopStatusHook();
+  // InstallPrivateShopStatusHook();
   launcherdll_hook_log("[ShStatus] skipped (experiment: list first-line clip)");
 
   // [暫停中] 實驗性 Action 4 偏移修正 Hook，根據要求暫不啟動

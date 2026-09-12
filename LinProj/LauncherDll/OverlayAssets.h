@@ -1,4 +1,4 @@
-﻿// OverlayAssets.h: loads an external pak (background/icon PNGs + strings.xml)
+// OverlayAssets.h: loads an external pak (background/icon PNGs + strings.xml)
 // so an overlay's appearance/text can be swapped without rebuilding the DLL.
 // Generic pak-set loader/parser shared by any number of independent overlays
 // (DisconnectOverlay, MimirPowerOverlay, ...) -- each calls OverlayAssets_Load
@@ -31,8 +31,14 @@ bool OverlayAssets_GetRawBytes(OverlayAssetSet *set, const char *name,
 // Returns a GDI+ bitmap decoded from the pak entry `name` (e.g.
 // "bg_disconnect.png"), or nullptr if not found/decoded. Caller does not own
 // the returned pointer (cached internally); do not delete it.
+// item_/skill_ 圖示會自動把 Sprite/tbt 常見的紅底（與洋紅）色鍵轉成 alpha=0。
 Gdiplus::Bitmap *OverlayAssets_GetBitmap(OverlayAssetSet *set,
                                          const char *name);
+
+// Sprite/tbt 匯出 BMP 的透明底多半是純紅 RGB(255,0,0)；少數工具用洋紅。
+// 回傳新的 32bpp ARGB Bitmap（色鍵像素 alpha=0），caller 負責 delete。
+// src 不修改；失敗回傳 nullptr。之後 DLL 內即時解 tbt 也可共用這支。
+Gdiplus::Bitmap *OverlayAssets_CloneWithSpriteColorKey(Gdiplus::Bitmap *src);
 
 // screen: e.g. "disconnect". key: "title" or "body_<reason>" / "body_default".
 // Returns true and fills outBuf if found.

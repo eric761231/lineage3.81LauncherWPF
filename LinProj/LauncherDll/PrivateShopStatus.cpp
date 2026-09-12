@@ -1,18 +1,26 @@
 #include "stdafx.h"
-#include "ShopStatusHook.h"
+#include "PrivateShopStatus.h"
 #include "WarehouseStatusHook.h"
 #include "LauncherDll.h"
 #include <string.h>
 
-// 全域 Log 計數器
-static int g_shBlobLogs = 0;
-static int g_shTipLogs = 0;
-static int g_shCloneLogs = 0;
+// ---------------------------------------------------------------------------
+// 全域除錯與 Log 計數器：限制高頻路徑的 Log 輸出次數，避免刷屏。
+// ---------------------------------------------------------------------------
+static int g_shBlobLogs = 0;   // PrivateShopPickStatus 的執行次數
+static int g_shTipLogs = 0;    // ShopTipDrawFmt 的執行次數
+static int g_shCloneLogs = 0;  // PrivateShopCopyBagFmt 的執行次數
 
-// 格式切割與繪製函式指標型態與位址定義
+// ---------------------------------------------------------------------------
+// 遊戲主程式內的原生函式指標與固定記憶體位址。
+// ---------------------------------------------------------------------------
+// SplitFmt：將原始格式化字串依 0x17 切割成多行並填入偏移量。
+// 位址 0x4AEC90，使用 cdecl 呼叫慣例。
 typedef char *(__cdecl *SplitFmt_t)(char *src, int *off, int *nlines);
 static SplitFmt_t SplitFmt = (SplitFmt_t)0x4AEC90;
 
+// DrawFec：遊戲底層文字繪製函式。
+// 位址 0x46FEC0，使用 cdecl 呼叫慣例。
 typedef void(__cdecl *DrawFec_t)(void *font, const char *str, int len, int x, int y,
                                 DWORD color);
 static DrawFec_t DrawFec = (DrawFec_t)0x46FEC0;
@@ -68,12 +76,14 @@ static int VisLen(const char *s, int n) {
  * @param item 道具結構指標
  * @return 計算出的 Tip 視窗寬度
  */
-extern "C" int __cdecl ShopTipWidth(char *name, void *item) {
+extern "C" int __cdecl PrivateShopTipWidth(char *name, void *item) {
   int w = 0;
+  // 先以道具名稱長度作為目前寬度下限，再與說明文字最長行比較。
   if (name) {
     w = static_cast<int>(strlen(name));
   }
   if (item) {
+    // 道具結構：+0xA8 為格式字串，+0x14 為行數，+0x18 為行偏移量陣列。
     char *fmt = *reinterpret_cast<char **>(static_cast<BYTE *>(item) + 0xa8);
     const int nlines = *reinterpret_cast<int *>(static_cast<BYTE *>(item) + 0x14);
     int *off = reinterpret_cast<int *>(static_cast<BYTE *>(item) + 0x18);
@@ -91,6 +101,7 @@ extern "C" int __cdecl ShopTipWidth(char *name, void *item) {
         if (end > flen) {
           end = flen;
         }
+        // 取所有說明行的可見字元數最大值，避免控制碼影響視窗寬度。
         const int vis = VisLen(fmt + start, end - start);
         if (vis > w) {
           w = vis;
@@ -101,6 +112,7 @@ extern "C" int __cdecl ShopTipWidth(char *name, void *item) {
   if (w < 1) {
     w = 1;
   }
+  // 遊戲以每字元約 6 像素計算，另加固定左右邊距 0xA。
   return w * 6 + 0xA;
 }
 
@@ -113,10 +125,12 @@ static int ShopNlines(void *item) {
   if (!item) {
     return 0;
   }
+  // 優先使用道具結構 +0x14 已計算好的行數。
   int n = *reinterpret_cast<int *>(static_cast<BYTE *>(item) + 0x14);
   if (n > 0 && n <= 32) {
     return n;
   }
+  // 若結構沒有有效行數，退回掃描 +0xA8 格式字串中的 0x17 分隔符。
   char *fmt = *reinterpret_cast<char **>(static_cast<BYTE *>(item) + 0xa8);
   if (!fmt || !fmt[0]) {
     return 0;
@@ -138,11 +152,13 @@ static int ShopNlines(void *item) {
  * @param item 道具結構指標
  * @return 計算出的 Tip 視窗高度
  */
-extern "C" int __cdecl ShopTipHeight(void *item) {
+extern "C" int __cdecl PrivateShopTipHeight(void *item) {
+  // +0x10 非空代表有附加狀態說明，需要增加 Tooltip 基礎高度。
   int extra = 0xC;
   if (item && *reinterpret_cast<void **>(static_cast<BYTE *>(item) + 0x10)) {
     extra = 0x18;
   }
+  // 高度 = 基礎高度 + 行數 * 每行高度 0xC + 固定邊距 0xA。
   return extra + ShopNlines(item) * 0xC + 0xA;
 }
 
@@ -152,21 +168,24 @@ extern "C" int __cdecl ShopTipHeight(void *item) {
  * @param srcItem 來源背包道具指標
  * @return 格式總行數
  */
-extern "C" int __cdecl CopyItemFmtFromBag(void *dst, void *srcItem) {
+extern "C" int __cdecl PrivateShopCopyItemFmtFromBag(void *dst, void *srcItem) {
   if (!dst || !srcItem || dst == srcItem) {
     return 0;
   }
+  // 從來源背包道具的 +0xA8 取得格式字串，+0x14 取得原始行數。
   char *src = *reinterpret_cast<char **>(static_cast<BYTE *>(srcItem) + 0xa8);
   const int nsrc = *reinterpret_cast<int *>(static_cast<BYTE *>(srcItem) + 0x14);
   if (!src || !src[0] || nsrc <= 0 || nsrc > 32) {
     return 0;
   }
+  // 先複製到區域緩衝區，交由原生 SplitFmt 建立目標使用的 heap 字串。
   char buf[0x400];
   strncpy_s(buf, sizeof(buf), src, _TRUNCATE);
   int dummyOff[32];
   int dummyN = 0;
   char *copied = SplitFmt(buf, dummyOff, &dummyN);
   if (copied) {
+    // 目標 +0x18 的行偏移量必須依來源字串重新計算，不能共用來源指標。
     const int nlist = ApplyListFmtOffBag(src, reinterpret_cast<int *>(static_cast<BYTE *>(dst) + 0x18), 32);
     *reinterpret_cast<int *>(static_cast<BYTE *>(dst) + 0x14) = nlist > 0 ? nlist : nsrc;
     *reinterpret_cast<char **>(static_cast<BYTE *>(dst) + 0xa8) = copied;
@@ -183,8 +202,8 @@ extern "C" int __cdecl CopyItemFmtFromBag(void *dst, void *srcItem) {
  * @param clone 克隆的商店道具指標
  * @param bag 背包道具指標
  */
-extern "C" void __cdecl ShopCopyBagFmt(void *clone, void *bag) {
-  const int n = CopyItemFmtFromBag(clone, bag);
+extern "C" void __cdecl PrivateShopCopyBagFmt(void *clone, void *bag) {
+  const int n = PrivateShopCopyItemFmtFromBag(clone, bag);
   if (n && g_shCloneLogs < 8) {
     g_shCloneLogs++;
     launcherdll_hook_log("[ShStatus] clone-fmt n=%d", n);
@@ -208,12 +227,14 @@ extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
   if (!fmt || nlines <= 0 || nlines > 32) {
     return;
   }
+  // 取得遊戲全域字型物件，位址為 0x9A84E0。
   void *font = *reinterpret_cast<void **>(0x9A84E0);
   const int flen = static_cast<int>(strlen(fmt));
   if (g_shTipLogs < 8) {
     g_shTipLogs++;
     launcherdll_hook_log("[ShStatus] tip n=%d y=%d flen=%d", nlines, y0, flen);
   }
+  // 逐行繪製，行距固定為 0xC；LineLen 會移除行尾控制字元。
   for (int i = 0; i < nlines; i++) {
     int start = off[i];
     if (start < 0 || start > flen) {
@@ -240,11 +261,12 @@ extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
  * @param len 資料長度
  * @return 處理後的 blob 指標
  */
-extern "C" char *__cdecl ShopPickStatus(char *blob, unsigned len) {
+extern "C" char *__cdecl PrivateShopPickStatus(char *blob, unsigned len) {
   if (!len) {
     FmtExtraNlSet(0);
     return 0;
   }
+  // 有狀態資料時開啟額外換行，讓後續 Tooltip 能保留狀態列。
   FmtExtraNlSet(1);
   if (g_shBlobLogs < 16) {
     g_shBlobLogs++;
@@ -264,6 +286,7 @@ static void PatchJmpN(void *src, void *dst, size_t nbytes) {
   if (nbytes < 5) {
     return;
   }
+  // 暫時解除頁面保護，寫入 x86 E9 relative JMP 並以 NOP 填滿覆蓋區。
   DWORD old = 0;
   VirtualProtect(src, nbytes, PAGE_EXECUTE_READWRITE, &old);
   BYTE *p = static_cast<BYTE *>(src);
@@ -273,6 +296,7 @@ static void PatchJmpN(void *src, void *dst, size_t nbytes) {
   for (size_t i = 5; i < nbytes; i++) {
     p[i] = 0x90;
   }
+  // 還原頁面保護並清除指令快取，確保 CPU 立即看到新指令。
   VirtualProtect(src, nbytes, old, &old);
   FlushInstructionCache(GetCurrentProcess(), src, nbytes);
 }
@@ -280,13 +304,14 @@ static void PatchJmpN(void *src, void *dst, size_t nbytes) {
 /**
  * @brief 商店狀態指標 Hook 跳板 (Trampoline) 函式。
  */
-__declspec(naked) void Tramp_ShopStatusPtr() {
+// 各跳板保留原生流程需要的暫存器／堆疊形狀，再跳回固定續接位址。
+__declspec(naked) void Tramp_PrivateShopStatusPtr() {
   __asm {
     movzx eax, byte ptr [ebp - 0x619]
     push eax
     lea ecx, [ebp - 0x410]
     push ecx
-    call ShopPickStatus
+    call PrivateShopPickStatus
     add esp, 8
     push eax
     push 0x5423E2
@@ -297,7 +322,7 @@ __declspec(naked) void Tramp_ShopStatusPtr() {
 /**
  * @brief 商店 Tip 寬度計算 Hook 跳板 (Trampoline) 函式。
  */
-__declspec(naked) void Tramp_ShopTipWidth() {
+__declspec(naked) void Tramp_PrivateShopTipWidth() {
   __asm {
     mov eax, dword ptr [ebp - 0x168]
     mov ecx, dword ptr [eax + 0x4C]
@@ -307,10 +332,10 @@ __declspec(naked) void Tramp_ShopTipWidth() {
     push ecx
     mov eax, dword ptr [ecx + 0xC]
     push eax
-    call ShopTipWidth
+    call PrivateShopTipWidth
     add esp, 8
     mov dword ptr [ebp - 0x38], eax
-    call ShopTipHeight
+    call PrivateShopTipHeight
     add esp, 4
     mov dword ptr [ebp - 0x34], eax
     push 0x59609E
@@ -321,7 +346,7 @@ __declspec(naked) void Tramp_ShopTipWidth() {
 /**
  * @brief 商店複製格式 Hook 跳板 (Trampoline) 函式。
  */
-__declspec(naked) void Tramp_ShopCloneFmt() {
+__declspec(naked) void Tramp_PrivateShopCloneFmt() {
   __asm {
     mov dl, byte ptr [ecx + 0xB0]
     mov byte ptr [eax + 0xB0], dl
@@ -329,7 +354,7 @@ __declspec(naked) void Tramp_ShopCloneFmt() {
     push ecx
     push ecx
     push eax
-    call ShopCopyBagFmt
+    call PrivateShopCopyBagFmt
     add esp, 8
     pop ecx
     pop eax
@@ -341,7 +366,7 @@ __declspec(naked) void Tramp_ShopCloneFmt() {
 /**
  * @brief 商店 Tip 繪製 Hook 跳板 (Trampoline) 函式。
  */
-__declspec(naked) void Tramp_ShopTipDraw() {
+__declspec(naked) void Tramp_PrivateShopTipDraw() {
   __asm {
     mov eax, dword ptr [ebp - 0x168]
     mov ecx, dword ptr [eax + 0x4C]
@@ -355,7 +380,7 @@ __declspec(naked) void Tramp_ShopTipDraw() {
     push edx
     push dword ptr [ebp - 0x10]
     push ecx
-    call ShopTipDrawFmt
+    call PrivateShopTipDrawFmt
     add esp, 16
     push 0x5966A0
     ret
@@ -365,15 +390,17 @@ __declspec(naked) void Tramp_ShopTipDraw() {
 /**
  * @brief 安裝商店狀態 Hook 函式。
  */
-void InstallShopStatusHook() {
+void InstallPrivateShopStatusHook() {
   // 實驗：商店列表第一行被砍，整組 JMP 先不打。要恢復把這段 return 拿掉即可。
   launcherdll_hook_log("[ShStatus] install skipped (experiment)");
   return;
 
+  // 各 Hook 目標位址：Blob、Tooltip 寬高、Tooltip 繪製與商品克隆。
   BYTE *pBlob = reinterpret_cast<BYTE *>(0x5423DD);
   BYTE *pWidth = reinterpret_cast<BYTE *>(0x596053);
   BYTE *pDraw = reinterpret_cast<BYTE *>(0x596573);
   BYTE *pClone = reinterpret_cast<BYTE *>(0x595736);
+  // 先比對原生機器碼特徵，版本不符時跳過修補，避免錯位寫入。
   static const BYTE kShopPushStr[5] = {0x68, 0x37, 0x42, 0x8D, 0x00};
   static const BYTE kShopWidth[7] = {0xC7, 0x45, 0xC8, 0x8E, 0x00, 0x00, 0x00};
   static const BYTE kShopDraw[10] = {0x83, 0x7D, 0xD0, 0x00, 0x0F, 0x84,
@@ -381,9 +408,10 @@ void InstallShopStatusHook() {
   static const BYTE kShopClone[12] = {0x8A, 0x91, 0xB0, 0x00, 0x00, 0x00,
                                       0x88, 0x90, 0xB0, 0x00, 0x00, 0x00};
 
+  // 依序嘗試 Blob、克隆、Tooltip 寬度與繪製四條路徑，彼此獨立記錄結果。
   int blobOk = 0;
   if (memcmp(pBlob, kShopPushStr, sizeof(kShopPushStr)) == 0) {
-    PatchJmpN(pBlob, reinterpret_cast<void *>(Tramp_ShopStatusPtr), 5);
+    PatchJmpN(pBlob, reinterpret_cast<void *>(Tramp_PrivateShopStatusPtr), 5);
     blobOk = 1;
   } else {
     launcherdll_hook_log("[ShStatus] 5423DD mismatch, skip blob");
@@ -391,7 +419,7 @@ void InstallShopStatusHook() {
 
   int cloneOk = 0;
   if (memcmp(pClone, kShopClone, sizeof(kShopClone)) == 0) {
-    PatchJmpN(pClone, reinterpret_cast<void *>(Tramp_ShopCloneFmt),
+    PatchJmpN(pClone, reinterpret_cast<void *>(Tramp_PrivateShopCloneFmt),
               sizeof(kShopClone));
     cloneOk = 1;
   } else {
@@ -401,14 +429,14 @@ void InstallShopStatusHook() {
   int widthOk = 0;
   int drawOk = 0;
   if (memcmp(pWidth, kShopWidth, sizeof(kShopWidth)) == 0) {
-    PatchJmpN(pWidth, reinterpret_cast<void *>(Tramp_ShopTipWidth),
+    PatchJmpN(pWidth, reinterpret_cast<void *>(Tramp_PrivateShopTipWidth),
               sizeof(kShopWidth));
     widthOk = 1;
   } else {
     launcherdll_hook_log("[ShStatus] 596053 width mismatch, skip");
   }
   if (memcmp(pDraw, kShopDraw, sizeof(kShopDraw)) == 0) {
-    PatchJmpN(pDraw, reinterpret_cast<void *>(Tramp_ShopTipDraw),
+    PatchJmpN(pDraw, reinterpret_cast<void *>(Tramp_PrivateShopTipDraw),
               sizeof(kShopDraw));
     drawOk = 1;
   } else {

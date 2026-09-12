@@ -1,7 +1,7 @@
 // VitalsPacketHook.cpp: see VitalsPacketHook.h.
 //
 // 背景：AutoPotionOverlay 的 BUFF 頁要畫紅/藍血魔條，資料來源本來規劃走「攔截
-// 原生 S_HPUpdate/S_MPUpdate」（見 docs/AutoPotionOverlay_HPMP條後端快取計畫.md），
+// 原生 S_HPUpdate/S_MPUpdate」（見 docs/PssOverlay_HPMP條後端快取計畫.md），
 // 但那需要用 Cheat Engine 對正在跑的 client 下斷點才能安全定位「外層 opcode 可見」
 // 的分派點——這個開發環境沒有這個條件，所以先做了一版「伺服器主動推送」的備援
 // （PacketBox 借位子類型 39，見 C_PlaySupport.java 的 handleUiVisible/
@@ -24,10 +24,10 @@
 //
 // 呼叫順序（同一個封包 handler 內）：curHP call 先、maxHP call 後（curMP/maxMP
 // 同理）——所以 max 那個 capture 觸發時，cur 一定已經是這次封包剛解出來的新值，
-// 直接在 max capture 裡一起呼叫 AutoPotionOverlay_OnHpUpdate/OnMpUpdate。
+// 直接在 max capture 裡一起呼叫 PssOverlay_OnHpUpdate/OnMpUpdate。
 #include "stdafx.h"
 #include "VitalsPacketHook.h"
-#include "AutoPotionOverlay.h"
+#include "PssOverlay.h"
 #include "LauncherDll.h"
 #include <cstring>
 
@@ -90,7 +90,7 @@ void __stdcall OnCurHpCaptured(int v) { g_lastCurHp = v; }
  * @brief 最大 HP 解包抓取回呼，同時更新至 AutoPotionOverlay。
  */
 void __stdcall OnMaxHpCaptured(int v) {
-  AutoPotionOverlay_OnHpUpdate(g_lastCurHp, v);
+  PssOverlay_OnHpUpdate(g_lastCurHp, v);
 }
 
 /**
@@ -102,7 +102,7 @@ void __stdcall OnCurMpCaptured(int v) { g_lastCurMp = v; }
  * @brief 最大 MP 解包抓取回呼，同時更新至 AutoPotionOverlay。
  */
 void __stdcall OnMaxMpCaptured(int v) {
-  AutoPotionOverlay_OnMpUpdate(g_lastCurMp, v);
+  PssOverlay_OnMpUpdate(g_lastCurMp, v);
 }
 
 /**

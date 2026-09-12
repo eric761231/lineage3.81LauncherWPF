@@ -1,4 +1,4 @@
-﻿// MimirPowerHook.cpp: 密米爾之泉 in-process hook。
+// MimirPowerHook.cpp: 密米爾之泉 in-process hook。
 //
 // S→C 封包偽裝走 PacketBox（S_OPCODE_PACKETBOX = 250 / 0xFA）子類型欄位。
 //
@@ -49,6 +49,7 @@
 #include "MimirPowerHook.h"
 #include "LineageEncryption.h"
 #include "MimirPowerOverlay.h"
+#include "PlaySupportSystem.h"
 
 #pragma comment(lib, "detours.lib")
 
@@ -69,6 +70,9 @@ constexpr DWORD DISPATCH_EPILOGUE_ADDR = 0x00541596;
 // 內建預設標題，不是原生功能——攔截本身沒問題，問題在畫面渲染邏輯）。
 constexpr BYTE MIMIR_SENTINEL_0 = 0x10;
 
+// PSS 子類型（32/39/46/47）由 PlaySupportSystem_OnPacketBox 處理。
+// 這裡只保留密米爾 0x10；cave 裡用寫死立即值比對 PSS（不要用 constexpr 當 jmp）。
+
 // 真實 C_CheckPK 的 wire opcode，Java 端 OpcodesClient：
 // public static final int C_OPCODE_CHECKPK = 51;
 constexpr BYTE C_CHECKPK_OPCODE = 51;
@@ -77,6 +81,7 @@ constexpr int MAX_SCAN_LEN = 4096; // 防禦性上限，配合 SEH 避免真的�
 
 SOCKET g_gameSocket = INVALID_SOCKET;
 DWORD g_mimirConsumedFlag = 0;
+DWORD g_pssConsumedFlag = 0;
 
 // -1 = 沒有待送出的選擇；否則是 0~255 的合法 index（BYTE 全值域都合法，用另一個
 // LONG 存 -1 當「沒有」的哨兵值，避免跟合法 index 撞在一起）。MimirPowerHook_
@@ -238,12 +243,12 @@ __declspec(naked) void MimirDispatchCave() {
   // 位址完全是垃圾記憶體、跳過去就當機（CE 反組譯直接看到 jmp dword ptr[eax*4+
   // 658CB1F0] 這種指向我們自己 DLL 資料段的位址，不是 0x5415B4，實測證實）。
   //
-  // 這裡直接比對 EAX == 0x10（我們的 PacketBox 子類型值），不是比對 250——見
-  // 檔案開頭說明，這個分派點的 EAX 本來就是子類型值，250 這個外層 opcode 從沒
-  // 出現在這裡過。
+  // 這裡直接比對 EAX == 0x10（密米爾 PacketBox 子類型）。PSS 子類型交給
+  // PlaySupportSystem_OnPacketBox（cdecl；回傳值寫進 g_pssConsumedFlag，
+  // 因為 popad 會把 eax 蓋掉）。
   __asm {
     cmp eax, 0x10 // MIMIR_SENTINEL_0
-    jne pass_through
+    jne check_pss
 
     pushfd
     pushad
@@ -256,6 +261,33 @@ __declspec(naked) void MimirDispatchCave() {
     popfd
 
     cmp g_mimirConsumedFlag, 0
+    jne consumed
+    jmp pass_through
+
+  check_pss:
+    cmp eax, 0x20
+    je do_pss
+    cmp eax, 0x27
+    je do_pss
+    cmp eax, 0x2E
+    je do_pss
+    cmp eax, 0x2F
+    je do_pss
+    jmp pass_through
+
+  do_pss:
+    pushfd
+    pushad
+    mov ecx, [ebp + 8]
+    push ecx
+    push eax
+    call PlaySupportSystem_OnPacketBox
+    add esp, 8
+    mov g_pssConsumedFlag, eax
+    popad
+    popfd
+
+    cmp g_pssConsumedFlag, 0
     jne consumed
 
   pass_through:

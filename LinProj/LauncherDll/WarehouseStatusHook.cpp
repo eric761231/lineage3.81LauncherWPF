@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "WarehouseStatusHook.h"
-#include "ShopStatusHook.h"
+#include "PrivateShopStatus.h"
 #include "LauncherDll.h"
 #include "detours.h"
 #include <string.h>
@@ -212,7 +212,7 @@ void __fastcall Hook_AttachStatus(void *self, void * /*edx*/, char *status) {
   if (!bag || bag == self) {
     return;
   }
-  const int copied = CopyItemFmtFromBag(self, bag);
+  const int copied = PrivateShopCopyItemFmtFromBag(self, bag);
   if (copied && g_whBagLogs < 8) {
     g_whBagLogs++;
     launcherdll_hook_log("[WhStatus] bag-fmt n=%d", copied);

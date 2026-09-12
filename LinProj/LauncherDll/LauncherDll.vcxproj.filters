@@ -42,7 +42,7 @@
     <ClCompile Include="TradeStatusHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ShopStatusHook.cpp">
+    <ClCompile Include="PrivateShopStatus.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SmoothRunPatch.cpp">
@@ -54,7 +54,13 @@
     <ClCompile Include="ShowClockPatch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="AutoPotionOverlay.cpp">
+    <ClCompile Include="PlaySupportSystem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PssConfig.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PssOverlay.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="InventoryDebugHook.cpp">
@@ -97,7 +103,7 @@
     <ClInclude Include="TradeStatusHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ShopStatusHook.h">
+    <ClInclude Include="PrivateShopStatus.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SmoothRunPatch.h">
@@ -109,7 +115,13 @@
     <ClInclude Include="ShowClockPatch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="AutoPotionOverlay.h">
+    <ClInclude Include="PlaySupportSystem.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PssConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PssOverlay.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="InventoryDebugHook.h">

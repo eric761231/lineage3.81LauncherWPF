@@ -1,10 +1,12 @@
-﻿// MimirPowerOverlay.cpp: 密米爾之泉自繪卡片清單視窗。
+// MimirPowerOverlay.cpp: 密米爾之泉自繪卡片清單視窗。
 // 跟 DisconnectOverlay 不同：這個視窗要真的能互動（點列表選項、按確認鈕），不是
 // 純觀察用的 click-through 疊層，所以：
 //   - hWndOwner 設成 g_hGameWnd：Windows 自動讓這個視窗永遠疊在遊戲視窗正上方、
 //     隨遊戲視窗一起最小化/還原，不用比照 DisconnectOverlay 那套 200ms 計時器手動
 //     判斷前景視窗、來回切換 HWND_TOPMOST/HWND_NOTOPMOST。
-//   - 不加 WS_EX_TRANSPARENT/WS_EX_NOACTIVATE，直接在自己的 WndProc 收滑鼠訊息。
+//   - 用 WS_EX_NOACTIVATE + SW_SHOWNOACTIVATE：仍可收滑鼠，但不搶遊戲 UI thread
+//     焦點。密米爾在獨立 overlay thread；若 SW_SHOW 搶焦點，會把 LineageIme 掛在
+//     遊戲 thread 的 TSF／IME 弄壞，人物重登也救不回（要關整個 client）。
 // 版面/素材（背景、卡片圖、hover/pressed 圖、圖示對照表）走 mimir_ui.pak/idx +
 // mimir_ui.xml，改版面/圖片不用重編 DLL，見 ParseMimirXml。
 #include <windows.h>
@@ -1059,6 +1061,9 @@ void HideWindow(HWND hwnd) {
   g_visible.store(false);
   KillTimer(hwnd, TIMER_COUNTDOWN);
   ShowWindow(hwnd, SW_HIDE);
+  // 若先前曾意外搶過焦點，關窗後把前景還給遊戲（人物重登不夠，但至少別繼續卡在 overlay）
+  if (g_hGameWnd && IsWindow(g_hGameWnd))
+    SetForegroundWindow(g_hGameWnd);
 }
 
 LRESULT CALLBACK MimirWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
@@ -1076,10 +1081,11 @@ LRESULT CALLBACK MimirWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     g_pressedConfirm = false;
     g_hoverClose = false;
     g_pressedClose = false;
-    ShowWindow(hwnd, SW_SHOW);
+    // 不搶焦點：見檔案頭註解（IME／TSF）
+    ShowWindow(hwnd, SW_SHOWNOACTIVATE);
     PaintLayered(hwnd);
     SetTimer(hwnd, TIMER_COUNTDOWN, 1000, NULL);
-    NetLog("[mimir-ui] shown countdown=%us", (unsigned)g_countdownTotalSeconds);
+    NetLog("[mimir-ui] shown countdown=%us (noactivate)", (unsigned)g_countdownTotalSeconds);
     return 0;
   }
   case WM_HIDE_MIMIR:
@@ -1234,10 +1240,9 @@ DWORD WINAPI OverlayThreadProc(void *) {
   RegisterClassExW(&cls);
 
   // hWndOwner = 遊戲主視窗：owned popup 會自動疊在 owner 正上方、隨 owner 一起
-  // 最小化/還原，不用像 DisconnectOverlay 那樣手動維護 Z 序。這個視窗要能被點
-  // 擊/取得焦點，所以不加 WS_EX_TRANSPARENT/WS_EX_NOACTIVATE。
-  HWND hwnd = CreateWindowExW(WS_EX_LAYERED | WS_EX_TOOLWINDOW, kClassName,
-                              L"MimirPower", WS_POPUP, 0, 0, g_cfg.windowW,
+  // 最小化/還原。WS_EX_NOACTIVATE：點得到、不搶遊戲 UI thread 焦點（保護 IME）。
+  HWND hwnd = CreateWindowExW(WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+                              kClassName, L"MimirPower", WS_POPUP, 0, 0, g_cfg.windowW,
                               g_cfg.windowH, g_hGameWnd, NULL, hinst, NULL);
   if (!hwnd) {
     NetLog("[mimir-ui] CreateWindowExW failed err=%u", GetLastError());
