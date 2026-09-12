@@ -4,10 +4,12 @@
 #include "LauncherDll.h"
 #include <string.h>
 
+// 全域 Log 計數器
 static int g_shBlobLogs = 0;
 static int g_shTipLogs = 0;
 static int g_shCloneLogs = 0;
 
+// 格式切割與繪製函式指標型態與位址定義
 typedef char *(__cdecl *SplitFmt_t)(char *src, int *off, int *nlines);
 static SplitFmt_t SplitFmt = (SplitFmt_t)0x4AEC90;
 
@@ -15,6 +17,12 @@ typedef void(__cdecl *DrawFec_t)(void *font, const char *str, int len, int x, in
                                 DWORD color);
 static DrawFec_t DrawFec = (DrawFec_t)0x46FEC0;
 
+/**
+ * @brief 計算去掉末端特殊控制字元後的字串實際長度。
+ * @param s 字串指標
+ * @param n 原始長度
+ * @return 裁切後的字串長度
+ */
 static int LineLen(const char *s, int n) {
   if (!s || n <= 0) {
     return 0;
@@ -30,6 +38,12 @@ static int LineLen(const char *s, int n) {
   return n;
 }
 
+/**
+ * @brief 計算字串的可見字元數量（過濾顏色控制碼如 \\fX）。
+ * @param s 字串指標
+ * @param n 字串長度
+ * @return 可見字元數量
+ */
 static int VisLen(const char *s, int n) {
   n = LineLen(s, n);
   int vis = 0;
@@ -48,6 +62,12 @@ static int VisLen(const char *s, int n) {
   return vis;
 }
 
+/**
+ * @brief 計算商店提示框（Tooltip）的寬度。
+ * @param name 道具名稱
+ * @param item 道具結構指標
+ * @return 計算出的 Tip 視窗寬度
+ */
 extern "C" int __cdecl ShopTipWidth(char *name, void *item) {
   int w = 0;
   if (name) {
@@ -84,6 +104,11 @@ extern "C" int __cdecl ShopTipWidth(char *name, void *item) {
   return w * 6 + 0xA;
 }
 
+/**
+ * @brief 取得商店道具格式說明的行數。
+ * @param item 道具結構指標
+ * @return 說明文字行數
+ */
 static int ShopNlines(void *item) {
   if (!item) {
     return 0;
@@ -108,6 +133,11 @@ static int ShopNlines(void *item) {
   return n;
 }
 
+/**
+ * @brief 計算商店提示框（Tooltip）的高度。
+ * @param item 道具結構指標
+ * @return 計算出的 Tip 視窗高度
+ */
 extern "C" int __cdecl ShopTipHeight(void *item) {
   int extra = 0xC;
   if (item && *reinterpret_cast<void **>(static_cast<BYTE *>(item) + 0x10)) {
@@ -116,6 +146,12 @@ extern "C" int __cdecl ShopTipHeight(void *item) {
   return extra + ShopNlines(item) * 0xC + 0xA;
 }
 
+/**
+ * @brief 從背包道具複製格式說明到目標結構中。
+ * @param dst 目標道具指標
+ * @param srcItem 來源背包道具指標
+ * @return 格式總行數
+ */
 extern "C" int __cdecl CopyItemFmtFromBag(void *dst, void *srcItem) {
   if (!dst || !srcItem || dst == srcItem) {
     return 0;
@@ -142,6 +178,11 @@ extern "C" int __cdecl CopyItemFmtFromBag(void *dst, void *srcItem) {
   return 0;
 }
 
+/**
+ * @brief 商店複製背包格式說明處理。
+ * @param clone 克隆的商店道具指標
+ * @param bag 背包道具指標
+ */
 extern "C" void __cdecl ShopCopyBagFmt(void *clone, void *bag) {
   const int n = CopyItemFmtFromBag(clone, bag);
   if (n && g_shCloneLogs < 8) {
@@ -150,6 +191,13 @@ extern "C" void __cdecl ShopCopyBagFmt(void *clone, void *bag) {
   }
 }
 
+/**
+ * @brief 繪製商店提示框（Tooltip）中的格式化文字。
+ * @param item 道具結構指標
+ * @param x 繪製起點 X 座標
+ * @param y0 繪製起點 Y 座標
+ * @param color 文字顏色
+ */
 extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
   if (!item) {
     return;
@@ -186,6 +234,12 @@ extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
   }
 }
 
+/**
+ * @brief 挑選並處理商店狀態 Blob 資料。
+ * @param blob 資料指標
+ * @param len 資料長度
+ * @return 處理後的 blob 指標
+ */
 extern "C" char *__cdecl ShopPickStatus(char *blob, unsigned len) {
   if (!len) {
     FmtExtraNlSet(0);
@@ -200,6 +254,12 @@ extern "C" char *__cdecl ShopPickStatus(char *blob, unsigned len) {
   return blob;
 }
 
+/**
+ * @brief 寫入指定位元組數量的 JMP 轉址修補，多餘長度補 0x90 NOP。
+ * @param src 原始位址
+ * @param dst 跳轉目標位址
+ * @param nbytes 欲修補的總位元組數 (至少 5 位元組)
+ */
 static void PatchJmpN(void *src, void *dst, size_t nbytes) {
   if (nbytes < 5) {
     return;
@@ -217,6 +277,9 @@ static void PatchJmpN(void *src, void *dst, size_t nbytes) {
   FlushInstructionCache(GetCurrentProcess(), src, nbytes);
 }
 
+/**
+ * @brief 商店狀態指標 Hook 跳板 (Trampoline) 函式。
+ */
 __declspec(naked) void Tramp_ShopStatusPtr() {
   __asm {
     movzx eax, byte ptr [ebp - 0x619]
@@ -231,6 +294,9 @@ __declspec(naked) void Tramp_ShopStatusPtr() {
   }
 }
 
+/**
+ * @brief 商店 Tip 寬度計算 Hook 跳板 (Trampoline) 函式。
+ */
 __declspec(naked) void Tramp_ShopTipWidth() {
   __asm {
     mov eax, dword ptr [ebp - 0x168]
@@ -252,6 +318,9 @@ __declspec(naked) void Tramp_ShopTipWidth() {
   }
 }
 
+/**
+ * @brief 商店複製格式 Hook 跳板 (Trampoline) 函式。
+ */
 __declspec(naked) void Tramp_ShopCloneFmt() {
   __asm {
     mov dl, byte ptr [ecx + 0xB0]
@@ -269,6 +338,9 @@ __declspec(naked) void Tramp_ShopCloneFmt() {
   }
 }
 
+/**
+ * @brief 商店 Tip 繪製 Hook 跳板 (Trampoline) 函式。
+ */
 __declspec(naked) void Tramp_ShopTipDraw() {
   __asm {
     mov eax, dword ptr [ebp - 0x168]
@@ -290,6 +362,9 @@ __declspec(naked) void Tramp_ShopTipDraw() {
   }
 }
 
+/**
+ * @brief 安裝商店狀態 Hook 函式。
+ */
 void InstallShopStatusHook() {
   // 實驗：商店列表第一行被砍，整組 JMP 先不打。要恢復把這段 return 拿掉即可。
   launcherdll_hook_log("[ShStatus] install skipped (experiment)");

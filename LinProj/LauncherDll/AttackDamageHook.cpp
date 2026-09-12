@@ -16,6 +16,7 @@
 
 namespace {
 
+// Hook 的記憶體位址與比對用原始 Code
 constexpr DWORD kAttackAddr = 0x005295D9;
 constexpr DWORD kAttackFall = 0x005295E3;
 constexpr DWORD kAttackSkip = 0x00529BCD;
@@ -39,16 +40,27 @@ constexpr DWORD kDamageColor = 0x0000F800;
 constexpr DWORD kAccumTimeoutMs = 8000;
 constexpr size_t kCaveSize = 0x400;
 
+// 全域狀態變數
 std::atomic<bool> g_enabled{false};
 bool g_installed = false;
 
+/**
+ * @struct AccumState
+ * @brief 傷害累計狀態結構，用於記錄特定目標在超時時間內的傷害加總。
+ */
 struct AccumState {
-  DWORD targetId;
-  DWORD total;
-  DWORD tick;
+  DWORD targetId; // 目標角色/怪物 ID
+  DWORD total;    // 累計總傷害量
+  DWORD tick;     // 上次受到傷害的時間戳記（毫秒）
 };
 AccumState g_accum = {};
 
+/**
+ * @brief 修改指定記憶體位址的 Code (修正記憶體保護屬性後寫入)。
+ * @param addr 目標記憶體位址
+ * @param code 欲寫入的指令資料
+ * @param len 資料長度
+ */
 void PatchCode(void *addr, const void *code, int len) {
   DWORD oldProt = 0;
   VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, PAGE_READWRITE, &oldProt);
@@ -56,18 +68,32 @@ void PatchCode(void *addr, const void *code, int len) {
   VirtualProtectEx(INVALID_HANDLE_VALUE, addr, len, oldProt, &oldProt);
 }
 
+/**
+ * @brief 建構 JMP 轉址指令（0xE9 + 相對位址）。
+ * @param patch 存放修補指令的緩衝區
+ * @param len 緩衝區長度（會先以 0x90 NOP 填滿）
+ * @param hookAddr Hook 起始位址
+ * @param target 轉址目標位址
+ */
 void BuildJmpPatch(BYTE *patch, int len, DWORD hookAddr, DWORD target) {
   memset(patch, 0x90, len);
   patch[0] = 0xE9;
   *(int *)&patch[1] = (int)((intptr_t)target - (intptr_t)hookAddr - 5);
 }
 
+// 頭頂浮動文字函式指標型態定義
 typedef void(__cdecl *OverheadTextFn)(DWORD targetId, const char *text, DWORD color, int a,
                                       int b, int c);
 
+/**
+ * @brief 在目標頭頂顯示傷害泡泡文字（當前傷害與累計傷害）。
+ * @param targetId 目標 ID
+ * @param damage 當次傷害值
+ * @param total 累計傷害值
+ */
 void ShowDamageBubble(DWORD targetId, DWORD damage, DWORD total) {
   char buf[96];
-  // \\fR 色碼：'0' 是暗藍看不清；'3'＝0x95FB44／0xF800 純紅（與強化 +9 同色）。
+  // \\fR 色碼：'0' 是暗藍看不清；'3'＝0x95FB44／0xF800 純批紅（與強化 +9 同色）。
   // 括號用 '>'（偏白）區隔；當下傷害與累計都用紅。
   _snprintf_s(buf, _TRUNCATE, "\\\\fRf>( \\\\fRf3%u\\\\fRf> ) \\\\fRf3%u", (unsigned)damage,
               (unsigned)total);
@@ -75,12 +101,20 @@ void ShowDamageBubble(DWORD targetId, DWORD damage, DWORD total) {
   fn(targetId, buf, kDamageColor, 1, 0, 0);
 }
 
+/**
+ * @brief 命中傷害觸發回呼函式（單體／普攻）。
+ * @param targetId 受擊目標 ID
+ * @param damage 傷害數值
+ */
 extern "C" void __cdecl AttackDamage_OnHit(DWORD targetId, DWORD damage) {
-  if (!g_enabled.load(std::memory_order_relaxed))
+  if (!g_enabled.load(std::memory_order_relaxed)) {
     return;
-  if (targetId == 0 || damage == 0)
+  }
+  if (targetId == 0 || damage == 0) {
     return;
+  }
 
+  // 計算並累加傷害
   const DWORD now = GetTickCount();
   if (g_accum.targetId == targetId && (now - g_accum.tick) <= kAccumTimeoutMs) {
     g_accum.total += damage;
@@ -89,24 +123,34 @@ extern "C" void __cdecl AttackDamage_OnHit(DWORD targetId, DWORD damage) {
     g_accum.total = damage;
   }
   g_accum.tick = now;
+  // 顯示傷害浮動泡泡
   ShowDamageBubble(targetId, damage, g_accum.total);
 }
 
-// container+4 = DWORD* targets；+8 = WORD* damages（本服＝真傷）
+/**
+ * @brief 範圍傷害（AOE / 魔法 AOE）批次處理回呼函式。
+ * @param container 包含目標與傷害陣列的容器指標 (container+4: targets, container+8: damages)
+ * @param count 命中目標數量
+ */
 extern "C" void __cdecl AttackDamage_OnAoeBatch(void *container, int count) {
-  if (!g_enabled.load(std::memory_order_relaxed))
+  if (!g_enabled.load(std::memory_order_relaxed)) {
     return;
-  if (!container || count <= 0 || count > 256)
+  }
+  if (!container || count <= 0 || count > 256) {
     return;
+  }
   DWORD *targets = *(DWORD **)((BYTE *)container + 4);
   WORD *dmgs = *(WORD **)((BYTE *)container + 8);
-  if (!targets || !dmgs)
+  if (!targets || !dmgs) {
     return;
+  }
 
+  // 走訪目標列表並合併相同目標的傷害金額
   for (int i = 0; i < count; i++) {
     const DWORD tid = targets[i];
-    if (!tid)
+    if (!tid) {
       continue;
+    }
     bool seen = false;
     for (int j = 0; j < i; j++) {
       if (targets[j] == tid) {
@@ -114,20 +158,25 @@ extern "C" void __cdecl AttackDamage_OnAoeBatch(void *container, int count) {
         break;
       }
     }
-    if (seen)
+    if (seen) {
       continue;
+    }
     DWORD sum = 0;
     for (int j = 0; j < count; j++) {
-      if (targets[j] == tid)
+      if (targets[j] == tid) {
         sum += dmgs[j];
+      }
     }
-    if (sum)
+    if (sum) {
       AttackDamage_OnHit(tid, sum);
+    }
   }
 }
 
-// 共用：pushfd/pushad → 過濾攻擊者(edx) → 成功跳 .ok
-// 回傳 sc 寫入長度；*out_ok / *out_skip 為相對 fixup 位置（填 int32 disp）
+/**
+ * @struct FilterFixups
+ * @brief 記錄 EmitAttackerFilter 所產生的 JCC 轉址修補位址。
+ */
 struct FilterFixups {
   int je_ok1;
   int jz_skip1;
@@ -135,6 +184,13 @@ struct FilterFixups {
   int jne_skip2;
 };
 
+/**
+ * @brief 寫入過濾攻擊者（驗證 edx 是否為玩家本人或寵物/召喚獸）的機器碼。
+ * @param sc 機器碼緩衝區
+ * @param n 當前寫入偏移量
+ * @param fx 記錄修補位址的結構指標
+ * @return 更新後的緩衝區偏移量
+ */
 int EmitAttackerFilter(BYTE *sc, int n, FilterFixups *fx) {
   // cmp edx,[self]; je .ok
   sc[n++] = 0x3B;
@@ -174,10 +230,23 @@ int EmitAttackerFilter(BYTE *sc, int n, FilterFixups *fx) {
   return n;
 }
 
+/**
+ * @brief 修補條件跳轉指令（Jcc）的相對偏移量。
+ * @param sc 機器碼緩衝區
+ * @param relOff Jcc 指令相對偏移欄位的位址
+ * @param targetOff 跳轉目標位址偏移量
+ */
 void PatchJcc(BYTE *sc, int relOff, int targetOff) {
   *(int *)&sc[relOff] = targetOff - (relOff + 4);
 }
 
+/**
+ * @brief 建造普攻 Code Cave 機器碼。
+ * @param caveAddr Cave 的基礎虛擬位址
+ * @param sc 緩衝區指標
+ * @param onHit 回呼函式位址
+ * @return 產生的機器碼總位元組長度
+ */
 int BuildAttackCave(DWORD caveAddr, BYTE *sc, DWORD onHit) {
   int n = 0;
   sc[n++] = 0x9C;
@@ -242,8 +311,17 @@ int BuildAttackCave(DWORD caveAddr, BYTE *sc, DWORD onHit) {
   return n;
 }
 
-// attackerEbpOff: byte offset from ebp (as signed 8-bit for [ebp+disp8])
-// containerEbpOff, countEbpOff similarly; count is word.
+/**
+ * @brief 建造範圍傷害（AOE / 魔法 AOE）Code Cave 機器碼。
+ * @param caveAddr Cave 的基礎虛擬位址
+ * @param sc 緩衝區指標
+ * @param onBatch 批次回呼函式位址
+ * @param attackerDisp 攻擊者相對於 ebp 的偏移量
+ * @param containerDisp 容器指標相對於 ebp 的偏移量
+ * @param countDisp 命中數量相對於 ebp 的偏移量
+ * @param fallthroughHook 原程式執行流寫回位址
+ * @return 產生的機器碼總位元組長度
+ */
 int BuildAoeCave(DWORD caveAddr, BYTE *sc, DWORD onBatch, BYTE attackerDisp,
                  BYTE containerDisp, BYTE countDisp, DWORD fallthrough) {
   int n = 0;
@@ -306,10 +384,15 @@ int BuildAoeCave(DWORD caveAddr, BYTE *sc, DWORD onBatch, BYTE attackerDisp,
 
 } // namespace
 
+/**
+ * @brief 安裝攻擊傷害顯示的 Hook（包括普攻、物理 AOE 與魔法 AOE）。
+ */
 void InstallAttackDamageHook() {
-  if (g_installed)
+  if (g_installed) {
     return;
+  }
 
+  // 比對位址特徵碼，確保未經預期修改
   if (memcmp((void *)kAttackAddr, kAttackOrig, kAttackLen) != 0 ||
       memcmp((void *)kAoeAddr, kAoeOrig, kAoeLen) != 0 ||
       memcmp((void *)kMagicAoeAddr, kMagicAoeOrig, kMagicAoeLen) != 0) {
@@ -317,6 +400,7 @@ void InstallAttackDamageHook() {
     return;
   }
 
+  // 配置動態 Cave 記憶體
   BYTE *cave = (BYTE *)VirtualAlloc(NULL, kCaveSize, MEM_COMMIT | MEM_RESERVE,
                                     PAGE_EXECUTE_READWRITE);
   if (!cave) {
@@ -328,6 +412,7 @@ void InstallAttackDamageHook() {
   const DWORD onHit = (DWORD)(uintptr_t)&AttackDamage_OnHit;
   const DWORD onBatch = (DWORD)(uintptr_t)&AttackDamage_OnAoeBatch;
 
+  // 構建普攻、物理 AOE 與魔法 AOE 的 Cave 機器碼
   int off = 0;
   int attackOff = off;
   off += BuildAttackCave(base + attackOff, cave + attackOff, onHit);
@@ -339,6 +424,7 @@ void InstallAttackDamageHook() {
   off +=
       BuildAoeCave(base + magicOff, cave + magicOff, onBatch, 0xE4, 0xBC, 0xB4, kMagicAoeFall);
 
+  // 對原 Code 進行修補，寫入 JMP 轉位指令至 Cave
   BYTE patch[16];
   BuildJmpPatch(patch, kAttackLen, kAttackAddr, base + attackOff);
   PatchCode((void *)kAttackAddr, patch, kAttackLen);
@@ -360,13 +446,22 @@ void InstallAttackDamageHook() {
   }
 }
 
+/**
+ * @brief 設定是否啟用傷害頭頂泡泡顯示。
+ * @param enabled true 為啟用，false 為停用
+ */
 void AttackDamageHook_SetEnabled(bool enabled) {
   g_enabled.store(enabled, std::memory_order_relaxed);
-  if (enabled)
+  if (enabled) {
     g_accum = {};
+  }
   launcherdll_hook_log("[AttackDmg] enabled=%d", enabled ? 1 : 0);
 }
 
+/**
+ * @brief 取得當前傷害頭頂泡泡顯示是否已啟用。
+ * @return true 代表已啟用，false 代表未啟用
+ */
 bool AttackDamageHook_IsEnabled() {
   return g_enabled.load(std::memory_order_relaxed);
 }
