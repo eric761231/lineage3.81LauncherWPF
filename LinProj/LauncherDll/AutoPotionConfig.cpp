@@ -9,7 +9,11 @@
 
 namespace {
 
-// 主要訊息才寫 log（細節／每格數量等不打）
+/**
+ * @brief 自動喝水組態專用 Log 紀錄函式。
+ * @param fmt 格式化字串
+ * @param ... 可變參數列表
+ */
 static void ApCfgLog(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
@@ -26,7 +30,11 @@ constexpr BYTE kMagicStatusSupport = 0x57; // 吃肉／修武
 typedef void(__cdecl *SendPacketDataFn)(const char *format, ...);
 const SendPacketDataFn SendPacketData = (SendPacketDataFn)0x580E50;
 
-// 道具名稱是 wchar_t；cfg 用 UTF-8，避免不同 Windows 內碼頁讀壞。
+/**
+ * @brief 將寬字元 (wchar_t) 字串轉換為 UTF-8 編碼的 std::string。
+ * @param w 寬字元字串指標
+ * @return UTF-8 編碼字串
+ */
 std::string WideToUtf8(const wchar_t *w) {
   if (!w || !w[0]) {
     return std::string();
@@ -40,6 +48,12 @@ std::string WideToUtf8(const wchar_t *w) {
   return out;
 }
 
+/**
+ * @brief 將 UTF-8 編碼的 std::string 轉換為寬字元 (wchar_t) 緩衝區。
+ * @param s UTF-8 字串
+ * @param out 輸出之寬字元緩衝區指標
+ * @param outCount 緩衝區容量
+ */
 void Utf8ToWide(const std::string &s, wchar_t *out, size_t outCount) {
   out[0] = 0;
   if (s.empty()) {
@@ -48,6 +62,10 @@ void Utf8ToWide(const std::string &s, wchar_t *out, size_t outCount) {
   MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, out, (int)outCount);
 }
 
+/**
+ * @brief 取得自動喝水設定檔 (auto_potion.cfg) 之完整檔案路徑。
+ * @return 設定檔完整路徑
+ */
 std::string ConfigFilePath() {
   char exePath[MAX_PATH] = {0};
   if (GetModuleFileNameA(NULL, exePath, MAX_PATH) > 0) {
@@ -61,6 +79,10 @@ std::string ConfigFilePath() {
   return std::string(exePath) + "\\Core\\auto_potion.cfg";
 }
 
+/**
+ * @brief 校正並限制 AutoPotionSlot 的數值範圍。
+ * @param s 欲限制的喝水/技能欄位參考
+ */
 void ClampAutoPotionSlot(AutoPotionSlot &s) {
   if (s.kind < AutoPotionSlot_None || s.kind > AutoPotionSlot_Skill) {
     s.kind = AutoPotionSlot_None;
@@ -81,13 +103,20 @@ void ClampAutoPotionSlot(AutoPotionSlot &s) {
   }
 }
 
+/**
+ * @brief 校正並限制 AutoPotionSection 的數值範圍。
+ * @param sec 欲限制的區塊參考（包含多個 Slots）
+ */
 void ClampAutoPotionSection(AutoPotionSection &sec) {
   for (int i = 0; i < kAutoPotionSlotsPerSection; i++) {
     ClampAutoPotionSlot(sec.slots[i]);
   }
 }
 
-// 專用名稱，避免跟其他標頭的 ClampConfig 撞名（ambiguous）。
+/**
+ * @brief 專用名稱，校正整個 AutoPotionConfig 結構之數值範圍，避免與其他標頭的 ClampConfig 衝突。
+ * @param cfg 欲校正的設定檔結構參考
+ */
 void ClampAutoPotionConfig(AutoPotionConfig &cfg) {
   ClampAutoPotionSection(cfg.heal);
   ClampAutoPotionSection(cfg.mana);
@@ -101,6 +130,11 @@ void ClampAutoPotionConfig(AutoPotionConfig &cfg) {
 
 } // namespace
 
+/**
+ * @brief 檢查設定檔中是否有任何已啟用的喝水/技能欄位。
+ * @param cfg 自動喝水設定檔參考
+ * @return true 代表至少有一個有效欄位，否則為 false
+ */
 bool AutoPotionConfig_HasAnySlot(const AutoPotionConfig &cfg) {
   for (int i = 0; i < kAutoPotionSlotsPerSection; i++) {
     if (cfg.heal.slots[i].kind != AutoPotionSlot_None && cfg.heal.slots[i].id > 0) {
@@ -113,6 +147,10 @@ bool AutoPotionConfig_HasAnySlot(const AutoPotionConfig &cfg) {
   return false;
 }
 
+/**
+ * @brief 自設定檔 (auto_potion.cfg) 載入自動喝水與輔助設定。
+ * @return 載入並校正後的 AutoPotionConfig 結構
+ */
 AutoPotionConfig AutoPotionConfig_Load() {
   AutoPotionConfig cfg;
   const std::string path = ConfigFilePath();
@@ -181,6 +219,11 @@ AutoPotionConfig AutoPotionConfig_Load() {
   return cfg;
 }
 
+/**
+ * @brief 將自動喝水設定儲存至 auto_potion.cfg 檔案中。
+ * @param cfgIn 欲儲存的設定結構
+ * @return 成功寫入檔案回傳 true，失敗回傳 false
+ */
 bool AutoPotionConfig_Save(const AutoPotionConfig &cfgIn) {
   AutoPotionConfig cfg = cfgIn;
   ClampAutoPotionConfig(cfg);
@@ -222,6 +265,10 @@ bool AutoPotionConfig_Save(const AutoPotionConfig &cfgIn) {
   return true;
 }
 
+/**
+ * @brief 發送自動喝水/技能設定至伺服器。
+ * @param cfgIn 自動喝水設定
+ */
 void AutoPotionConfig_SendToServer(const AutoPotionConfig &cfgIn) {
   AutoPotionConfig cfg = cfgIn;
   ClampAutoPotionConfig(cfg);
@@ -250,6 +297,10 @@ void AutoPotionConfig_SendToServer(const AutoPotionConfig &cfgIn) {
   ApCfgLog("[AutoPotion] send potion: done (62-byte)");
 }
 
+/**
+ * @brief 發送輔助狀態（吃肉／修武）至伺服器。
+ * @param cfgIn 自動喝水設定
+ */
 void AutoPotionConfig_SendStatusToServer(const AutoPotionConfig &cfgIn) {
   AutoPotionConfig cfg = cfgIn;
   ClampAutoPotionConfig(cfg);
@@ -272,6 +323,12 @@ void AutoPotionConfig_SendStatusToServer(const AutoPotionConfig &cfgIn) {
       (unsigned)flags, cfg.eatMeatItemId, cfg.whetstoneItemId);
 }
 
+/**
+ * @brief 發送道具解析請求至伺服器。
+ * @param section 區塊 (0: heal, 1: mana)
+ * @param slotIndex 欄位索引 (0~4)
+ * @param objId 道具之 Object ID
+ */
 void AutoPotionConfig_SendResolveItemRequest(int section, int slotIndex,
                                              DWORD objId) {
   ApCfgLog(
@@ -284,6 +341,10 @@ void AutoPotionConfig_SendResolveItemRequest(int section, int slotIndex,
                  (int)objId, 0);
 }
 
+/**
+ * @brief 發送 UI 可見性狀態通知至伺服器。
+ * @param visible UI 是否顯示
+ */
 void AutoPotionConfig_SendUiVisible(bool visible) {
   ApCfgLog("[AutoPotion] ui visible=%d (4-byte notify)", (int)visible);
   SendPacketData("cccc", (int)kOpcodePlaySupport, (int)kMagicUiVisible,
