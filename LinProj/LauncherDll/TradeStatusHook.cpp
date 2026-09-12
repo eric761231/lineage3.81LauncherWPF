@@ -3,6 +3,9 @@
 #include "LauncherDll.h"
 #include <string.h>
 
+/**
+ * @brief 安裝交易狀態面板跳過 NOP 修補（將 0x45A9DC 處的 je 指令轉為 NOP）。
+ */
 void InstallTradeStatusHook() {
   BYTE *pJe = reinterpret_cast<BYTE *>(0x45A9DC);
   static const BYTE kTradeCmpJe[6] = {0x83, 0x7A, 0x10, 0x00, 0x74, 0x2C};

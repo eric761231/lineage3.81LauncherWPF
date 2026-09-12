@@ -33,13 +33,21 @@
 
 namespace {
 
-const char kFileEncryptKey[] = "PAt82IqEvNBmERYl"; // same as GetFileBuffer()
+const char kFileEncryptKey[] = "PAt82IqEvNBmERYl"; // 與 GetFileBuffer() 相同的 XOR 加密金鑰
 
+/**
+ * @struct IdxEntry
+ * @brief 記錄 PAK 資源包中單一檔案的偏移量與長度。
+ */
 struct IdxEntry {
   size_t offset;
   size_t length;
 };
 
+/**
+ * @struct ScreenStrings
+ * @brief 紀錄 strings.xml 中解析出的單一 Screen 介面佈局與文字資訊。
+ */
 struct ScreenStrings {
   std::wstring title;
   std::map<std::string, std::wstring> bodyByReason;
@@ -71,6 +79,11 @@ bool g_gdiplusStarted = false;
 ULONG_PTR g_gdiplusToken = 0;
 std::map<std::string, OverlayAssetSet *> g_instances; // key: folderName+"|"+pakBaseName
 
+/**
+ * @brief 寫入 Overlay 資源加載 Log。
+ * @param fmt 格式化字串
+ * @param ... 可變參數
+ */
 void NetLog(const char *fmt, ...) {
   char exePath[MAX_PATH] = {0};
   char logPath[MAX_PATH] = "./Core/launcher.log";
@@ -84,8 +97,9 @@ void NetLog(const char *fmt, ...) {
     sprintf_s(logPath, "%s\\Core\\launcher.log", exePath);
   }
   FILE *fp = NULL;
-  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL)
+  if (fopen_s(&fp, logPath, "a+") != 0 || fp == NULL) {
     return;
+  }
   SYSTEMTIME st;
   GetLocalTime(&st);
   char msg[1024] = {0};
@@ -101,10 +115,18 @@ void NetLog(const char *fmt, ...) {
   fclose(fp);
 }
 
+/**
+ * @brief 解析相對於執行檔目錄的完整路徑。
+ * @param relPath 相對路徑
+ * @param outPath 輸出完整路徑緩衝區
+ * @param outSize 緩衝區容量
+ * @return 成功回傳 true，失敗回傳 false
+ */
 bool ResolveExeRelativePath(const char *relPath, char *outPath, size_t outSize) {
   char exePath[MAX_PATH] = {0};
-  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) <= 0)
+  if (GetModuleFileNameA(NULL, exePath, MAX_PATH) <= 0) {
     return false;
+  }
   for (int i = (int)strlen(exePath) - 1; i >= 0; i--) {
     if (exePath[i] == '\\' || exePath[i] == '/') {
       exePath[i] = '\0';
@@ -115,10 +137,17 @@ bool ResolveExeRelativePath(const char *relPath, char *outPath, size_t outSize) 
   return true;
 }
 
+/**
+ * @brief 完整讀取指定的檔案內容至記憶體中。
+ * @param path 檔案路徑
+ * @param outData 輸出位元組向量指標
+ * @return 讀取成功回傳 true，否則為 false
+ */
 bool ReadWholeFile(const char *path, std::vector<BYTE> *outData) {
   FILE *fp = NULL;
-  if (fopen_s(&fp, path, "rb") != 0 || !fp)
+  if (fopen_s(&fp, path, "rb") != 0 || !fp) {
     return false;
+  }
   fseek(fp, 0, SEEK_END);
   long len = ftell(fp);
   fseek(fp, 0, SEEK_SET);
@@ -132,39 +161,60 @@ bool ReadWholeFile(const char *path, std::vector<BYTE> *outData) {
   return readCount == (size_t)len;
 }
 
+/**
+ * @brief 使用金鑰對資料進行 XOR 解密/加碼。
+ * @param data 位元組向量指標
+ */
 void XorDecrypt(std::vector<BYTE> *data) {
   size_t keyLen = sizeof(kFileEncryptKey) - 1; // exclude trailing NUL
-  for (size_t i = 0; i < data->size(); i++)
+  for (size_t i = 0; i < data->size(); i++) {
     (*data)[i] ^= (BYTE)kFileEncryptKey[i % keyLen];
+  }
 }
 
-// Extracts attrName="value" from a line into outBuf (UTF-8 bytes, unescaped
-// as-is). Returns false if the attribute isn't present on this line.
+/**
+ * @brief 從 XML 標籤列中提取 attrName="value" 的屬性值。
+ * @param line XML 單行文字
+ * @param attrName 屬性名稱
+ * @param outBuf 輸出緩衝區
+ * @param outSize 緩衝區容量
+ * @return 成功提取回傳 true，無該屬性則回傳 false
+ */
 bool ExtractAttr(const char *line, const char *attrName, char *outBuf,
                  size_t outSize) {
   char needle[64];
   sprintf_s(needle, "%s=\"", attrName);
   const char *p = strstr(line, needle);
-  if (!p)
+  if (!p) {
     return false;
+  }
   p += strlen(needle);
   const char *end = strchr(p, '"');
-  if (!end)
+  if (!end) {
     return false;
+  }
   size_t len = (size_t)(end - p);
-  if (len >= outSize)
+  if (len >= outSize) {
     len = outSize - 1;
+  }
   memcpy(outBuf, p, len);
   outBuf[len] = 0;
   return true;
 }
 
+/**
+ * @brief 將 UTF-8 字串轉為寬字元 std::wstring。
+ * @param utf8 UTF-8 編碼字串
+ * @return 寬字元字串
+ */
 std::wstring Utf8ToWide(const char *utf8) {
-  if (!utf8 || !utf8[0])
+  if (!utf8 || !utf8[0]) {
     return std::wstring();
+  }
   int chars = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
-  if (chars <= 0)
+  if (chars <= 0) {
     return std::wstring();
+  }
   std::wstring w;
   w.resize((size_t)chars - 1);
   MultiByteToWideChar(CP_UTF8, 0, utf8, -1, &w[0], chars);
@@ -173,10 +223,10 @@ std::wstring Utf8ToWide(const char *utf8) {
 
 } // namespace
 
-// Per-loaded-pak state. Opaque to callers (OverlayAssets.h only forward-
-// declares this struct); each OverlayAssets_Load() call gets its own
-// instance, cached by (folderName, pakBaseName) so repeated Load calls for
-// the same pak set are cheap and idempotent.
+/**
+ * @struct OverlayAssetSet
+ * @brief 存放載入之資源包內容（PAK 資料、IDX 索引、XML 文字及快取的 GDI+ 圖檔）。
+ */
 struct OverlayAssetSet {
   bool loaded = false;
   std::vector<BYTE> pakData;
@@ -187,6 +237,12 @@ struct OverlayAssetSet {
 
 namespace {
 
+/**
+ * @brief 解析 .idx 資源索引檔。
+ * @param set 資源集結構指標
+ * @param path 檔案路徑
+ * @return 成功回傳 true，失敗回傳 false
+ */
 bool ParseIdx(OverlayAssetSet *set, const char *path) {
   FILE *fp = NULL;
   if (fopen_s(&fp, path, "r") != 0 || !fp) {
@@ -201,23 +257,27 @@ bool ParseIdx(OverlayAssetSet *set, const char *path) {
       // Skip a UTF-8 BOM if present (e.g. from a different tool/encoding)
       // so it doesn't get glued onto the first entry's name.
       if ((unsigned char)p[0] == 0xEF && (unsigned char)p[1] == 0xBB &&
-          (unsigned char)p[2] == 0xBF)
+          (unsigned char)p[2] == 0xBF) {
         p += 3;
+      }
       firstLine = false;
     }
     char name[128] = {0};
     size_t offset = 0, length = 0;
     // name=offset,length
     char *eq = strchr(p, '=');
-    if (!eq)
+    if (!eq) {
       continue;
+    }
     size_t nameLen = (size_t)(eq - p);
-    if (nameLen == 0 || nameLen >= sizeof(name))
+    if (nameLen == 0 || nameLen >= sizeof(name)) {
       continue;
+    }
     memcpy(name, p, nameLen);
     name[nameLen] = 0;
-    if (sscanf_s(eq + 1, "%zu,%zu", &offset, &length) != 2)
+    if (sscanf_s(eq + 1, "%zu,%zu", &offset, &length) != 2) {
       continue;
+    }
     IdxEntry entry{offset, length};
     set->idx[name] = entry;
   }
@@ -225,6 +285,12 @@ bool ParseIdx(OverlayAssetSet *set, const char *path) {
   return !set->idx.empty();
 }
 
+/**
+ * @brief 解析記憶體中解密後的 strings.xml 內容。
+ * @param set 資源集結構指標
+ * @param data 解密後的 XML 資料指標
+ * @param len 資料長度
+ */
 void ParseStringsXml(OverlayAssetSet *set, const BYTE *data, size_t len) {
   // Line-scan over the in-memory buffer (no FILE*, this came from the
   // decrypted pak, not disk) mirroring LoadCombatConfig()'s fgets style.
@@ -232,11 +298,13 @@ void ParseStringsXml(OverlayAssetSet *set, const BYTE *data, size_t len) {
   size_t pos = 0;
   while (pos < len) {
     size_t lineEnd = pos;
-    while (lineEnd < len && data[lineEnd] != '\n')
+    while (lineEnd < len && data[lineEnd] != '\n') {
       lineEnd++;
+    }
     size_t lineLen = lineEnd - pos;
-    if (lineLen > 2000)
+    if (lineLen > 2000) {
       lineLen = 2000;
+    }
     char line[2048] = {0};
     memcpy(line, data + pos, lineLen);
     line[lineLen] = 0;
@@ -248,8 +316,9 @@ void ParseStringsXml(OverlayAssetSet *set, const BYTE *data, size_t len) {
         currentScreen = mode;
         ScreenStrings &s = set->screens[currentScreen];
         char titleUtf8[512] = {0};
-        if (ExtractAttr(line, "title", titleUtf8, sizeof(titleUtf8)))
+        if (ExtractAttr(line, "title", titleUtf8, sizeof(titleUtf8))) {
           s.title = Utf8ToWide(titleUtf8);
+        }
         char num[32];
         int x, y, w, h;
         bool gotAll = ExtractAttr(line, "btnX", num, sizeof(num)) &&
@@ -305,22 +374,29 @@ void ParseStringsXml(OverlayAssetSet *set, const BYTE *data, size_t len) {
           s.bodyRect.right = rx + rw;
           s.bodyRect.bottom = ry + rh;
         }
-        if (ExtractAttr(line, "titleFontSize", num, sizeof(num)))
+        if (ExtractAttr(line, "titleFontSize", num, sizeof(num))) {
           s.titleFontSize = atoi(num);
-        if (ExtractAttr(line, "bodyFontSize", num, sizeof(num)))
+        }
+        if (ExtractAttr(line, "bodyFontSize", num, sizeof(num))) {
           s.bodyFontSize = atoi(num);
+        }
         char fontUtf8[128];
-        if (ExtractAttr(line, "titleFontFamily", fontUtf8, sizeof(fontUtf8)))
+        if (ExtractAttr(line, "titleFontFamily", fontUtf8, sizeof(fontUtf8))) {
           s.titleFontFamily = Utf8ToWide(fontUtf8);
-        if (ExtractAttr(line, "bodyFontFamily", fontUtf8, sizeof(fontUtf8)))
+        }
+        if (ExtractAttr(line, "bodyFontFamily", fontUtf8, sizeof(fontUtf8))) {
           s.bodyFontFamily = Utf8ToWide(fontUtf8);
+        }
         char boolBuf[16];
-        if (ExtractAttr(line, "showTitle", boolBuf, sizeof(boolBuf)))
+        if (ExtractAttr(line, "showTitle", boolBuf, sizeof(boolBuf))) {
           s.showTitle = _stricmp(boolBuf, "false") != 0;
-        if (ExtractAttr(line, "titleAlign", boolBuf, sizeof(boolBuf)))
+        }
+        if (ExtractAttr(line, "titleAlign", boolBuf, sizeof(boolBuf))) {
           s.titleCenter = _stricmp(boolBuf, "center") == 0;
-        if (ExtractAttr(line, "bodyAlign", boolBuf, sizeof(boolBuf)))
+        }
+        if (ExtractAttr(line, "bodyAlign", boolBuf, sizeof(boolBuf))) {
           s.bodyCenter = _stricmp(boolBuf, "center") == 0;
+        }
         int posX, posY;
         bool gotPos = ExtractAttr(line, "posX", num, sizeof(num)) &&
                      (posX = atoi(num), true) &&
@@ -350,12 +426,19 @@ void ParseStringsXml(OverlayAssetSet *set, const BYTE *data, size_t len) {
 
 } // namespace
 
+/**
+ * @brief 載入指定的 Overlay 資源包 (.pak / .idx)。
+ * @param folderName 資源資料夾名稱
+ * @param pakBaseName 資源包主檔名
+ * @return 成功回傳 OverlayAssetSet 聚合物物件指標，失敗回傳 nullptr
+ */
 OverlayAssetSet *OverlayAssets_Load(const char *folderName,
                                     const char *pakBaseName) {
   std::string cacheKey = std::string(folderName) + "|" + pakBaseName;
   auto existing = g_instances.find(cacheKey);
-  if (existing != g_instances.end())
+  if (existing != g_instances.end()) {
     return existing->second->loaded ? existing->second : nullptr;
+  }
 
   OverlayAssetSet *set = new OverlayAssetSet();
   g_instances[cacheKey] = set; // cache even on failure, so we don't retry every call
@@ -371,8 +454,9 @@ OverlayAssetSet *OverlayAssets_Load(const char *folderName,
     return nullptr;
   }
 
-  if (!ParseIdx(set, idxPath))
+  if (!ParseIdx(set, idxPath)) {
     return nullptr;
+  }
 
   if (!ReadWholeFile(pakPath, &set->pakData)) {
     NetLog("[overlay-assets] pak not found: %s", pakPath);
@@ -390,10 +474,11 @@ OverlayAssetSet *OverlayAssets_Load(const char *folderName,
 
   if (!g_gdiplusStarted) {
     Gdiplus::GdiplusStartupInput input;
-    if (Gdiplus::GdiplusStartup(&g_gdiplusToken, &input, NULL) == Gdiplus::Ok)
+    if (Gdiplus::GdiplusStartup(&g_gdiplusToken, &input, NULL) == Gdiplus::Ok) {
       g_gdiplusStarted = true;
-    else
+    } else {
       NetLog("[overlay-assets] GdiplusStartup failed");
+    }
   }
 
   set->loaded = !set->pakData.empty();
@@ -403,29 +488,43 @@ OverlayAssetSet *OverlayAssets_Load(const char *folderName,
   return set->loaded ? set : nullptr;
 }
 
+/**
+ * @brief 檢查資源包是否已成功載入。
+ */
 bool OverlayAssets_IsLoaded(OverlayAssetSet *set) { return set && set->loaded; }
 
+/**
+ * @brief 自資源包中獲取指定名稱檔案的原始未解密位元組。
+ */
 bool OverlayAssets_GetRawBytes(OverlayAssetSet *set, const char *name,
                                const BYTE **outData, size_t *outLen) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto idxIt = set->idx.find(name);
-  if (idxIt == set->idx.end())
+  if (idxIt == set->idx.end()) {
     return false;
+  }
   const IdxEntry &e = idxIt->second;
-  if (e.offset + e.length > set->pakData.size())
+  if (e.offset + e.length > set->pakData.size()) {
     return false;
+  }
   *outData = set->pakData.data() + e.offset;
   *outLen = e.length;
   return true;
 }
 
+/**
+ * @brief 自資源包解碼並取得 GDI+ Bitmap 物件（含內部快取）。
+ */
 Gdiplus::Bitmap *OverlayAssets_GetBitmap(OverlayAssetSet *set, const char *name) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return nullptr;
+  }
   auto cacheIt = set->bitmapCache.find(name);
-  if (cacheIt != set->bitmapCache.end())
+  if (cacheIt != set->bitmapCache.end()) {
     return cacheIt->second;
+  }
 
   auto idxIt = set->idx.find(name);
   if (idxIt == set->idx.end()) {
@@ -439,8 +538,9 @@ Gdiplus::Bitmap *OverlayAssets_GetBitmap(OverlayAssetSet *set, const char *name)
   }
 
   HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, e.length);
-  if (!hMem)
+  if (!hMem) {
     return nullptr;
+  }
   void *pMem = GlobalLock(hMem);
   memcpy(pMem, set->pakData.data() + e.offset, e.length);
   GlobalUnlock(hMem);
@@ -464,139 +564,195 @@ Gdiplus::Bitmap *OverlayAssets_GetBitmap(OverlayAssetSet *set, const char *name)
   return bmp;
 }
 
+/**
+ * @brief 取得指定 Screen 及 key 的寬字元文字設定。
+ */
 bool OverlayAssets_GetText(OverlayAssetSet *set, const char *screen,
                            const char *key, wchar_t *outBuf, size_t outChars) {
-  if (!set || !set->loaded || outChars == 0)
+  if (!set || !set->loaded || outChars == 0) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end())
+  if (sIt == set->screens.end()) {
     return false;
+  }
   if (strcmp(key, "title") == 0) {
-    if (sIt->second.title.empty())
+    if (sIt->second.title.empty()) {
       return false;
+    }
     wcsncpy_s(outBuf, outChars, sIt->second.title.c_str(), _TRUNCATE);
     return true;
   }
   auto bIt = sIt->second.bodyByReason.find(key);
-  if (bIt == sIt->second.bodyByReason.end() || bIt->second.empty())
+  if (bIt == sIt->second.bodyByReason.end() || bIt->second.empty()) {
     return false;
+  }
   wcsncpy_s(outBuf, outChars, bIt->second.c_str(), _TRUNCATE);
   return true;
 }
 
+/**
+ * @brief 取得指定 Screen 的按鈕外框矩形 (RECT)。
+ */
 bool OverlayAssets_GetButtonRect(OverlayAssetSet *set, const char *screen,
                                  RECT *outRc) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end() || !sIt->second.hasBtnRect)
+  if (sIt == set->screens.end() || !sIt->second.hasBtnRect) {
     return false;
+  }
   *outRc = sIt->second.btnRect;
   return true;
 }
 
+/**
+ * @brief 取得指定 Screen 的寬與高尺寸。
+ */
 bool OverlayAssets_GetSize(OverlayAssetSet *set, const char *screen, int *outW,
                            int *outH) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end() || !sIt->second.hasSize)
+  if (sIt == set->screens.end() || !sIt->second.hasSize) {
     return false;
+  }
   *outW = sIt->second.width;
   *outH = sIt->second.height;
   return true;
 }
 
+/**
+ * @brief 取得指定 Screen 的參考對齊尺寸 (RefSize)。
+ */
 bool OverlayAssets_GetRefSize(OverlayAssetSet *set, const char *screen,
                               int *outW, int *outH) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end() || !sIt->second.hasRefSize)
+  if (sIt == set->screens.end() || !sIt->second.hasRefSize) {
     return false;
+  }
   *outW = sIt->second.refW;
   *outH = sIt->second.refH;
   return true;
 }
 
+/**
+ * @brief 取得指定 Screen 中標題或內文的文字矩形 (titleRect / bodyRect)。
+ */
 bool OverlayAssets_GetTextRect(OverlayAssetSet *set, const char *screen,
                                const char *which, RECT *outRc) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end())
+  if (sIt == set->screens.end()) {
     return false;
+  }
   if (strcmp(which, "title") == 0) {
-    if (!sIt->second.hasTitleRect)
+    if (!sIt->second.hasTitleRect) {
       return false;
+    }
     *outRc = sIt->second.titleRect;
     return true;
   }
-  if (!sIt->second.hasBodyRect)
+  if (!sIt->second.hasBodyRect) {
     return false;
+  }
   *outRc = sIt->second.bodyRect;
   return true;
 }
 
+/**
+ * @brief 取得指定 Screen 中標題或內文的字型大小。
+ */
 bool OverlayAssets_GetFontSize(OverlayAssetSet *set, const char *screen,
                                const char *which, int *outSize) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end())
+  if (sIt == set->screens.end()) {
     return false;
+  }
   int size = strcmp(which, "title") == 0 ? sIt->second.titleFontSize
                                          : sIt->second.bodyFontSize;
-  if (size <= 0)
+  if (size <= 0) {
     return false;
+  }
   *outSize = size;
   return true;
 }
 
+/**
+ * @brief 取得指定 Screen 中標題或內文的字型名稱 (FontFamily)。
+ */
 bool OverlayAssets_GetFontFamily(OverlayAssetSet *set, const char *screen,
                                  const char *which, wchar_t *outBuf,
                                  size_t outChars) {
-  if (!set || !set->loaded || outChars == 0)
+  if (!set || !set->loaded || outChars == 0) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end())
+  if (sIt == set->screens.end()) {
     return false;
+  }
   const std::wstring &family = strcmp(which, "title") == 0
                                    ? sIt->second.titleFontFamily
                                    : sIt->second.bodyFontFamily;
-  if (family.empty())
+  if (family.empty()) {
     return false;
+  }
   wcsncpy_s(outBuf, outChars, family.c_str(), _TRUNCATE);
   return true;
 }
 
+/**
+ * @brief 檢查指定 Screen 是否顯示標題。
+ */
 bool OverlayAssets_GetShowTitle(OverlayAssetSet *set, const char *screen) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return true;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end())
+  if (sIt == set->screens.end()) {
     return true;
+  }
   return sIt->second.showTitle;
 }
 
+/**
+ * @brief 檢查指定 Screen 中標題或內文是否設置為居中對齊。
+ */
 bool OverlayAssets_GetCenterAlign(OverlayAssetSet *set, const char *screen,
                                   const char *which) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end())
+  if (sIt == set->screens.end()) {
     return false;
+  }
   return strcmp(which, "title") == 0 ? sIt->second.titleCenter
                                      : sIt->second.bodyCenter;
 }
 
+/**
+ * @brief 取得指定 Screen 的顯示座標 (posX, posY)。
+ */
 bool OverlayAssets_GetPosition(OverlayAssetSet *set, const char *screen,
                                int *outX, int *outY) {
-  if (!set || !set->loaded)
+  if (!set || !set->loaded) {
     return false;
+  }
   auto sIt = set->screens.find(screen);
-  if (sIt == set->screens.end() || !sIt->second.hasPos)
+  if (sIt == set->screens.end() || !sIt->second.hasPos) {
     return false;
+  }
   *outX = sIt->second.posX;
   *outY = sIt->second.posY;
   return true;

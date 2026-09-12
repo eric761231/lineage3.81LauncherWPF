@@ -6,6 +6,7 @@
 //
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 //
+//  通用版本參數宣告標頭檔 (Detours 庫組件)。
 
 #ifndef DETOURS_STRINGIFY
 #define DETOURS_STRINGIFY(x)    DETOURS_STRINGIFY_(x)
