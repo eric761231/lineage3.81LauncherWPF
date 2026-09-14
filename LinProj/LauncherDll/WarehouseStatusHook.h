@@ -7,6 +7,10 @@ void InstallWarehouseStatusHook();
 
 // 僅倉庫注入／商店賣出列打開。背包與交易走官方 4AEC90，不要改列數。
 extern "C" void FmtExtraNlSet(int on);
+// 2026-09-14：驗證 g_fmtExtraNl 是否會在商店 Clone 路徑呼叫 SplitFmt 當下
+// 意外殘留非 0（見 docs/PrivateShopStatus_開發須知.md 的待驗證線索），暫時
+// 只給診斷 log 用，確認完可以拿掉。
+extern "C" int FmtExtraNlGet();
 
 extern "C" int ApplyListFmtOff(const char *src, int *off, int cap);
 extern "C" int ApplyListFmtOffBag(const char *src, int *off, int cap);

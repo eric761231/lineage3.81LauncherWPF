@@ -118,6 +118,10 @@ extern "C" void FmtExtraNlSet(int on) {
   g_fmtExtraNl = on ? 1 : 0;
 }
 
+extern "C" int FmtExtraNlGet() {
+  return g_fmtExtraNl;
+}
+
 static int ApplyListFmtOffEx(const char *src, int *off, int cap, int dotSpace) {
   if (!src || !off || cap < 1) {
     return 0;
@@ -166,16 +170,24 @@ extern "C" int ApplyListFmtOffBag(const char *src, int *off, int cap) {
 }
 
 char *__cdecl Hook_SplitFmt(char *src, int *off, int *nlines) {
+  // g_fmtExtraNl 是跨模組共用的 thread-local 旗標（倉庫 Hook_AttachStatus、
+  // 個人商店 PrivateShopPickStatus 都會設定它）。個人商店的 Blob 路徑設成 1
+  // 之後沒有對應的重設時機，若不在這裡「用完就消費掉」，旗標會一路殘留到
+  // 下一次不相關道具的 SplitFmt 呼叫，導致那個道具的說明多出一行空白
+  // （2026-09-14 實測掛賣道具確認過這個現象）。這裡改成只影響「這一次」
+  // SplitFmt 呼叫，用完立刻歸零，避免跨道具汙染。
+  const int useExtraNl = g_fmtExtraNl;
   int saved[32];
   int savedN = 0;
-  if (g_fmtExtraNl && src) {
+  if (useExtraNl && src) {
     savedN = ApplyListFmtOff(src, saved, 32);
   }
   char *copied = real_SplitFmt(src, off, nlines);
-  if (g_fmtExtraNl && copied && off && nlines && savedN > 0) {
+  if (useExtraNl && copied && off && nlines && savedN > 0) {
     memcpy(off, saved, savedN * sizeof(int));
     *nlines = savedN;
   }
+  g_fmtExtraNl = 0;
   return copied;
 }
 

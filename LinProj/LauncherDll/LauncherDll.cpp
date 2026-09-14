@@ -505,6 +505,7 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   InstallItemStatusColorHook();
   InstallWarehouseStatusHook();
   InstallTradeStatusHook();
+  InstallPrivateShopStatusHook();
   PatchThread(NULL);
 
   return 0;

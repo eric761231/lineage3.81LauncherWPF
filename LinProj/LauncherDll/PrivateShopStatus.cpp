@@ -179,6 +179,30 @@ extern "C" int __cdecl PrivateShopCopyItemFmtFromBag(void *dst, void *srcItem) {
   strncpy_s(buf, sizeof(buf), src, _TRUNCATE);
   int dummyOff[32];
   int dummyN = 0;
+  // 2026-09-14：暫時診斷 log，驗證 g_fmtExtraNl（WarehouseStatusHook.cpp）是否
+  // 會在商店 Clone 呼叫 SplitFmt 當下意外殘留非 0（懷疑是之前「商店列表第一行
+  // 被截斷」的可能根因之一，見 docs/PrivateShopStatus_開發須知.md）。確認完
+  // 這個旗標的實際行為後，這段 log 要拿掉，不要留在正式路徑。
+  static int s_flagCheckLogs = 0;
+  if (s_flagCheckLogs < 8) {
+    s_flagCheckLogs++;
+    // 把 src 前段內容轉成可視化字串（不可見字元印成 \xNN），確認第一行實際
+    // 內容是不是空白/純控制碼，藉此判斷空白行是不是來自來源字串本身。
+    char esc[200] = {0};
+    int ei = 0;
+    for (int si = 0; si < 48 && src[si] && ei < (int)sizeof(esc) - 5; si++) {
+      const unsigned char c = static_cast<unsigned char>(src[si]);
+      if (c >= 0x20 && c < 0x7F) {
+        esc[ei++] = static_cast<char>(c);
+      } else {
+        ei += sprintf_s(esc + ei, sizeof(esc) - ei, "\\x%02X", c);
+      }
+    }
+    launcherdll_hook_log(
+        "[Pss][diag] PrivateShopCopyItemFmtFromBag: g_fmtExtraNl=%d nsrc=%d "
+        "src_head=\"%s\" before SplitFmt (n=%d)",
+        FmtExtraNlGet(), nsrc, esc, s_flagCheckLogs);
+  }
   // SplitFmt 會回傳新的格式字串；dummyOff 只用來接收切割結果，真正的行偏移量
   // 由 ApplyListFmtOffBag 依來源內容填入目標結構。
   char *copied = SplitFmt(buf, dummyOff, &dummyN);
@@ -201,6 +225,51 @@ extern "C" int __cdecl PrivateShopCopyItemFmtFromBag(void *dst, void *srcItem) {
  * @param bag 背包道具指標
  */
 extern "C" void __cdecl PrivateShopCopyBagFmt(void *clone, void *bag) {
+  // 只在目的地還沒有有效說明資料時才複製——對齊 WarehouseStatusHook.cpp
+  // 的 Hook_AttachStatus「先讓原生流程跑完，line count 還是無效才 fallback
+  // 複製背包資料」寫法，而不是每次都無條件覆蓋。原生某些情況下可能已經
+  // 正確帶好 +0x14/+0x18，這裡不需要、也不應該蓋掉。
+  if (!clone) {
+    return;
+  }
+  const int existing = *reinterpret_cast<int *>(static_cast<BYTE *>(clone) + 0x14);
+  // 2026-09-14：驗證「existing 已經是 1~32 就直接 return 不 fallback 複製」
+  // 這個判斷會不會誤判——懷疑掛賣當下 clone 的 +0x14 本來就非 0，導致這裡
+  // 提早 return，複製流程整個沒跑到。確認完就拿掉，不要留在正式路徑。
+  static int s_bagFmtLogs = 0;
+  if (s_bagFmtLogs < 8) {
+    s_bagFmtLogs++;
+    // 2026-09-14：CE 中斷點在保護殼下打不進去，改用程式碼內 log 直接查
+    // clone+0x10（附加狀態指標）的值，確認空白行是不是這個欄位殘留非 0
+    // 造成的（原生 Tooltip 高度/繪製會依這個欄位多保留一行）。
+    void *extra = *reinterpret_cast<void **>(static_cast<BYTE *>(clone) + 0x10);
+    char extraEsc[80] = {0};
+    if (extra) {
+      // extra 是原生欄位讀出來的原始指標，內容格式未知，直接讀取有機率
+      // 讀到無效記憶體，用 SEH 包起來避免弄壞玩家正在玩的遊戲行程。
+      __try {
+        const char *es = reinterpret_cast<const char *>(extra);
+        int ei = 0;
+        for (int si = 0; si < 24 && es[si] && ei < (int)sizeof(extraEsc) - 5; si++) {
+          const unsigned char c = static_cast<unsigned char>(es[si]);
+          if (c >= 0x20 && c < 0x7F) {
+            extraEsc[ei++] = static_cast<char>(c);
+          } else {
+            ei += sprintf_s(extraEsc + ei, sizeof(extraEsc) - ei, "\\x%02X", c);
+          }
+        }
+      } __except (EXCEPTION_EXECUTE_HANDLER) {
+        strncpy_s(extraEsc, sizeof(extraEsc), "<unreadable>", _TRUNCATE);
+      }
+    }
+    launcherdll_hook_log(
+        "[Pss][diag] PrivateShopCopyBagFmt: existing=%d clone=%p bag=%p "
+        "extra_ptr=%p extra_head=\"%s\" (n=%d)",
+        existing, clone, bag, extra, extraEsc, s_bagFmtLogs);
+  }
+  if (existing > 0 && existing <= 32) {
+    return;
+  }
   // 跳板只需要執行複製；正常成功不逐次記錄 Log，避免掛攤操作刷屏。
   const int n = PrivateShopCopyItemFmtFromBag(clone, bag);
   (void)n;
@@ -255,7 +324,14 @@ extern "C" void __cdecl ShopTipDrawFmt(void *item, int x, int y0, int color) {
  * @return 處理後的 blob 指標
  */
 extern "C" char *__cdecl PrivateShopPickStatus(char *blob, unsigned len) {
-  // Blob 入口同樣是高頻路徑；只切換額外換行狀態，不在正常資料流記錄內容。
+  // 2026-09-14：暫時診斷 log，確認掛賣時這個 Blob 路徑真的有被呼叫到。
+  // 確認完就拿掉，不要留在正式路徑（這是高頻路徑，正常不應該逐次記錄）。
+  static int s_pickLogs = 0;
+  if (s_pickLogs < 8) {
+    s_pickLogs++;
+    launcherdll_hook_log("[Pss][diag] PrivateShopPickStatus: len=%u blob=%p (n=%d)",
+                         len, blob, s_pickLogs);
+  }
   if (!len) {
     FmtExtraNlSet(0);
     return 0;
@@ -380,15 +456,21 @@ __declspec(naked) void Tramp_PrivateShopTipDraw() {
  * @brief 安裝商店狀態 Hook 函式。
  */
 void InstallPrivateShopStatusHook() {
-  // 目前停用：整組修補曾造成商店列表第一行被截斷。失敗原因與重新啟用前的
-  // 驗證清單集中記錄於 docs/PrivateShopStatus_開發須知.md。
-  return;
-
-  // 各 Hook 目標位址：Blob、Tooltip 寬高、Tooltip 繪製與商品克隆。
+  // 2026-09-14：依 docs/PrivateShopStatus_開發須知.md 的「逐一驗證四條路徑，
+  // 不要一次取消所有防護」原則。Clone 這條已驗證過是「保險機制」，掛收能顯示
+  // 資料其實是靠 WarehouseStatusHook.cpp 的 Hook_AttachStatus fallback，跟
+  // Clone 無關；而掛賣的道具完全沒有觸發任何格式複製（連 Hook_AttachStatus
+  // 都沒進），證實掛賣走的是另一條原生流程。這次額外重新啟用「Blob」這一條
+  // （位址 0x5423DD，機器碼特徵 kShopPushStr——push 常數字串，對應「上架/
+  // 掛賣」情境），驗證是不是掛賣真正需要的路徑。Tooltip 寬高／繪製這兩條
+  // 維持停用，之前「商店列表第一行被截斷」是四條一起開造成的，還沒驗證是
+  // 不是這兩條的問題，先不要一起打開。
   BYTE *pBlob = reinterpret_cast<BYTE *>(0x5423DD);
   BYTE *pWidth = reinterpret_cast<BYTE *>(0x596053);
   BYTE *pDraw = reinterpret_cast<BYTE *>(0x596573);
   BYTE *pClone = reinterpret_cast<BYTE *>(0x595736);
+  (void)pWidth;
+  (void)pDraw;
   // 先比對原生機器碼特徵，版本不符時跳過修補，避免錯位寫入。
   static const BYTE kShopPushStr[5] = {0x68, 0x37, 0x42, 0x8D, 0x00};
   static const BYTE kShopWidth[7] = {0xC7, 0x45, 0xC8, 0x8E, 0x00, 0x00, 0x00};
@@ -396,13 +478,8 @@ void InstallPrivateShopStatusHook() {
                                      0x23, 0x01, 0x00, 0x00};
   static const BYTE kShopClone[12] = {0x8A, 0x91, 0xB0, 0x00, 0x00, 0x00,
                                       0x88, 0x90, 0xB0, 0x00, 0x00, 0x00};
-
-  // 依序嘗試 Blob、克隆、Tooltip 寬度與繪製四條路徑，彼此獨立記錄結果。
-  int blobOk = 0;
-  if (memcmp(pBlob, kShopPushStr, sizeof(kShopPushStr)) == 0) {
-    PatchJmpN(pBlob, reinterpret_cast<void *>(Tramp_PrivateShopStatusPtr), 5);
-    blobOk = 1;
-  }
+  (void)kShopWidth;
+  (void)kShopDraw;
 
   int cloneOk = 0;
   if (memcmp(pClone, kShopClone, sizeof(kShopClone)) == 0) {
@@ -411,21 +488,28 @@ void InstallPrivateShopStatusHook() {
     cloneOk = 1;
   }
 
-  int widthOk = 0;
-  int drawOk = 0;
-  if (memcmp(pWidth, kShopWidth, sizeof(kShopWidth)) == 0) {
-    PatchJmpN(pWidth, reinterpret_cast<void *>(Tramp_PrivateShopTipWidth),
-              sizeof(kShopWidth));
-    widthOk = 1;
-  }
-  if (memcmp(pDraw, kShopDraw, sizeof(kShopDraw)) == 0) {
-    PatchJmpN(pDraw, reinterpret_cast<void *>(Tramp_PrivateShopTipDraw),
-              sizeof(kShopDraw));
-    drawOk = 1;
+  int blobOk = 0;
+  if (memcmp(pBlob, kShopPushStr, sizeof(kShopPushStr)) == 0) {
+    PatchJmpN(pBlob, reinterpret_cast<void *>(Tramp_PrivateShopStatusPtr), 5);
+    blobOk = 1;
   }
 
-  // 只保留安裝結果摘要；正常成功時應為四條路徑全部為 1。
+  // Width／Draw 暫時不裝：
+  // int widthOk = 0, drawOk = 0;
+  // if (memcmp(pWidth, kShopWidth, sizeof(kShopWidth)) == 0) {
+  //   PatchJmpN(pWidth, reinterpret_cast<void *>(Tramp_PrivateShopTipWidth),
+  //             sizeof(kShopWidth));
+  //   widthOk = 1;
+  // }
+  // if (memcmp(pDraw, kShopDraw, sizeof(kShopDraw)) == 0) {
+  //   PatchJmpN(pDraw, reinterpret_cast<void *>(Tramp_PrivateShopTipDraw),
+  //             sizeof(kShopDraw));
+  //   drawOk = 1;
+  // }
+
+  // 只保留安裝結果摘要；這次裝 clone+blob，width/draw 固定顯示為停用中。
   launcherdll_hook_log(
-      "[PrivateShopStatus] hook result blob=%d width=%d draw=%d clone=%d",
-                       blobOk, widthOk, drawOk, cloneOk);
+      "[Pss][Install] PrivateShopStatus hook result clone=%d blob=%d "
+      "(width/draw disabled, see docs/PrivateShopStatus_開發須知.md)",
+      cloneOk, blobOk);
 }
