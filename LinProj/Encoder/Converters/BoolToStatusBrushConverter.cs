@@ -16,14 +16,35 @@ namespace LinEncoder.Converters
         private static readonly SolidColorBrush Gray = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x66, 0x66, 0x66));
         private static readonly SolidColorBrush Orange = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0x85, 0x1B));
 
+        /// <summary>
+        /// 將布林值轉換為狀態對應的 Brush 顏色。
+        /// </summary>
+        /// <param name="value">輸入值（期望為 bool）</param>
+        /// <param name="targetType">目標屬性型別</param>
+        /// <param name="parameter">轉換參數（可傳入 "Warn" 改變 false 顏色）</param>
+        /// <param name="culture">區域語系資訊</param>
+        /// <return>對應狀態之 SolidColorBrush</return>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             bool b = value is bool v && v;
-            if (b) return Green;
+            if (b)
+            {
+                return Green;
+            }
             return string.Equals(parameter as string, "Warn", StringComparison.OrdinalIgnoreCase) ? Orange : Gray;
         }
 
+        /// <summary>
+        /// 反向轉換（未實現）。
+        /// </summary>
+        /// <param name="value">綁定目標值</param>
+        /// <param name="targetType">來源型別</param>
+        /// <param name="parameter">轉換參數</param>
+        /// <param name="culture">區域語系資訊</param>
+        /// <return>拋出 NotImplementedException 異常</return>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
     }
 }
