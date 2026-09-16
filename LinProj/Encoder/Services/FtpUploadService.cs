@@ -6,10 +6,24 @@ using System.Net;
 
 namespace LinEncoder.Services
 {
+    /// <summary>
+    /// FTP 上傳結果類別。
+    /// </summary>
     public class FtpUploadResult
     {
+        /// <summary>
+        /// 是否成功。
+        /// </summary>
         public bool Success { get; set; }
+
+        /// <summary>
+        /// 錯誤訊息 (若失敗)。
+        /// </summary>
         public string? ErrorMessage { get; set; }
+
+        /// <summary>
+        /// 已成功上傳檔案數量。
+        /// </summary>
         public int UploadedCount { get; set; }
     }
 
@@ -19,6 +33,18 @@ namespace LinEncoder.Services
     /// </summary>
     public static class FtpUploadService
     {
+        /// <summary>
+        /// 上傳指定本機目錄內之所有檔案至遠端 FTP 伺服器。
+        /// </summary>
+        /// <param name="localDir">本機來源目錄</param>
+        /// <param name="host">FTP 主機位址</param>
+        /// <param name="port">FTP 通訊埠 (Port)</param>
+        /// <param name="username">帳號</param>
+        /// <param name="password">密碼</param>
+        /// <param name="remoteDir">遠端目標目錄</param>
+        /// <param name="progress">進度報告介面</param>
+        /// <param name="log">日誌寫入委派</param>
+        /// <return>FTP 上傳結果物件</return>
         public static FtpUploadResult UploadDirectory(
             string localDir,
             string host,
@@ -35,9 +61,13 @@ namespace LinEncoder.Services
             }
 
             if (string.IsNullOrWhiteSpace(localDir) || !Directory.Exists(localDir))
+            {
                 return new FtpUploadResult { Success = false, ErrorMessage = "本機來源目錄不存在。" };
+            }
             if (string.IsNullOrWhiteSpace(host))
+            {
                 return new FtpUploadResult { Success = false, ErrorMessage = "請填寫 FTP 主機。" };
+            }
 
             string root = Path.GetFullPath(localDir);
             var skipNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Thumbs.db", ".DS_Store" };
@@ -47,7 +77,9 @@ namespace LinEncoder.Services
                 .ToList();
 
             if (files.Count == 0)
+            {
                 return new FtpUploadResult { Success = false, ErrorMessage = "來源目錄內沒有可上傳的檔案。" };
+            }
 
             string baseRemoteDir = NormalizeRemoteDir(remoteDir);
             var madeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -105,6 +137,11 @@ namespace LinEncoder.Services
             return new FtpUploadResult { Success = true, UploadedCount = files.Count };
         }
 
+        /// <summary>
+        /// 正規化遠端目錄路徑。
+        /// </summary>
+        /// <param name="remoteDir">原始遠端目錄字串</param>
+        /// <return>正規化後路徑</return>
         private static string NormalizeRemoteDir(string? remoteDir) =>
             "/" + (remoteDir ?? "").Trim('/', '\\').Replace('\\', '/');
 
@@ -113,6 +150,14 @@ namespace LinEncoder.Services
         /// 成功過一次才能按，避免像這次一樣填錯遠端目錄（誤填本機磁碟路徑）才在批次
         /// 上傳中途才發現。
         /// </summary>
+        /// <param name="host">FTP 主機位址</param>
+        /// <param name="port">FTP 通訊埠 (Port)</param>
+        /// <param name="username">帳號</param>
+        /// <param name="password">密碼</param>
+        /// <param name="remoteDir">遠端目標目錄</param>
+        /// <param name="log">日誌寫入委派</param>
+        /// <param name="error">輸出錯誤訊息 (若失敗)</param>
+        /// <return>測試成功回傳 true，否則回傳 false</return>
         public static bool TestConnection(
             string host, int port, string username, string password, string remoteDir,
             Action<string>? log, out string? error)
@@ -153,10 +198,18 @@ namespace LinEncoder.Services
             }
         }
 
+        /// <summary>
+        /// 自遠端檔案完整路徑中擷取所在目錄路徑。
+        /// </summary>
+        /// <param name="remotePath">遠端檔案完整路徑</param>
+        /// <return>目錄路徑字串，無目錄時回傳 null</return>
         private static string? GetRemoteDirectory(string remotePath)
         {
             int idx = remotePath.LastIndexOf('/');
-            if (idx <= 0) return null;
+            if (idx <= 0)
+            {
+                return null;
+            }
             return remotePath.Substring(0, idx);
         }
 
@@ -171,6 +224,13 @@ namespace LinEncoder.Services
         /// 如果 LIST 也失敗，才是真正的問題，直接回傳明確錯誤訊息（含 FTP 原始
         /// 回應），不要繼續往下走到上傳階段。
         /// </summary>
+        /// <param name="host">FTP 主機位址</param>
+        /// <param name="port">FTP 通訊埠 (Port)</param>
+        /// <param name="username">帳號</param>
+        /// <param name="password">密碼</param>
+        /// <param name="remoteDir">遠端目標目錄</param>
+        /// <param name="log">日誌寫入委派</param>
+        /// <return>建立失敗回傳錯誤描述，成功則回傳 null</return>
         private static string? EnsureRemoteDirectoryExists(string host, int port, string username, string password, string remoteDir, Action<string>? log = null)
         {
             string[] segments = remoteDir.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -214,10 +274,17 @@ namespace LinEncoder.Services
             return null;
         }
 
+        /// <summary>
+        /// 說明並轉換 WebException 中 FTP 相關的回應訊息。
+        /// </summary>
+        /// <param name="ex">WebException 異常物件</param>
+        /// <return>格式化後的錯誤字串</return>
         private static string DescribeFtpError(WebException ex)
         {
             if (ex.Response is FtpWebResponse ftpResp)
+            {
                 return $"{(int)ftpResp.StatusCode} {ftpResp.StatusDescription?.Trim()}";
+            }
             return ex.Message;
         }
 
@@ -228,6 +295,13 @@ namespace LinEncoder.Services
         /// 邏輯一樣，唯一差異是執行環境（Task.Run + async/await + WPF Dispatcher），
         /// 用逐行 log 才能抓到究竟卡在 GetRequestStream／CopyTo／GetResponse 的哪一步。
         /// </summary>
+        /// <param name="localFile">本機來源檔案路徑</param>
+        /// <param name="host">FTP 主機位址</param>
+        /// <param name="port">FTP 通訊埠 (Port)</param>
+        /// <param name="username">帳號</param>
+        /// <param name="password">密碼</param>
+        /// <param name="remotePath">遠端目標路徑</param>
+        /// <param name="log">日誌寫入委派</param>
         private static void UploadFile(string localFile, string host, int port, string username, string password, string remotePath, Action<string>? log)
         {
             void L(string m) { try { log?.Invoke(m); } catch { } }
@@ -252,6 +326,16 @@ namespace LinEncoder.Services
             L($"  → STOR {remotePath} 伺服器回應：{(int)resp.StatusCode} {resp.StatusDescription?.Trim()}");
         }
 
+        /// <summary>
+        /// 建立與設置 FtpWebRequest 請求物件。
+        /// </summary>
+        /// <param name="host">FTP 主機位址</param>
+        /// <param name="port">FTP 通訊埠 (Port)</param>
+        /// <param name="username">帳號</param>
+        /// <param name="password">密碼</param>
+        /// <param name="remotePath">遠端目標路徑</param>
+        /// <param name="method">FTP 操作方法 (如 UploadFile, ListDirectory 等)</param>
+        /// <return>設置完成之 FtpWebRequest 物件</return>
         private static FtpWebRequest CreateRequest(string host, int port, string username, string password, string remotePath, string method)
         {
             string url = $"ftp://{host}:{port}{remotePath}";

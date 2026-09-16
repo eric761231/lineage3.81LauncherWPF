@@ -7,13 +7,21 @@ using LinEncoder.Models;
 
 namespace LinEncoder.Services
 {
+    /// <summary>
+    /// 登入器組態檔案 (config.dat) 區塊構建寫入服務。
+    /// </summary>
     public static class ConfigDatWriter
     {
+        /// <summary>
+        /// 標頭檔固定長度 (位元組)。
+        /// </summary>
         public const int HeaderSize = 26;
 
         /// <summary>
         /// 建立加密後的 config 區塊。每次呼叫會產生新的隨機 16-byte 金鑰（寫入結構體 Key 欄位）。
         /// </summary>
+        /// <param name="cfg">登入器組態物件</param>
+        /// <return>加密後的位元組陣列</return>
         public static byte[] BuildEncryptedFile(LauncherConfig cfg)
         {
             cfg.Sign = LauncherConfig.LAUNCHER_CONFIG_SIGN;
@@ -21,13 +29,17 @@ namespace LinEncoder.Services
             cfg.Configed = true;
             cfg.Key ??= new byte[16];
             if (cfg.Key.Length != 16)
+            {
                 cfg.Key = new byte[16];
+            }
             RandomNumberGenerator.Fill(cfg.Key);
 
             int size = Marshal.SizeOf(typeof(LauncherConfig));
             int payloadLen = size - HeaderSize;
             if (payloadLen <= 0)
+            {
                 throw new InvalidOperationException($"LauncherConfig 序列化長度 {size} 無效。");
+            }
 
             IntPtr ptr = Marshal.AllocHGlobal(size);
             byte[] data;
