@@ -9,6 +9,9 @@ using LinEncoder.Models;
 
 namespace LinEncoder.Services
 {
+    /// <summary>
+    /// 提供登入器建立、變身檔/邊界檔 PAK 打包，以及更新補丁封包構建之核心服務類別。
+    /// </summary>
     public class EncoderService
     {
         private const int MinBinTotalBytes = 20; // 與 LinLauncher UpdateService 下載端一致
@@ -19,9 +22,16 @@ namespace LinEncoder.Services
         /// (0x12345678FEDCBAFF) 抽出這段區塊寫成 config.dat —— 舊版這裡只單純複製範本檔案，
         /// 完全沒有寫入設定，等於「產生登入器」這個核心功能沒有真的生效。
         /// </summary>
+        /// <param name="config">登入器組態設定</param>
+        /// <param name="templatePath">登入器範本執行檔路徑</param>
+        /// <param name="outputPath">輸出執行檔路徑</param>
+        /// <return>成功建立回傳 true，否則回傳 false</return>
         public bool CreateLauncher(LauncherConfig config, string templatePath, string outputPath)
         {
-            if (!File.Exists(templatePath)) return false;
+            if (!File.Exists(templatePath))
+            {
+                return false;
+            }
             try
             {
                 byte[] template = File.ReadAllBytes(templatePath);
@@ -60,9 +70,16 @@ namespace LinEncoder.Services
         /// 真的有東西可用。用 Latin1（byte↔char 一對一）讀寫，不用 UTF-8——語法本身全 ASCII，
         /// Latin1 能保證非 ASCII byte 原樣往返，不會被 UTF-8 解碼器改動或報錯。
         /// </summary>
+        /// <param name="input">輸入檔案路徑</param>
+        /// <param name="output">輸出 PAK 檔案路徑</param>
+        /// <param name="morphPreprocessEnabled">是否開啟變身檔順跑預處理</param>
+        /// <return>成功打包回傳 true，否則回傳 false</return>
         public bool PackagePak(string input, string output, bool morphPreprocessEnabled = false)
         {
-            if (!File.Exists(input)) return false;
+            if (!File.Exists(input))
+            {
+                return false;
+            }
             try
             {
                 byte[] raw = File.ReadAllBytes(input);
@@ -78,7 +95,9 @@ namespace LinEncoder.Services
                 using (var ms = new MemoryStream())
                 {
                     using (var zs = new ZLibStream(ms, CompressionLevel.Optimal, leaveOpen: true))
+                    {
                         zs.Write(raw, 0, raw.Length);
+                    }
                     compressed = ms.ToArray();
                 }
 
@@ -103,6 +122,12 @@ namespace LinEncoder.Services
         /// 產生與 LinLauncher UpdateService 下載端相容的更新資源：
         /// 寫入「輸出目錄\update.txt」與「輸出目錄\{相對路徑}.bin」（含子目錄時會建立對應資料夾）。
         /// </summary>
+        /// <param name="sourceDir">補丁來源目錄</param>
+        /// <param name="outputDir">輸出目錄</param>
+        /// <param name="baseUrl">下載基底網址</param>
+        /// <param name="compressionLevel">壓縮等級 (1: 最快, 2: 最小尺寸, 其他: 最佳化)</param>
+        /// <param name="progress">進度報告介面</param>
+        /// <return>補丁封包打包結果物件</return>
         public PatchPackageResult BuildUpdatePackage(
             string sourceDir,
             string outputDir,
@@ -111,9 +136,13 @@ namespace LinEncoder.Services
             IProgress<(int current, int total, string relativePath)>? progress)
         {
             if (string.IsNullOrWhiteSpace(sourceDir) || !Directory.Exists(sourceDir))
+            {
                 return new PatchPackageResult { Success = false, ErrorMessage = "請選擇有效的來源目錄。" };
+            }
             if (string.IsNullOrWhiteSpace(outputDir))
+            {
                 return new PatchPackageResult { Success = false, ErrorMessage = "請選擇輸出目錄。" };
+            }
 
             try
             {
@@ -126,7 +155,9 @@ namespace LinEncoder.Services
 
             string baseUrlTrim = (baseUrl ?? "").Trim();
             if (string.IsNullOrEmpty(baseUrlTrim))
+            {
                 return new PatchPackageResult { Success = false, ErrorMessage = "請填寫下載基底網址（對應 update.txt 的 [main] url）。" };
+            }
 
             CompressionLevel zLevel = MapCompressionLevel(compressionLevel);
             byte[] xorKey = Encoding.ASCII.GetBytes(Constants.FileEncryptKey);
@@ -142,7 +173,9 @@ namespace LinEncoder.Services
             }
 
             if (workList.Count == 0)
+            {
                 return new PatchPackageResult { Success = false, ErrorMessage = "來源目錄內沒有可封裝的檔案。" };
+            }
 
             string sourceRoot = Path.GetFullPath(sourceDir);
             var rows = new List<PatchFileRow>();
@@ -203,13 +236,17 @@ namespace LinEncoder.Services
                 // 前 4 bytes 保留；登入器自 offset 4 做 XOR 與 ZLib 解壓
                 Buffer.BlockCopy(compressed, 0, packet, 4, compressed.Length);
                 for (int i = 0; i < 16; i++)
+                {
                     packet[4 + i] ^= xorKey[i % xorKey.Length];
+                }
 
                 string relOs = rel.Replace('/', Path.DirectorySeparatorChar);
                 string outPath = Path.Combine(outputDir, relOs) + ".bin";
                 string? outDir = Path.GetDirectoryName(outPath);
                 if (!string.IsNullOrEmpty(outDir))
+                {
                     Directory.CreateDirectory(outDir);
+                }
 
                 try
                 {
@@ -246,7 +283,9 @@ namespace LinEncoder.Services
                 sb.AppendLine();
                 sb.AppendLine("[update]");
                 foreach (var line in lines)
+                {
                     sb.AppendLine(line);
+                }
                 File.WriteAllText(listPath, sb.ToString(), new UTF8Encoding(false));
             }
             catch (Exception ex)
@@ -267,11 +306,15 @@ namespace LinEncoder.Services
         }
 
         /// <summary>與打包相同的規則列舉來源檔（供預覽清單）。</summary>
+        /// <param name="sourceDir">補丁來源目錄</param>
+        /// <return>補丁檔案預覽列表</return>
         public static List<PatchFileRow> BuildPatchFilePreview(string sourceDir)
         {
             var rows = new List<PatchFileRow>();
             if (string.IsNullOrWhiteSpace(sourceDir) || !Directory.Exists(sourceDir))
+            {
                 return rows;
+            }
 
             List<string> paths;
             try
@@ -304,6 +347,11 @@ namespace LinEncoder.Services
             return rows;
         }
 
+        /// <summary>
+        /// 掃描並取得補丁來源目錄中所有需處理的檔案清單。
+        /// </summary>
+        /// <param name="sourceDir">來源目錄</param>
+        /// <return>合格檔案路徑清單</return>
         private static List<string> GetPatchSourceWorkList(string sourceDir)
         {
             string[] allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
@@ -328,6 +376,8 @@ namespace LinEncoder.Services
         /// 子行程鎖住，登入器端算 MD5 時會直接丟例外，導致清單裡這個檔案之後的所有
         /// 檔案永遠沒機會被檢查到——玩家端會看到「每次更新都跑不完」。
         /// </summary>
+        /// <param name="fullPath">完整檔案路徑</param>
+        /// <return>若屬於執行時無用檔案路徑回傳 true，否則回傳 false</return>
         private static bool IsRuntimeJunkPath(string fullPath)
         {
             string normalized = fullPath.Replace('\\', '/');
@@ -337,6 +387,11 @@ namespace LinEncoder.Services
                 || Path.GetFileName(fullPath).Equals("launcher.log", StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// 轉換整數等級為 .NET CompressionLevel 列舉。
+        /// </summary>
+        /// <param name="level">等級數值</param>
+        /// <return>對應之 CompressionLevel</return>
         private static CompressionLevel MapCompressionLevel(int level) => level switch
         {
             1 => CompressionLevel.Fastest,
@@ -344,6 +399,12 @@ namespace LinEncoder.Services
             _ => CompressionLevel.Optimal
         };
 
+        /// <summary>
+        /// 對原始資料進行 ZLib 壓縮處理。
+        /// </summary>
+        /// <param name="raw">原始位元組資料</param>
+        /// <param name="level">壓縮等級</param>
+        /// <return>壓縮後的位元組陣列</return>
         private static byte[] ZLibCompress(byte[] raw, CompressionLevel level)
         {
             using var ms = new MemoryStream();

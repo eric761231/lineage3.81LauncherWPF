@@ -4,6 +4,9 @@ using System.Security.Cryptography;
 
 namespace LinEncoder.Services
 {
+    /// <summary>
+    /// 提供 AES-ECB 加解密與 XOR 表混淆之加解密服務類別。
+    /// </summary>
     public static class CryptoService
     {
         private static readonly byte[] XorTableBase =
@@ -26,9 +29,17 @@ namespace LinEncoder.Services
             0xE6, 0x3C, 0xB3, 0x5C, 0xE7, 0xFE, 0xD9, 0x6B, 0xE5, 0xB8, 0x67, 0x32, 0xE4, 0x7A, 0x0D, 0x05
         };
 
+        /// <summary>
+        /// 解密組態資料（先進行 AES-ECB 解密，再解混淆 XOR 表）。
+        /// </summary>
+        /// <param name="key">16 位元組金鑰</param>
+        /// <param name="buffer">欲解密之位元組資料緩衝區</param>
         public static void ConfigDecrypt(byte[] key, byte[] buffer)
         {
-            if (key == null || key.Length != 16) throw new ArgumentException("Key must be 16 bytes.");
+            if (key == null || key.Length != 16)
+            {
+                throw new ArgumentException("Key must be 16 bytes.");
+            }
             using (Aes aes = Aes.Create())
             {
                 aes.Key = key;
@@ -38,26 +49,44 @@ namespace LinEncoder.Services
                 {
                     int count = buffer.Length / 16;
                     for (int i = 0; i < count; i++)
+                    {
                         decryptor.TransformBlock(buffer, i * 16, 16, buffer, i * 16);
+                    }
                 }
             }
             byte[] xorTable = new byte[256];
             Array.Copy(XorTableBase, xorTable, 256);
             for (int i = 0; i < 256; i++)
+            {
                 xorTable[i] ^= key[i % 16];
+            }
             for (int i = 0; i < buffer.Length; i++)
+            {
                 buffer[i] ^= xorTable[i % 256];
+            }
         }
 
+        /// <summary>
+        /// 加密組態資料（先進行 XOR 表混淆，再執行 AES-ECB 加密）。
+        /// </summary>
+        /// <param name="key">16 位元組金鑰</param>
+        /// <param name="buffer">欲加密之位元組資料緩衝區</param>
         public static void ConfigEncrypt(byte[] key, byte[] buffer)
         {
-            if (key == null || key.Length != 16) throw new ArgumentException("Key must be 16 bytes.");
+            if (key == null || key.Length != 16)
+            {
+                throw new ArgumentException("Key must be 16 bytes.");
+            }
             byte[] xorTable = new byte[256];
             Array.Copy(XorTableBase, xorTable, 256);
             for (int i = 0; i < 256; i++)
+            {
                 xorTable[i] ^= key[i % 16];
+            }
             for (int i = 0; i < buffer.Length; i++)
+            {
                 buffer[i] ^= xorTable[i % 256];
+            }
             using (Aes aes = Aes.Create())
             {
                 aes.Key = key;
@@ -67,7 +96,9 @@ namespace LinEncoder.Services
                 {
                     int count = buffer.Length / 16;
                     for (int i = 0; i < count; i++)
+                    {
                         encryptor.TransformBlock(buffer, i * 16, 16, buffer, i * 16);
+                    }
                 }
             }
         }
