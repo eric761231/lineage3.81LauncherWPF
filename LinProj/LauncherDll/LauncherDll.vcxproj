@@ -210,7 +210,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="SkillHasteHook.cpp">
+    <ClCompile Include="GroundTrapIconHook.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="WindShackleTimePatch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -266,7 +270,8 @@
     <ClInclude Include="PrivateShopStatus.h" />
     <ClInclude Include="SpellIconHook.h" />
     <ClInclude Include="AllDayPatch.h" />
-    <ClInclude Include="SkillHasteHook.h" />
+    <ClInclude Include="GroundTrapIconHook.h" />
+    <ClInclude Include="WindShackleTimePatch.h" />
     <ClInclude Include="PatchUtil.h" />
     <ClInclude Include="EquipUiPatch.h" />
     <ClInclude Include="Login77Hook.h" />

@@ -18,7 +18,8 @@
 #include "PrivateShopStatus.h"
 #include "SpellIconHook.h"
 #include "AllDayPatch.h"
-#include "SkillHasteHook.h"
+#include "GroundTrapIconHook.h"
+#include "WindShackleTimePatch.h"
 #include "PatchUtil.h"
 #include "EquipUiPatch.h"
 #include "Login77Hook.h"
@@ -521,7 +522,8 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   InstallPrivateShopStatusHook();
   InstallSpellListParseHook();
   InstallAllDayHook();
-  InstallSkillHasteHook();
+  InstallGroundTrapIconHook();
+  InstallWindShackleTimePatch();
   PatchThread(NULL);
 
   return 0;

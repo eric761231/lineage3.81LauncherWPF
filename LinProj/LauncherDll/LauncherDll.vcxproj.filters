@@ -51,7 +51,10 @@
     <ClCompile Include="AllDayPatch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SkillHasteHook.cpp">
+    <ClCompile Include="GroundTrapIconHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WindShackleTimePatch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PatchUtil.cpp">
@@ -136,7 +139,10 @@
     <ClInclude Include="AllDayPatch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SkillHasteHook.h">
+    <ClInclude Include="GroundTrapIconHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WindShackleTimePatch.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PatchUtil.h">

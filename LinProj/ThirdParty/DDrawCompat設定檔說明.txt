@@ -1,0 +1,13 @@
+DDrawCompat.ini
+CompatFixes = nodwmflush
+CrashDump = full
+這兩項都不是可有可無的裝飾設定，而是這個專案之前實際踩過坑、刻意加上去的修正：
+CompatFixes = nodwmflush：修正「螢幕保護程式/鎖定畫面啟動時遊戲直接卡死」的問題——原本 vsync 執行緒卡
+在 waitForVerticalBlank → DwmFlush()，螢幕保護程式啟動時 DWM 不會正常回應，整條執行緒永遠等下去。
+這個設定改成用掃描線輪詢做垂直同步，繞開這個死結點。跟 ScreenSaverGuard 這個獨立小工具是同一類問題的兩道防線（各自從不同角度處理螢幕保護程式相關的卡死）。
+CrashDump = full：一旦真的當機（例如遊戲主程式或 DDrawCompat 內部的死結沒被完全修好），
+自動存一份完整記憶體傾印檔（DDrawCompat-TW13081901.bin.dmp），方便事後用 LinBin3.81 那套工具分析，
+不用即時搶時間用除錯器抓。
+DDrawCompat 本身（DDraw.dll，第三方相容層，
+處理這個舊版遊戲的 DirectDraw 相容性）沒有這個檔案也能跑（會用內建預設值），
+但拿掉這個 ini 就等於同時拿掉「螢幕保護程式卡死修正」跟「當機自動存傾印檔」這兩個實際解決過問題的保護——不建議移除。

@@ -92,17 +92,19 @@ namespace LinLauncher.Services
         }
 
         /// <summary>
-        /// 熱更新機制：Core 目錄下若放了 &lt;dllPath&gt;.new，且比現有 dllPath 新（或
-        /// dllPath 還不存在），就用它取代——方便開發時直接丟新編出來的 DLL 進
-        /// Core，不用每次都手動關遊戲、蓋檔案再重開。登入器啟動時、以及每次按
-        /// 開始遊戲前都會呼叫一次。取代失敗（最常見是遊戲正在跑、舊檔被鎖住）
-        /// 只記 log、不丟例外，呼叫端照舊用現有的 dllPath 繼續。
+        /// 熱更新機制：Core 目錄下若放了 &lt;dllPath&gt;.bin，且比現有 dllPath 新（或
+        /// dllPath 還不存在），就用它取代——副檔名統一用 .bin，跟登入器自己那套
+        /// 從線上更新伺服器下載套用的慣例一致（見 UpdateDownload），避免跟另一套
+        /// 命名搞混。方便開發時直接把新編出來的 DLL 打包丟進 Core，不用每次都
+        /// 手動關遊戲、蓋檔案再重開。按下開始遊戲、真正啟動 TW13081901.bin 之前
+        /// 一定會呼叫一次；登入器啟動時也會呼叫一次。取代失敗（最常見是遊戲正在
+        /// 跑、舊檔被鎖住）只記 log、不丟例外，呼叫端照舊用現有的 dllPath 繼續。
         /// </summary>
         public static void ApplyPendingDllUpdate(string dllPath)
         {
             try
             {
-                string newPath = dllPath + ".new";
+                string newPath = dllPath + ".bin";
                 if (!File.Exists(newPath)) return;
 
                 bool oldMissing = !File.Exists(dllPath);

@@ -1,4 +1,7 @@
 {
     "git.ignoreLimitWarning": true,
-    "dotnet.defaultSolution": "LauncherWPF381.sln"
+    "dotnet.defaultSolution": "LauncherWPF381.sln",
+    "chat.tools.terminal.autoApprove": {
+        "git remote": true
+    }
 }
