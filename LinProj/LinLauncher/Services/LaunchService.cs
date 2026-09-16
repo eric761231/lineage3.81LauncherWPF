@@ -65,6 +65,8 @@ namespace LinLauncher.Services
             bool windowed = true,
             uint windowMode = 5)
         {
+            GamePathHelper.ApplyPendingDllUpdate(dllPath);
+
             if (!File.Exists(gameExePath) || !File.Exists(dllPath)) return false;
 
             NativeMethods.SystemParametersInfo(NativeMethods.SPI_GETSCREENSAVEACTIVE, 0, ref _originalScreenSaverActive, 0);

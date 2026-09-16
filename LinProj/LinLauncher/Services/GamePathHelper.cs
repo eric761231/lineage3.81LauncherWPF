@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using LinLauncher;
 
 namespace LinLauncher.Services
 {
@@ -88,6 +89,38 @@ namespace LinLauncher.Services
 
             fullPath = Path.GetFullPath(inGameRoot);
             return false;
+        }
+
+        /// <summary>
+        /// 熱更新機制：Core 目錄下若放了 &lt;dllPath&gt;.new，且比現有 dllPath 新（或
+        /// dllPath 還不存在），就用它取代——方便開發時直接丟新編出來的 DLL 進
+        /// Core，不用每次都手動關遊戲、蓋檔案再重開。登入器啟動時、以及每次按
+        /// 開始遊戲前都會呼叫一次。取代失敗（最常見是遊戲正在跑、舊檔被鎖住）
+        /// 只記 log、不丟例外，呼叫端照舊用現有的 dllPath 繼續。
+        /// </summary>
+        public static void ApplyPendingDllUpdate(string dllPath)
+        {
+            try
+            {
+                string newPath = dllPath + ".new";
+                if (!File.Exists(newPath)) return;
+
+                bool oldMissing = !File.Exists(dllPath);
+                bool newerThanOld = oldMissing ||
+                    File.GetLastWriteTimeUtc(newPath) > File.GetLastWriteTimeUtc(dllPath);
+                if (!newerThanOld)
+                {
+                    StartupLog.Append($"DLL 熱更新：發現 {newPath} 但不比現有 {dllPath} 新，略過");
+                    return;
+                }
+
+                File.Move(newPath, dllPath, overwrite: true);
+                StartupLog.Append($"DLL 熱更新：用 {newPath} 取代 {dllPath}");
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("DLL 熱更新：取代失敗（可能是 LauncherDll.dll 正在使用中），略過，繼續用現有 DLL", ex);
+            }
         }
 
         public const string LauncherDllFileName = "LauncherDll.dll";

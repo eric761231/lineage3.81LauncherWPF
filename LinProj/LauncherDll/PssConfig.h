@@ -5,13 +5,15 @@
 //   opcode 75  C_PlaySupport     — 治療／補魔 62-byte、點背包解析 8-byte、面板 4-byte(0x56)
 //   opcode 128 C_SecurityStatus  — 原生城堡剛好 5 bytes；其餘看 magic：
 //                                  0x58 名單覆寫、0x59 請回推、0x5A 其他頁 flags、
-//                                  0x5B 名單續段（追加）、0x5C 提煉黑魔石四勾
+//                                  0x5B 名單續段（追加）、0x5C 提煉黑魔石四勾、
+//                                  0x5D BUFF-固定九格 itemId
 // 75 與 128 的 magic 互不相通。SendPacketData 必須在遊戲主執行緒（0x580E50）。
 #pragma once
 
 #include <windows.h>
 
 constexpr int kPssSlotsPerSection = 5;
+constexpr int kPssFixedBuffSlots = 9;
 constexpr int kItemFilterMax = 200;
 constexpr int kItemFilterMinCells = 40;
 constexpr int kItemFilterListDelete = 0;
@@ -48,10 +50,15 @@ struct ItemFilterList {
   ItemFilterEntry items[kItemFilterMax];
 };
 
+struct PssFixedBuff {
+  PssSlot slots[kPssFixedBuffSlots];
+};
+
 struct PssConfig {
   bool enabled = false;
   PssSection heal;
   PssSection mana;
+  PssFixedBuff fixedBuff;
 
   // 其他頁打勾。送 opcode 128 / magic 0x5A / flags（bit0 吃肉、bit1 修武）。
   // eatMeatItemId／whetstoneItemId 只留 cfg 相容舊檔，不再上傳（後端固定白名單自選）。
@@ -64,6 +71,8 @@ struct PssConfig {
   bool darkStone[4] = {false, false, false, false};
 
   bool showDamage = false; // 僅本機 AttackDamageHook，不進任何 C 包
+  bool underwaterPump = false; // 僅本機 UnderwaterPumpHook，不進任何 C 包
+  bool allDay = false; // 僅本機 AllDayPatch，不進任何 C 包
 
   ItemFilterList autoDelete;
   ItemFilterList autoDissolve;
@@ -82,6 +91,9 @@ void PssConfig_SendStatusToServer(const PssConfig &cfg);
 
 // 送提煉黑魔石四勾。opcode 128、magic 0x5C、剛好 4 bytes。
 void PssConfig_SendCraftToServer(const PssConfig &cfg);
+
+// 送 BUFF-固定九格 itemId。opcode 128、magic 0x5D（cccc + 9×d，空槽 0）。
+void PssConfig_SendFixedBuffToServer(const PssConfig &cfg);
 
 bool PssConfig_HasAnySlot(const PssConfig &cfg);
 

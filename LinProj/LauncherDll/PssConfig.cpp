@@ -32,6 +32,7 @@ constexpr BYTE kMagicItemFilterRequest = 0x59; // 僅 128：請 PacketBox 47 回
 constexpr BYTE kMagicMiscFlags = 0x5A;         // 僅 128：其他頁打勾
 constexpr BYTE kMagicItemFilterAppend = 0x5B;  // 僅 128：名單續段（追加，勿清）
 constexpr BYTE kMagicCraftFlags = 0x5C;        // 僅 128：提煉黑魔石四勾
+constexpr BYTE kMagicFixedBuff = 0x5D;         // 僅 128：BUFF-固定九格 itemId
 constexpr int kItemFilterChunk = 20;           // 每包最多 20 個 d；40 個分兩包，避免 164-byte 打亂加密
 
 typedef void(__cdecl *SendPacketDataFn)(const char *format, ...);
@@ -245,9 +246,16 @@ std::string JoinFilterNames(const ItemFilterList &list) {
  * @brief 專用名稱，校正整個 PssConfig 結構之數值範圍，避免與其他標頭的 ClampConfig 衝突。
  * @param cfg 欲校正的設定檔結構參考
  */
+void ClampPssFixedBuff(PssFixedBuff &sec) {
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    ClampPssSlot(sec.slots[i]);
+  }
+}
+
 void ClampPssConfig(PssConfig &cfg) {
   ClampPssSection(cfg.heal);
   ClampPssSection(cfg.mana);
+  ClampPssFixedBuff(cfg.fixedBuff);
   ClampItemFilterList(cfg.autoDelete);
   ClampItemFilterList(cfg.autoDissolve);
   if (cfg.eatMeatItemId < 0) {
@@ -271,6 +279,12 @@ bool PssConfig_HasAnySlot(const PssConfig &cfg) {
       return true;
     }
     if (cfg.mana.slots[i].kind != PssSlot_None && cfg.mana.slots[i].id > 0) {
+      return true;
+    }
+  }
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    if (cfg.fixedBuff.slots[i].kind != PssSlot_None &&
+        cfg.fixedBuff.slots[i].id > 0) {
       return true;
     }
   }
@@ -314,6 +328,10 @@ PssConfig PssConfig_Load() {
       cfg.whetstoneItemId = atoi(value.c_str());
     } else if (key == "client.showDamage") {
       cfg.showDamage = (atoi(value.c_str()) != 0);
+    } else if (key == "client.underwaterPump") {
+      cfg.underwaterPump = (atoi(value.c_str()) != 0);
+    } else if (key == "client.allDay") {
+      cfg.allDay = (atoi(value.c_str()) != 0);
     } else if (key.rfind("craft.darkStone", 0) == 0 && key.size() == 16) {
       int idx = key[15] - '0';
       if (idx >= 0 && idx < 4) {
@@ -359,6 +377,32 @@ PssConfig PssConfig_Load() {
       } else if (field == "count") {
         sec->slots[idx].count = atoi(value.c_str());
       }
+    } else if (key.rfind("buff.slot", 0) == 0) {
+      size_t slotPos = key.find(".slot");
+      if (slotPos == std::string::npos) {
+        continue;
+      }
+      int idx = key[slotPos + 5] - '0';
+      if (idx < 0 || idx >= kPssFixedBuffSlots) {
+        continue;
+      }
+      size_t fieldDot = key.find('.', slotPos + 6);
+      if (fieldDot == std::string::npos) {
+        continue;
+      }
+      std::string field = key.substr(fieldDot + 1);
+      if (field == "kind") {
+        cfg.fixedBuff.slots[idx].kind = atoi(value.c_str());
+      } else if (field == "id") {
+        cfg.fixedBuff.slots[idx].id = atoi(value.c_str());
+      } else if (field == "gfxid") {
+        cfg.fixedBuff.slots[idx].gfxid = atoi(value.c_str());
+      } else if (field == "name") {
+        Utf8ToWide(value, cfg.fixedBuff.slots[idx].name,
+                   _countof(cfg.fixedBuff.slots[idx].name));
+      } else if (field == "count") {
+        cfg.fixedBuff.slots[idx].count = atoi(value.c_str());
+      }
     }
     // 舊版 heal.threshold / mana.threshold、status.eatMeatThreshold 忽略。
   }
@@ -366,8 +410,9 @@ PssConfig PssConfig_Load() {
   ParseItemFilterList(cfg.autoDissolve, dissolveIds, dissolveGfx, dissolveNames);
   ClampPssConfig(cfg);
   ApCfgLog(
-      "[Pss] load: enabled=%d eatMeat=%d whetstone=%d showDamage=%d",
-      (int)cfg.enabled, (int)cfg.eatMeat, (int)cfg.whetstone, (int)cfg.showDamage);
+      "[Pss] load: enabled=%d eatMeat=%d whetstone=%d showDamage=%d pump=%d",
+      (int)cfg.enabled, (int)cfg.eatMeat, (int)cfg.whetstone, (int)cfg.showDamage,
+      (int)cfg.underwaterPump);
   return cfg;
 }
 
@@ -405,12 +450,23 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
          << "\n";
     fout << "mana.slot" << i << ".count=" << cfg.mana.slots[i].count << "\n";
   }
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    fout << "buff.slot" << i << ".kind=" << cfg.fixedBuff.slots[i].kind << "\n";
+    fout << "buff.slot" << i << ".id=" << cfg.fixedBuff.slots[i].id << "\n";
+    fout << "buff.slot" << i << ".gfxid=" << cfg.fixedBuff.slots[i].gfxid << "\n";
+    fout << "buff.slot" << i << ".name="
+         << WideToUtf8(cfg.fixedBuff.slots[i].name) << "\n";
+    fout << "buff.slot" << i << ".count=" << cfg.fixedBuff.slots[i].count
+         << "\n";
+  }
   // status：一律 0/1，跟 enabled= 風格一致。
   fout << "status.eatMeat=" << (cfg.eatMeat ? 1 : 0) << "\n";
   fout << "status.whetstone=" << (cfg.whetstone ? 1 : 0) << "\n";
   fout << "status.eatMeatItemId=" << cfg.eatMeatItemId << "\n";
   fout << "status.whetstoneItemId=" << cfg.whetstoneItemId << "\n";
   fout << "client.showDamage=" << (cfg.showDamage ? 1 : 0) << "\n";
+  fout << "client.underwaterPump=" << (cfg.underwaterPump ? 1 : 0) << "\n";
+  fout << "client.allDay=" << (cfg.allDay ? 1 : 0) << "\n";
   for (int i = 0; i < 4; i++) {
     fout << "craft.darkStone" << i << "=" << (cfg.darkStone[i] ? 1 : 0) << "\n";
   }
@@ -420,9 +476,10 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
   fout << "dissolve_ids=" << JoinFilterIds(cfg.autoDissolve) << "\n";
   fout << "dissolve_gfx=" << JoinFilterGfx(cfg.autoDissolve) << "\n";
   fout << "dissolve_names=" << JoinFilterNames(cfg.autoDissolve) << "\n";
-  ApCfgLog("[Pss] save: wrote %s enabled=%d eat=%d whet=%d dmg=%d",
+  ApCfgLog("[Pss] save: wrote %s enabled=%d eat=%d whet=%d dmg=%d pump=%d",
                        path.c_str(), (int)cfg.enabled, (int)cfg.eatMeat,
-                       (int)cfg.whetstone, (int)cfg.showDamage);
+                       (int)cfg.whetstone, (int)cfg.showDamage,
+                       (int)cfg.underwaterPump);
   return true;
 }
 
@@ -502,6 +559,23 @@ void PssConfig_SendCraftToServer(const PssConfig &cfgIn) {
   SendPacketData("cccc", (int)kOpcodeItemFilter, (int)kMagicCraftFlags, (int)flags,
                  0);
   ApCfgLog("[Pss] send craft flags=0x%02X (128/0x5C 4-byte)", (unsigned)flags);
+}
+
+void PssConfig_SendFixedBuffToServer(const PssConfig &cfgIn) {
+  PssConfig cfg = cfgIn;
+  ClampPssConfig(cfg);
+  int id[kPssFixedBuffSlots] = {};
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    if (cfg.fixedBuff.slots[i].kind == PssSlot_Item &&
+        cfg.fixedBuff.slots[i].id > 0) {
+      id[i] = cfg.fixedBuff.slots[i].id;
+    }
+  }
+  // opcode + 0x5D + pad + n=9 + 9×itemId
+  SendPacketData("ccccddddddddd", (int)kOpcodeItemFilter, (int)kMagicFixedBuff, 0,
+                 kPssFixedBuffSlots, id[0], id[1], id[2], id[3], id[4], id[5],
+                 id[6], id[7], id[8]);
+  ApCfgLog("[Pss] send fixed buff 128/0x5D");
 }
 
 /**

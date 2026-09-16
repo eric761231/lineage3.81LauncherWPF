@@ -160,7 +160,23 @@ namespace LinLauncher.ViewModels
             // 用的 OverallProgress/StatusText 顯示一個「模擬」進度條，實際完成時機
             // 還是以視窗真的出現為準（見 LaunchService.WaitForGameWindowAsync）。
             _launchService.GameProcessStarted += async (s, pid) => await WatchGameStartupProgressAsync(pid);
-            
+
+            // 開登入器時先檢查 Core 目錄有沒有放 LauncherDll.dll.new（熱更新），有且比
+            // 現有的新就換掉——按開始遊戲前也會再檢查一次，這裡提早做一次是讓「登入器
+            // 開著、DLL 還沒被載入」的空檔盡量拿來換檔，減少之後因為遊戲正在跑而換檔
+            // 失敗的機率。換檔失敗（例如檔案正被使用）只記 log，不影響登入器啟動。
+            try
+            {
+                string appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(
+                    Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string candidateDllPath = Path.Combine(appDir, GamePathHelper.LauncherDllFileName);
+                GamePathHelper.ApplyPendingDllUpdate(candidateDllPath);
+            }
+            catch (Exception ex)
+            {
+                StartupLog.Append("MainViewModel: 啟動時檢查 DLL 熱更新失敗", ex);
+            }
+
             try
             {
                 LoadConfigFromResource();

@@ -45,7 +45,61 @@ BAGITEM_INFO *GetItem(int index) {
   return pBagItem;
 }
 
+// 2026-09-15：技能書（spell_book）位址，抄自 RUST 參考專案
+// src\aux\spell_book.rs（同一支 TW13081901.bin，2026-05-01 該專案實機驗證）。
+// entry+0x08 是未驗證的猜測，其餘（book_ptr/count/array/packed/name）是抄
+// 過來已驗證的部分。
+#pragma pack(push, 1)
+struct SPELLBOOK_ENTRY_INFO {
+  int vtable;        // +0x00
+  DWORD packedId;    // +0x04：玩家學會的 packed skill id
+  int unknow2;        // +0x08：未驗證，猜測跟 BAGITEM_INFO 一樣「剛被點擊」瞬間非 0
+  char *name;         // +0x0C：Big5 名稱字串指標
+};
+#pragma pack(pop)
+constexpr DWORD kSpellBookPtr = 0x00C31324;
+constexpr int kSpellBookMaxCount = 1024;
+
 } // namespace
+
+bool InventoryDebug_FindJustClickedSkill(ClickedSkillInfo *out) {
+  if (!out)
+    return false;
+  __try {
+    const DWORD bookPtr = *reinterpret_cast<DWORD *>(kSpellBookPtr);
+    if (!bookPtr)
+      return false;
+    const int count = *reinterpret_cast<int *>(bookPtr + 0x2C);
+    if (count <= 0 || count > kSpellBookMaxCount)
+      return false;
+    const DWORD arrayPtr = *reinterpret_cast<DWORD *>(bookPtr + 0x58);
+    if (!arrayPtr)
+      return false;
+    for (int i = 0; i < count; i++) {
+      const DWORD entryPtr = *reinterpret_cast<DWORD *>(arrayPtr + i * 4);
+      if (!entryPtr)
+        continue;
+      __try {
+        SPELLBOOK_ENTRY_INFO *entry =
+            reinterpret_cast<SPELLBOOK_ENTRY_INFO *>(entryPtr);
+        if (entry->unknow2 == 0)
+          continue;
+        out->packedSkillId = entry->packedId;
+        out->nameBig5[0] = 0;
+        if (entry->name) {
+          strncpy_s(out->nameBig5, sizeof(out->nameBig5), entry->name,
+                    sizeof(out->nameBig5) - 1);
+        }
+        return true;
+      } __except (EXCEPTION_EXECUTE_HANDLER) {
+        continue;
+      }
+    }
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return false;
+  }
+  return false;
+}
 
 bool InventoryDebug_FindJustClickedItem(ClickedItemInfo *out) {
   if (!out)

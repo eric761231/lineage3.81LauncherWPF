@@ -86,6 +86,20 @@ if ($itemIconFiles) {
     Write-Host "Found $($itemIconFiles.Count) item_*.png icon(s) in $SourceFolder, adding to pack list." -ForegroundColor Cyan
 }
 
+# PSS BUFF-固定 9 格預設圖（檔名固定，見 PssOverlay.cpp kFixedBuffPng）
+$fixedBuffPng = @(
+    "01_speed.png",
+    "02_secondspeed.png",
+    "03_thridspeed.png",
+    "04_exp.png",
+    "05_cook.png",
+    "06_cook2.png",
+    "07_blue.png",
+    "08_wisdom.png",
+    "09_eva.png"
+)
+$Files = @($Files) + @($fixedBuffPng)
+
 $ErrorActionPreference = "Stop"
 
 function Get-XorBytes {

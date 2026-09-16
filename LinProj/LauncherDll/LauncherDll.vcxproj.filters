@@ -45,6 +45,15 @@
     <ClCompile Include="PrivateShopStatus.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SpellIconHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AllDayPatch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SkillHasteHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="PatchUtil.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -119,6 +128,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PrivateShopStatus.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SpellIconHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AllDayPatch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SkillHasteHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PatchUtil.h">

@@ -49,7 +49,8 @@ S 包仍走 PacketBox 空號（0～183、Java 沒用過）。已用：16 密米�
 |---|---|---|
 | 修武、吃肉 | 是 | **已搬**：128 magic 0x5A、4-byte flags（bit0 吃肉、bit1 修武），長度 ≠ 5。不再上傳 itemId |
 | 顯示傷害 | 否 | 只寫本機 cfg／`AttackDamageHook` |
-| 全白天、抽水、待設定 | 暫否 | 本機佔位；真要後端再佔 flags bit |
+| 海底抽水 | 否 | 只寫本機 cfg／`UnderwaterPumpHook`（S_MapID 當陸地） |
+| 全白天、待設定 | 暫否 | 本機佔位；真要後端再佔 flags bit |
 
 建議 128 magic（可微調，**數值一旦上線勿改**）：
 

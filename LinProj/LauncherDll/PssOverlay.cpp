@@ -16,6 +16,8 @@
 #include "PssConfig.h"
 #include "OverlayAssets.h"
 #include "AttackDamageHook.h"
+#include "UnderwaterPumpHook.h"
+#include "AllDayPatch.h"
 
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "user32.lib")
@@ -86,11 +88,13 @@ volatile LONG g_pendingUiNotify = -1;
 const wchar_t *kTabNames[Tab_Count] = {L"BUFF", L"道具", L"傳送", L"其他"};
 
 // 2026-09-10：「其他」分頁。「自動修理武器」「自動吃肉」→ cfg／伺服器；
-// 「顯示傷害」→ AttackDamageHook（客戶端）；其餘暫 g_miscToggle 佔位。
+// 「顯示傷害」→ AttackDamageHook；「海底抽水」→ UnderwaterPumpHook；其餘暫佔位。
 constexpr int kMiscToggleCount = 6;
 const wchar_t *kMiscToggleLabels[kMiscToggleCount] = {
     L"全白天", L"自動修理武器", L"海底抽水", L"自動吃肉", L"顯示傷害", L"待設定",
 };
+constexpr int kMiscIdx_AllDay = 0;
+constexpr int kMiscIdx_UnderwaterPump = 2;
 constexpr int kMiscIdx_Whetstone = 1;
 constexpr int kMiscIdx_EatMeat = 3;
 constexpr int kMiscIdx_ShowDamage = 4;
@@ -132,6 +136,15 @@ Gdiplus::Bitmap *GetItemIconBitmap(int gfxid) {
     return nullptr;
   char name[32];
   sprintf_s(name, "item_%d.png", gfxid);
+  return OverlayAssets_GetBitmap(g_assets, name);
+}
+
+Gdiplus::Bitmap *GetUiNamedBitmap(const char *name) {
+  if (!name || !name[0])
+    return nullptr;
+  EnsureAssetsLoaded();
+  if (!g_assets)
+    return nullptr;
   return OverlayAssets_GetBitmap(g_assets, name);
 }
 
@@ -586,6 +599,99 @@ RECT SlotLabelRc(int section, int index) {
   return rc;
 }
 
+constexpr int kFixedBuffCols = 3;
+constexpr int kFixedBuffRows = 3;
+
+void ComputeFixedBuffSlots(const RECT &box, RECT outSlots[kPssFixedBuffSlots]) {
+  RECT titleRc = box;
+  titleRc.bottom = box.top + (int)(4 * g_scaleY) + (int)(18 * g_scaleY);
+  const int gap = (int)(4 * g_scaleX);
+  const int availW = (box.right - box.left) - (int)(12 * g_scaleX);
+  const int availH = box.bottom - titleRc.bottom - (int)(10 * g_scaleY);
+  int slot = (availW - (kFixedBuffCols - 1) * gap) / kFixedBuffCols;
+  int slotH = (availH - (kFixedBuffRows - 1) * gap) / kFixedBuffRows;
+  if (slotH < slot)
+    slot = slotH;
+  if (slot < 20)
+    slot = 20;
+  int gridW = kFixedBuffCols * slot + (kFixedBuffCols - 1) * gap;
+  int gridH = kFixedBuffRows * slot + (kFixedBuffRows - 1) * gap;
+  int ox = (box.left + box.right - gridW) / 2;
+  int oy = titleRc.bottom + (int)(6 * g_scaleY);
+  if (oy + gridH > box.bottom - 4)
+    oy = box.bottom - gridH - 4;
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    int r = i / kFixedBuffCols;
+    int c = i % kFixedBuffCols;
+    outSlots[i].left = ox + c * (slot + gap);
+    outSlots[i].top = oy + r * (slot + gap);
+    outSlots[i].right = outSlots[i].left + slot;
+    outSlots[i].bottom = outSlots[i].top + slot;
+  }
+}
+
+RECT FixedBuffBoxRc() {
+  RECT tl;
+  ContentQuads(&tl, nullptr, nullptr, nullptr);
+  return tl;
+}
+
+RECT FixedBuffSlotRc(int index) {
+  RECT slots[kPssFixedBuffSlots];
+  ComputeFixedBuffSlots(FixedBuffBoxRc(), slots);
+  if (index < 0 || index >= kPssFixedBuffSlots)
+    return slots[0];
+  return slots[index];
+}
+
+RECT FixedBuffCancelRc(const RECT &slotRc) {
+  int d = (int)(12 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
+  if (d < 10)
+    d = 10;
+  RECT rc;
+  rc.right = slotRc.right + (int)(1 * g_scaleX);
+  rc.top = slotRc.top - (int)(1 * g_scaleY);
+  rc.left = rc.right - d;
+  rc.bottom = rc.top + d;
+  return rc;
+}
+
+RECT SlotRectAny(int section, int index) {
+  if (section == 2)
+    return FixedBuffSlotRc(index);
+  return SlotRc(section, index);
+}
+
+bool FixedBuffFilled(const PssSlot &s) {
+  return s.kind == PssSlot_Item && s.id > 0 && s.count > 0;
+}
+
+void DrawFixedBuffCancel(Gdiplus::Graphics &g, const RECT &slotRc) {
+  RECT rc = FixedBuffCancelRc(slotRc);
+  Gdiplus::REAL x = (Gdiplus::REAL)rc.left;
+  Gdiplus::REAL y = (Gdiplus::REAL)rc.top;
+  Gdiplus::REAL d = (Gdiplus::REAL)(rc.right - rc.left);
+  Gdiplus::SolidBrush fill(Gdiplus::Color(230, 200, 36, 36));
+  g.FillEllipse(&fill, x, y, d, d);
+  Gdiplus::Pen rim(Gdiplus::Color(255, 255, 220, 220), 1.0f);
+  g.DrawEllipse(&rim, x, y, d, d);
+  Gdiplus::Pen xx(Gdiplus::Color(255, 255, 255, 255), 1.6f);
+  Gdiplus::REAL pad = d * 0.28f;
+  g.DrawLine(&xx, x + pad, y + pad, x + d - pad, y + d - pad);
+  g.DrawLine(&xx, x + d - pad, y + pad, x + pad, y + d - pad);
+}
+
+void ClearFixedBuffSlotUnlocked(int index) {
+  if (index < 0 || index >= kPssFixedBuffSlots)
+    return;
+  PssSlot &s = g_cfg.fixedBuff.slots[index];
+  s.kind = PssSlot_None;
+  s.id = 0;
+  s.gfxid = 0;
+  s.count = 0;
+  s.name[0] = 0;
+}
+
 // 只取消「打字輸入」狀態，不動「正在等伺服器回覆的道具選擇」——存檔／關閉／
 // ±這幾個按鈕只需要取消打字，不該連帶把還在飛行中的解析請求丟掉（見
 // CancelPick 的說明）。
@@ -617,6 +723,13 @@ void ClearEdit() {
 // 避免 hover tooltip／格子內數量顯示舊道具留下來的名稱/數量，跟格子裡實際的
 // 新內容對不上。呼叫端必須已經持有 g_lock（直接改 g_cfg，不自己上鎖）。
 void ClearSlotCache(int section, int slot) {
+  if (section == 2) {
+    if (slot >= 0 && slot < kPssFixedBuffSlots) {
+      g_cfg.fixedBuff.slots[slot].name[0] = 0;
+      g_cfg.fixedBuff.slots[slot].count = 0;
+    }
+    return;
+  }
   PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
   sec.slots[slot].name[0] = 0;
   sec.slots[slot].count = 0;
@@ -842,8 +955,21 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const PssSlot &slot)
 void DrawHoverTooltip(Gdiplus::Graphics &g, const PssConfig &cfg) {
   if (g_hoverSection < 0 || g_hoverSlot < 0)
     return;
-  const PssSection &sec = (g_hoverSection == 0) ? cfg.heal : cfg.mana;
-  const PssSlot &slot = sec.slots[g_hoverSlot];
+  const PssSlot *slotPtr = nullptr;
+  PssSlot slotCopy;
+  if (g_hoverSection == 2) {
+    if (g_hoverSlot < 0 || g_hoverSlot >= kPssFixedBuffSlots)
+      return;
+    slotCopy = cfg.fixedBuff.slots[g_hoverSlot];
+    slotPtr = &slotCopy;
+  } else {
+    if (g_hoverSlot < 0 || g_hoverSlot >= kPssSlotsPerSection)
+      return;
+    const PssSection &sec = (g_hoverSection == 0) ? cfg.heal : cfg.mana;
+    slotCopy = sec.slots[g_hoverSlot];
+    slotPtr = &slotCopy;
+  }
+  const PssSlot &slot = *slotPtr;
   if (slot.kind == PssSlot_None || slot.id <= 0)
     return;
 
@@ -856,7 +982,7 @@ void DrawHoverTooltip(Gdiplus::Graphics &g, const PssConfig &cfg) {
     swprintf_s(text, L"道具 #%d", slot.id);
   }
 
-  RECT slotRc = SlotRc(g_hoverSection, g_hoverSlot);
+  RECT slotRc = SlotRectAny(g_hoverSection, g_hoverSlot);
   int tipW = (int)(180 * g_scaleX);
   int tipH = (int)(24 * g_scaleY);
   int tipX = slotRc.left;
@@ -879,7 +1005,7 @@ void DrawPickingTooltip(Gdiplus::Graphics &g) {
   if (section < 0 || slot < 0)
     return;
 
-  RECT slotRc = SlotRc(section, slot);
+  RECT slotRc = SlotRectAny(section, slot);
   int tipW = (int)(140 * g_scaleX);
   int tipH = (int)(24 * g_scaleY);
   int tipX = slotRc.left;
@@ -940,7 +1066,101 @@ void DrawSection(Gdiplus::Graphics &g, int section, const PssSection &sec,
     DrawSlot(g, section, i, sec.slots[i]);
 }
 
-/** 尚未接線的宮格（BUFF-固定／自訂）空格佔位。 */
+/** BUFF-固定：3×3＝9 格，圖檔在 ui.pak（檔名見 kFixedBuffPng）。 */
+const char *kFixedBuffPng[kPssFixedBuffSlots] = {
+    "01_speed.png",      "02_secondspeed.png", "03_thridspeed.png",
+    "04_exp.png",        "05_cook.png",        "06_cook2.png",
+    "07_blue.png",       "08_wisdom.png",      "09_eva.png",
+};
+
+void DrawFixedBuffItemIcon(Gdiplus::Graphics &g, const RECT &rc, int gfxid) {
+  Gdiplus::Bitmap *icon = GetItemIconBitmap(gfxid);
+  if (!icon) {
+    DrawItemPlaceholderIcon(g, rc, false);
+    return;
+  }
+  g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+  g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+  const int pad = (int)(4 * g_scaleX);
+  const int maxW = (rc.right - rc.left) - pad * 2;
+  const int maxH = (rc.bottom - rc.top) - pad * 2;
+  constexpr double kIconUpscale = 1.05;
+  int iw = (int)(icon->GetWidth() * g_scaleX * kIconUpscale);
+  int ih = (int)(icon->GetHeight() * g_scaleY * kIconUpscale);
+  if (iw > maxW || ih > maxH) {
+    double s = min((double)maxW / iw, (double)maxH / ih);
+    iw = (int)(iw * s);
+    ih = (int)(ih * s);
+  }
+  int dx = rc.left + ((rc.right - rc.left) - iw) / 2;
+  int dy = rc.top + ((rc.bottom - rc.top) - ih) / 2;
+  g.DrawImage(icon, dx, dy, iw, ih);
+}
+
+void DrawFixedBuffDefaultIcon(Gdiplus::Graphics &g, const RECT &rc, int index) {
+  Gdiplus::Bitmap *icon = GetUiNamedBitmap(kFixedBuffPng[index]);
+  if (!icon)
+    return;
+  g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+  g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+  int pad = (int)(3 * g_scaleX);
+  int maxW = (rc.right - rc.left) - pad * 2;
+  int maxH = (rc.bottom - rc.top) - pad * 2;
+  int iw = (int)(icon->GetWidth() * g_scaleX);
+  int ih = (int)(icon->GetHeight() * g_scaleY);
+  if (iw > maxW || ih > maxH) {
+    double s = min((double)maxW / iw, (double)maxH / ih);
+    iw = (int)(iw * s);
+    ih = (int)(ih * s);
+  }
+  int dx = rc.left + ((rc.right - rc.left) - iw) / 2;
+  int dy = rc.top + ((rc.bottom - rc.top) - ih) / 2;
+  g.DrawImage(icon, dx, dy, iw, ih);
+}
+
+void DrawFixedBuffQuad(Gdiplus::Graphics &g, const RECT &box, const PssConfig &cfg) {
+  DrawRoundRect(g, box, Gdiplus::Color(255, 48, 36, 30),
+                Gdiplus::Color(255, 120, 95, 55), 1.5f);
+  RECT titleRc = box;
+  titleRc.left += (int)(6 * g_scaleX);
+  titleRc.top += (int)(4 * g_scaleY);
+  titleRc.bottom = titleRc.top + (int)(18 * g_scaleY);
+  DrawTextIn(g, titleRc, L"BUFF-固定", Gdiplus::Color(255, 230, 210, 160), 12, true,
+             false);
+
+  RECT slots[kPssFixedBuffSlots];
+  ComputeFixedBuffSlots(box, slots);
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    RECT rc = slots[i];
+    const PssSlot &slot = cfg.fixedBuff.slots[i];
+    const bool picking =
+        (g_pickSection.load() == 2 && g_pickSlot.load() == i);
+    Gdiplus::Color stroke(255, 160, 130, 70);
+    if (picking)
+      stroke = Gdiplus::Color(255, 255, 220, 120);
+    else if (FixedBuffFilled(slot))
+      stroke = Gdiplus::Color(255, 200, 170, 90);
+    DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28), stroke,
+                  picking ? 2.5f : 1.2f);
+    if (FixedBuffFilled(slot)) {
+      DrawFixedBuffItemIcon(g, rc, slot.gfxid);
+      if (slot.count > 0) {
+        wchar_t cnt[16];
+        swprintf_s(cnt, L"%d", slot.count);
+        int cw = (int)(22 * g_scaleX);
+        int ch = (int)(14 * g_scaleY);
+        RECT cntRc = {rc.left, rc.bottom - ch, rc.left + cw, rc.bottom};
+        DrawTextIn(g, cntRc, cnt, Gdiplus::Color(255, 235, 225, 200), 8, false,
+                   true);
+      }
+      DrawFixedBuffCancel(g, rc);
+    } else {
+      DrawFixedBuffDefaultIcon(g, rc, i);
+    }
+  }
+}
+
+/** 尚未接線的宮格（BUFF-自訂）空格佔位。 */
 void DrawPlaceholderQuad(Gdiplus::Graphics &g, const RECT &box, const wchar_t *title,
                          int cols, int rows, bool crossLayout) {
   DrawRoundRect(g, box, Gdiplus::Color(255, 48, 36, 30),
@@ -984,18 +1204,18 @@ void DrawPlaceholderQuad(Gdiplus::Graphics &g, const RECT &box, const wchar_t *t
         rc.top = oy + r * (slot + gap);
         rc.right = rc.left + slot;
         rc.bottom = rc.top + slot;
-        DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28),
-                      Gdiplus::Color(255, 160, 130, 70), 1.2f);
+  DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28),
+                    Gdiplus::Color(255, 160, 130, 70), 1.2f);
       }
     }
   }
 }
 
-/** BUFF 頁：左上／右上佔位、左下恢復、右下變身。 */
+/** BUFF 頁：左上固定 9 格／右上自訂佔位、左下恢復、右下變身。 */
 void DrawBuffPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   RECT tl, tr, br;
   ContentQuads(&tl, &tr, nullptr, &br);
-  DrawPlaceholderQuad(g, tl, L"BUFF-固定", 0, 0, true);
+  DrawFixedBuffQuad(g, tl, cfg);
   DrawPlaceholderQuad(g, tr, L"BUFF-自訂", 3, 3, false);
 
   // 左下：恢復道具——條上顯示伺服器權威 cur/max（g_vitals）
@@ -1174,7 +1394,7 @@ void DrawBackPage(Gdiplus::Graphics &g) {
 }
 
 // 2026-09-10：「其他」分頁。「自動修理武器」「自動吃肉」讀 cfg；
-// 「顯示傷害」讀 AttackDamageHook；其餘 g_miscToggle。
+// 「顯示傷害」讀 AttackDamageHook；「海底抽水」讀 UnderwaterPumpHook；其餘 g_miscToggle。
 void DrawMiscPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   RECT o = ContentOuterRc();
   DrawRoundRect(g, o, Gdiplus::Color(255, 48, 36, 30),
@@ -1194,6 +1414,10 @@ void DrawMiscPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
       checked = cfg.eatMeat;
     } else if (i == kMiscIdx_ShowDamage) {
       checked = AttackDamageHook_IsEnabled();
+    } else if (i == kMiscIdx_UnderwaterPump) {
+      checked = UnderwaterPumpHook_IsEnabled();
+    } else if (i == kMiscIdx_AllDay) {
+      checked = AllDayHook_IsEnabled();
     } else {
       checked = g_miscToggle[i];
     }
@@ -1472,6 +1696,23 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
             g_cfg.showDamage = next;
           }
           QueueSave(); // 只本機 cfg；封包忽略 showDamage
+        } else if (i == kMiscIdx_UnderwaterPump) {
+          bool next = !UnderwaterPumpHook_IsEnabled();
+          UnderwaterPumpHook_SetEnabled(next);
+          {
+            std::lock_guard<std::mutex> lock(g_lock);
+            g_cfg.underwaterPump = next;
+          }
+          QueueSave(); // 只本機 cfg；封包忽略 underwaterPump
+          UnderwaterPumpHook_PumpPending(); // 本執行緒立刻停／開藍
+        } else if (i == kMiscIdx_AllDay) {
+          bool next = !AllDayHook_IsEnabled();
+          AllDayHook_SetEnabled(next);
+          {
+            std::lock_guard<std::mutex> lock(g_lock);
+            g_cfg.allDay = next;
+          }
+          QueueSave(); // 只本機 cfg；封包忽略 allDay
         } else {
           g_miscToggle[i] = !g_miscToggle[i];
         }
@@ -1539,6 +1780,34 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
   // 僅 BUFF 頁的恢復槽可互動
   if (g_activeTab != Tab_Buff)
     return;
+
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    RECT src = FixedBuffSlotRc(i);
+    PssSlot slot;
+    {
+      std::lock_guard<std::mutex> lock(g_lock);
+      slot = g_cfg.fixedBuff.slots[i];
+    }
+    if (FixedBuffFilled(slot) && PtIn(FixedBuffCancelRc(src), x, y)) {
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        ClearFixedBuffSlotUnlocked(i);
+      }
+      ClearEdit();
+      QueueSave();
+      PaintLayered(hwnd);
+      return;
+    }
+  }
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    if (!PtIn(FixedBuffSlotRc(i), x, y))
+      continue;
+    ClearEdit();
+    g_pickSection.store(2);
+    g_pickSlot.store(i);
+    PaintLayered(hwnd);
+    return;
+  }
 
   for (int s = 0; s < 2; s++) {
     for (int i = 0; i < kPssSlotsPerSection; i++) {
@@ -1686,6 +1955,13 @@ void OnLButtonUp(HWND hwnd, int x, int y) {
 void OnMouseMove(HWND hwnd, int x, int y) {
   int newSection = -1, newSlot = -1;
   if (g_activeTab == Tab_Buff) {
+    for (int i = 0; i < kPssFixedBuffSlots && newSection < 0; i++) {
+      if (PtIn(FixedBuffSlotRc(i), x, y)) {
+        newSection = 2;
+        newSlot = i;
+        break;
+      }
+    }
     for (int s = 0; s < 2 && newSection < 0; s++) {
       for (int i = 0; i < kPssSlotsPerSection; i++) {
         if (PtIn(SlotRc(s, i), x, y)) {
@@ -1720,8 +1996,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         g_cfg.heal.slots[i].count = 0;
         g_cfg.mana.slots[i].count = 0;
       }
+      for (int i = 0; i < kPssFixedBuffSlots; i++) {
+        g_cfg.fixedBuff.slots[i].count = 0;
+      }
     }
     AttackDamageHook_SetEnabled(loaded.showDamage);
+    UnderwaterPumpHook_SetEnabled(loaded.underwaterPump);
+    AllDayHook_SetEnabled(loaded.allDay);
     // 2026-09-10：名稱/數量現在跟著設定檔一起讀（PssSlot.name/count），
     // 不用再清空重置——剛開視窗就能看到上次存檔當下的名稱/數量，不用等重新
     // 點選才有東西可顯示。
@@ -1769,22 +2050,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
           bool changed = false;
           {
             std::lock_guard<std::mutex> lock(g_lock);
-            PssSection &sec = (m->section == 0) ? g_cfg.heal : g_cfg.mana;
-            PssSlot &dst = sec.slots[m->slot];
-            // 2026-09-10：選到的道具（含數量）只要跟目前存檔內容有任何差異
-            // 就要存檔——點同一瓶但數量因為玩家中途用掉/撿到而不同，也要更新
-            // 存檔裡的數量快照，不然下次進遊戲顯示的還是舊數字。
-            changed = (dst.kind != PssSlot_Item) ||
-                      (dst.id != m->templateItemId) ||
-                      (dst.gfxid != m->gfxid) ||
-                      (dst.count != m->count) ||
-                      (wcscmp(dst.name, m->name) != 0);
-            if (changed) {
-              dst.kind = PssSlot_Item;
-              dst.id = m->templateItemId;
-              dst.gfxid = m->gfxid;
-              wcscpy_s(dst.name, m->name);
-              dst.count = m->count;
+            PssSlot *dst = nullptr;
+            if (m->section == 2) {
+              if (m->slot >= 0 && m->slot < kPssFixedBuffSlots)
+                dst = &g_cfg.fixedBuff.slots[m->slot];
+            } else if (m->section == 0 || m->section == 1) {
+              PssSection &sec = (m->section == 0) ? g_cfg.heal : g_cfg.mana;
+              if (m->slot >= 0 && m->slot < kPssSlotsPerSection)
+                dst = &sec.slots[m->slot];
+            }
+            if (dst) {
+              changed = (dst->kind != PssSlot_Item) ||
+                        (dst->id != m->templateItemId) ||
+                        (dst->gfxid != m->gfxid) ||
+                        (dst->count != m->count) ||
+                        (wcscmp(dst->name, m->name) != 0);
+              if (changed) {
+                dst->kind = PssSlot_Item;
+                dst->id = m->templateItemId;
+                dst->gfxid = m->gfxid;
+                wcscpy_s(dst->name, m->name);
+                dst->count = m->count;
+              }
             }
           } // 釋放鎖，QueueSave() 內部自己也會上鎖，兩邊不能疊在一起
           if (changed) {
@@ -1810,11 +2097,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   case WM_PSS_SLOT_COUNTS: {
     SlotCountsBatchMsg *m = (SlotCountsBatchMsg *)lp;
     if (m) {
+      bool needSave = false;
       {
         std::lock_guard<std::mutex> lock(g_lock);
         for (int i = 0; i < m->n; i++) {
           int section = m->items[i].section;
           int slot = m->items[i].slot;
+          int count = m->items[i].count;
+          if (section == 2) {
+            if (slot < 0 || slot >= kPssFixedBuffSlots)
+              continue;
+            PssSlot &dst = g_cfg.fixedBuff.slots[slot];
+            if (dst.kind == PssSlot_Item && dst.id > 0) {
+              dst.count = count;
+              ApLog("slot-count section=2 slot=%d count=%d", slot, count);
+              if (count <= 0) {
+                ClearFixedBuffSlotUnlocked(slot);
+                needSave = true;
+              }
+            }
+            continue;
+          }
           if (section < 0 || section > 1 || slot < 0 || slot >= 5)
             continue;
           PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
@@ -1827,6 +2130,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
       }
       delete m;
+      if (needSave)
+        QueueSave();
       if (g_visible.load())
         PaintLayered(hwnd);
     }
@@ -2067,6 +2372,15 @@ bool PssOverlay_HitTestSlot(int screenX, int screenY, int *outSection,
       }
     }
   }
+  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+    if (PtIn(FixedBuffSlotRc(i), pt.x, pt.y)) {
+      if (outSection)
+        *outSection = 2;
+      if (outIndex)
+        *outIndex = i;
+      return true;
+    }
+  }
   return false;
 }
 
@@ -2126,6 +2440,7 @@ static void PumpPendingSaveUnlocked() {
   PssConfig_SendToServer(cfg);
   PssConfig_SendStatusToServer(cfg);
   PssConfig_SendCraftToServer(cfg);
+  PssConfig_SendFixedBuffToServer(cfg);
   PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
   PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
 }
@@ -2145,6 +2460,7 @@ static void PumpPendingUiNotifyUnlocked() {
     PssConfig_SendToServer(cfg);
     PssConfig_SendStatusToServer(cfg);
     PssConfig_SendCraftToServer(cfg);
+    PssConfig_SendFixedBuffToServer(cfg);
     PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
     PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
     PssConfig_RequestItemFilterList(kItemFilterListDelete);
@@ -2286,6 +2602,8 @@ void PssOverlay_OnWorldEnter() {
       g_pendingCfg = cfg;
     }
     AttackDamageHook_SetEnabled(cfg.showDamage);
+    UnderwaterPumpHook_SetEnabled(cfg.underwaterPump);
+    AllDayHook_SetEnabled(cfg.allDay);
   } else {
     std::lock_guard<std::mutex> lock(g_lock);
     cfg = g_cfg;

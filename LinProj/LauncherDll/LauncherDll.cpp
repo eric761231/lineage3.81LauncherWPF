@@ -9,12 +9,16 @@
 #include "VitalsPacketHook.h"
 #include "ShowClockPatch.h"
 #include "AttackDamageHook.h"
+#include "UnderwaterPumpHook.h"
 #include "PssOverlay.h"
 #include "PssConfig.h"
 #include "InventoryDebugHook.h"
 #include "WarehouseStatusHook.h"
 #include "TradeStatusHook.h"
 #include "PrivateShopStatus.h"
+#include "SpellIconHook.h"
+#include "AllDayPatch.h"
+#include "SkillHasteHook.h"
 #include "PatchUtil.h"
 #include "EquipUiPatch.h"
 #include "Login77Hook.h"
@@ -124,6 +128,7 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     MimirPowerHook_PumpPendingChoice();
     PssOverlay_PumpPendingSave();
     PssOverlay_PumpPendingUiNotify();
+    UnderwaterPumpHook_PumpPending();
 
     MSG *pMsg = (MSG *)lParam;
     if (pMsg->message == WM_KEYDOWN &&
@@ -132,6 +137,12 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     }
     // WM_LBUTTONUP：遊戲已處理完這次點擊，才能讀到當格道具。
     if (pMsg->message == WM_LBUTTONUP) {
+      // 2026-09-15：暫時診斷，驗證「點技能欄」能否比照背包點選抓到 skillId
+      // （見 InventoryDebugHook.cpp，已實機驗證成功）。先不受 PssOverlay
+      // picking 狀態限制，玩家點技能欄時就直接嘗試抓一次。
+      ClickedSkillInfo clickedSkill;
+      InventoryDebug_FindJustClickedSkill(&clickedSkill);
+
       int pickSection = -1, pickSlot = -1;
       if (PssOverlay_IsPicking(&pickSection, &pickSlot)) {
         ClickedItemInfo clicked;
@@ -246,6 +257,7 @@ static int my_send(SOCKET s, const char *buf, int len, int flag) {
   MimirPowerHook_PumpPendingChoice();
   PssOverlay_PumpPendingSave();
   PssOverlay_PumpPendingUiNotify();
+  UnderwaterPumpHook_PumpPending();
   return ret;
 }
 
@@ -459,6 +471,7 @@ static DWORD WINAPI PatchThread(void *p) {
     // VitalsPacketHook 進世界會斷線，不安裝。
     InstallShowClockPatch();
     InstallAttackDamageHook();
+    InstallUnderwaterPumpHook();
   } __except (1) {
     launcherdll_hook_log("[Install] PatchThread exception");
   }
@@ -506,6 +519,9 @@ static DWORD WINAPI DelayedDetourThread(void *p) {
   InstallWarehouseStatusHook();
   InstallTradeStatusHook();
   InstallPrivateShopStatusHook();
+  InstallSpellListParseHook();
+  InstallAllDayHook();
+  InstallSkillHasteHook();
   PatchThread(NULL);
 
   return 0;
