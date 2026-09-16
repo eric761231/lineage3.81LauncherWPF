@@ -37,6 +37,30 @@ Write-Host "    - Publishing Launcher..."
 if (Test-Path "$Root\LinProj\LinLauncher\publish") { Remove-Item -Recurse -Force "$Root\LinProj\LinLauncher\publish" }
 dotnet publish "$LauncherProj" -c Release -r win-x86 --no-restore --self-contained true -o "$Root\LinProj\LinLauncher\publish"
 
+# LauncherDll.dll／LineageIme.dll 是 C++ vcxproj，dotnet 管不到，這裡另外用 MSBuild 建置。
+# 透過 vswhere 找目前機器上裝的 Visual Studio 的 MSBuild.exe，避免寫死某個版本路徑
+# （版本升級、換機器都不用改這支腳本）。找不到 MSBuild 就跳過建置（黃字警告），下面
+# 複製那步會退回用「已經建好、還留在 Release\ 底下」的舊版本，不會讓整個部署失敗。
+Write-Host "    - Building native LauncherDll.dll / LineageIme.dll (MSBuild)..."
+$VsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+$MsBuildPath = $null
+if (Test-Path $VsWhere) {
+    $MsBuildPath = & $VsWhere -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+}
+if (-not $MsBuildPath) {
+    Write-Host "    [!] Skipped native DLL build: MSBuild.exe not found via vswhere (build them manually first)" -ForegroundColor Yellow
+} else {
+    $NativeProjects = @(
+        "$Root\LinProj\LauncherDll\LauncherDll.vcxproj",
+        "$Root\LinProj\LineageIme\LineageIme.vcxproj"
+    )
+    foreach ($proj in $NativeProjects) {
+        Write-Host "      - $proj"
+        & $MsBuildPath $proj "/p:Configuration=Release" "/p:Platform=Win32" "/m"
+        if ($LASTEXITCODE -ne 0) { throw "MSBuild failed for $proj with exit code $LASTEXITCODE" }
+    }
+}
+
 Write-Host ">>> [4/5] Syncing files to distribution folder..." -ForegroundColor Cyan
 if (!(Test-Path $EnvDir)) {
     New-Item -ItemType Directory -Path $EnvDir -Force
@@ -49,9 +73,9 @@ if (!(Test-Path $EncoderToolDir)) {
 Copy-Item "$Root\LinProj\Encoder\publish\*" "$EncoderToolDir" -Recurse -Force
 Copy-Item "$Root\LinProj\LinLauncher\publish\*" "$EnvDir" -Recurse -Force
 
-# LauncherDll.dll／LineageIme.dll 是 C++ vcxproj，dotnet publish 管不到，建置維持手動
-# 用 Visual Studio／MSBuild（見 DeployTool/Program.cs 的說明）——這裡只負責把「已經建好」
-# 的 Release 版本複製進 Core\，避免每次部署都要手動記得補這一步、或忘記複製到舊版本。
+# LauncherDll.dll／LineageIme.dll 上面已經用 MSBuild 重新建置過；這裡把建好的
+# Release 版本複製進 Core\。若上面因為找不到 MSBuild 而跳過建置，這裡會退回複製
+# Release\ 底下既有（可能是舊的、手動建置留下）的版本，並印黃字警告。
 $NativeDlls = @(
     @{ Name = 'LauncherDll.dll'; Source = "$Root\LinProj\LauncherDll\Release\LauncherDll.dll" },
     @{ Name = 'LineageIme.dll';  Source = "$Root\LinProj\LineageIme\Release\LineageIme.dll" }
