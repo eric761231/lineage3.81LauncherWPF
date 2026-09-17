@@ -12,8 +12,11 @@
 #include <string.h>
 #include <mutex>
 #include <atomic>
+#include <string>
+#include <map>
 #include "PssOverlay.h"
 #include "PssConfig.h"
+#include "SpellListTable.h"
 #include "OverlayAssets.h"
 #include "AttackDamageHook.h"
 #include "UnderwaterPumpHook.h"
@@ -125,6 +128,7 @@ void EnsureAssetsLoaded() {
   if (g_assets)
     return;
   g_assets = OverlayAssets_Load("ui", "ui");
+  SpellList_EnsureLoaded();
 }
 
 /** 依 gfxid 取 item_<id>.png；沒檔回 null。 */
@@ -166,6 +170,20 @@ int g_hoverDec = -1, g_hoverInc = -1; // 0=heal 1=mana
 // PssOverlay_OnPickCandidate 這整條只服務那個顯示的機制。
 std::atomic<int> g_pickSection{-1};
 std::atomic<int> g_pickSlot{-1};
+
+// 2026-09-17：resolve 失敗（白名單不符／道具已不在背包）之前完全沒有畫面
+// 回饋，玩家反應「選了不知道有沒有成功」。用一個簡單的定時訊息取代——
+// WM_PSS_RESOLVE_REPLY success=false 時設定，Draw 迴圈每次檢查是否還沒過期。
+std::mutex g_resolveFailLock;
+wchar_t g_resolveFailMsg[64] = {};
+ULONGLONG g_resolveFailUntilMs = 0;
+constexpr ULONGLONG kResolveFailDurationMs = 2200;
+
+void ShowResolveFailMsg(const wchar_t *msg) {
+  std::lock_guard<std::mutex> lock(g_resolveFailLock);
+  wcscpy_s(g_resolveFailMsg, msg);
+  g_resolveFailUntilMs = GetTickCount64() + kResolveFailDurationMs;
+}
 
 struct ResolveReplyMsg {
   bool success;
@@ -559,7 +577,7 @@ RECT HealBoxRc() {
   rc.bottom = bl.top + hh;
   return rc;
 }
-/** 左下宮格下半：補魔五格。 */
+/** 左下宮格下半：補魔六格。 */
 RECT ManaBoxRc() {
   RECT bl;
   ContentQuads(nullptr, nullptr, &bl, nullptr);
@@ -569,7 +587,24 @@ RECT ManaBoxRc() {
   return rc;
 }
 
-/** 治療／補魔第 index 格（0~4）。 */
+// 2026-09-17：治療/補魔幾個固定用途格的索引常數。
+constexpr int kHealTeleportSlotIndex = 4;   // 治療第5格：傳送道具或傳送技能（白名單）
+constexpr int kHealSurvivalCrySlotIndex = 5; // 治療第6格：生存的吶喊（完全不能挑）
+constexpr int kManaSkillSlotIndex = 5;       // 補魔第6格：MP恢復技能（只能挑技能）
+// 對齊伺服器 C_PlaySupport.SECTION_MANA_SKILL：補魔第6格 resolve 走這個獨立
+// section 值（跟一般補魔 section=1 分開），只收技能。
+constexpr int kSectionManaSkill = 5;
+// 對齊伺服器 C_PlaySupport.SECTION_FIXED_BUFF_SKILL：BUFF-固定第8格（解毒，
+// index 7）技能 resolve 走這個獨立 section 值（跟一般 BUFF-固定 section=2
+// 分開），只收技能（解毒術/聖潔之光）。kFixedBuffDetoxSlotIndex 定義在
+// PssConfig.h（PssConfig.cpp 送包時也要用同一個常數）。
+constexpr int kSectionFixedBuffSkill = 6;
+constexpr int kSectionHealTeleportSkill = 7;
+// g_editMode 除了既有 0/1(道具編號打字，已停用)、2/3(heal/mana 百分比)，新增
+// 一個給補魔第6格的第二門檻（HP% 安全下限）用。
+constexpr int kEditModeManaHpGuard = 4;
+
+/** 治療／補魔第 index 格（0~5）。 */
 RECT SlotRc(int section /*0 heal 1 mana*/, int index) {
   RECT box = (section == 0) ? HealBoxRc() : ManaBoxRc();
   // 標題列約 20px，再留一點給 HP/MP 示意條，槽列往上靠
@@ -599,10 +634,27 @@ RECT SlotLabelRc(int section, int index) {
   return rc;
 }
 
+/** 補魔第 6 格專屬第二門檻（HP% 安全下限）：畫在第一個百分比徽章正下方。 */
+RECT SlotLabel2Rc(int section, int index) {
+  RECT lab = SlotLabelRc(section, index);
+  RECT rc;
+  rc.left = lab.left;
+  rc.right = lab.right;
+  rc.top = lab.bottom + (int)(1 * g_scaleY);
+  rc.bottom = rc.top + (int)(14 * g_scaleY);
+  return rc;
+}
+
 constexpr int kFixedBuffCols = 3;
 constexpr int kFixedBuffRows = 3;
+constexpr int kMorphSlotCount = 3;
+constexpr int kMorphThirdIndex = 2;
+// 2026-09-17：慎重藥水格（原本跟「設定變身」第三格互換畫面位置的 index 7）
+// 改成獨立的 index 9，畫面位置固定就是「設定變身」面板右下角那個小格，不再
+// 跟解毒格（index 7，現在正常畫在 3x3 網格）共用/互換。
+constexpr int kFixedBuffWisdomSlotIndex = 9;
 
-void ComputeFixedBuffSlots(const RECT &box, RECT outSlots[kPssFixedBuffSlots]) {
+void ComputeFixedBuffGrid(const RECT &box, RECT outSlots[]) {
   RECT titleRc = box;
   titleRc.bottom = box.top + (int)(4 * g_scaleY) + (int)(18 * g_scaleY);
   const int gap = (int)(4 * g_scaleX);
@@ -620,7 +672,9 @@ void ComputeFixedBuffSlots(const RECT &box, RECT outSlots[kPssFixedBuffSlots]) {
   int oy = titleRc.bottom + (int)(6 * g_scaleY);
   if (oy + gridH > box.bottom - 4)
     oy = box.bottom - gridH - 4;
-  for (int i = 0; i < kPssFixedBuffSlots; i++) {
+  // 只填純 3x3＝9 格（BUFF-固定 0~8、BUFF-自訂共用這份排版也是 9 格）；
+  // 慎重藥水（index 9）不算在這個網格內，見 ComputeFixedBuffSlots。
+  for (int i = 0; i < kFixedBuffCols * kFixedBuffRows; i++) {
     int r = i / kFixedBuffCols;
     int c = i % kFixedBuffCols;
     outSlots[i].left = ox + c * (slot + gap);
@@ -628,6 +682,47 @@ void ComputeFixedBuffSlots(const RECT &box, RECT outSlots[kPssFixedBuffSlots]) {
     outSlots[i].right = outSlots[i].left + slot;
     outSlots[i].bottom = outSlots[i].top + slot;
   }
+}
+
+void ComputeMorphSlotGrid(const RECT &box, RECT outSlots[kMorphSlotCount]) {
+  RECT morphTitle = box;
+  morphTitle.left += (int)(6 * g_scaleX);
+  morphTitle.top += (int)(4 * g_scaleY);
+  morphTitle.bottom = morphTitle.top + (int)(18 * g_scaleY);
+  RECT preview = box;
+  preview.left += (int)(10 * g_scaleX);
+  preview.top = morphTitle.bottom + (int)(6 * g_scaleY);
+  preview.right = box.left + (box.right - box.left) * 2 / 3;
+  preview.bottom = box.bottom - (int)(10 * g_scaleY);
+  const int slot = (int)(36 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
+  const int gap = (int)(8 * g_scaleY);
+  int sx = preview.right + (int)(8 * g_scaleX);
+  int sy = preview.top;
+  for (int i = 0; i < kMorphSlotCount; i++) {
+    outSlots[i].left = sx;
+    outSlots[i].top = sy + i * (slot + gap);
+    outSlots[i].right = sx + slot;
+    outSlots[i].bottom = outSlots[i].top + slot;
+  }
+}
+
+/**
+ * BUFF-固定：0~8 是 3x3 網格自己的位置；9（慎重藥水）直接借用「設定變身」
+ * 面板第三格的畫面位置（不是互換，是這個新格子本來就沒有自己的網格位置，
+ * 借用那塊本來的空框），跟 index 7（解毒）完全無關、互不影響。
+ */
+void ComputeFixedBuffSlots(const RECT &box, RECT outSlots[kPssFixedBuffSlots]) {
+  ComputeFixedBuffGrid(box, outSlots);
+  RECT br = {};
+  ContentQuads(nullptr, nullptr, nullptr, &br);
+  RECT morph[kMorphSlotCount];
+  ComputeMorphSlotGrid(br, morph);
+  outSlots[kFixedBuffWisdomSlotIndex] = morph[kMorphThirdIndex];
+}
+
+/** 「設定變身」面板本身的排版；第三格畫面位置被慎重藥水借走，畫框交給 DrawFixedBuffQuad。 */
+void ComputeMorphSlots(const RECT &box, RECT outSlots[kMorphSlotCount]) {
+  ComputeMorphSlotGrid(box, outSlots);
 }
 
 RECT FixedBuffBoxRc() {
@@ -656,14 +751,22 @@ RECT FixedBuffCancelRc(const RECT &slotRc) {
   return rc;
 }
 
+RECT CustomBuffSlotRc(int index); // 定義在下方（依 kPssCustomBuffSlots 分格）
+
 RECT SlotRectAny(int section, int index) {
   if (section == 2)
     return FixedBuffSlotRc(index);
+  if (section == 3 || section == 4)
+    return CustomBuffSlotRc(index);
   return SlotRc(section, index);
 }
 
 bool FixedBuffFilled(const PssSlot &s) {
-  return s.kind == PssSlot_Item && s.id > 0 && s.count > 0;
+  // 第 7 格（解毒）可能是技能：resolve 回包會把 count 設成 1（見
+  // WM_PSS_RESOLVE_REPLY 的 newKind==PssSlot_Skill 分支），跟道具格一樣要求
+  // count>0，只是不再限定 kind==Item。
+  return (s.kind == PssSlot_Item || s.kind == PssSlot_Skill) && s.id > 0 &&
+         s.count > 0;
 }
 
 void DrawFixedBuffCancel(Gdiplus::Graphics &g, const RECT &slotRc) {
@@ -685,6 +788,45 @@ void ClearFixedBuffSlotUnlocked(int index) {
   if (index < 0 || index >= kPssFixedBuffSlots)
     return;
   PssSlot &s = g_cfg.fixedBuff.slots[index];
+  s.kind = PssSlot_None;
+  s.id = 0;
+  s.gfxid = 0;
+  s.count = 0;
+  s.name[0] = 0;
+}
+
+RECT CustomBuffBoxRc() {
+  RECT tr;
+  ContentQuads(nullptr, &tr, nullptr, nullptr);
+  return tr;
+}
+
+// 跟固定格共用同一套純 3x3 排版（沒有固定格那個智慧藥水/變身互換的花招）。
+void ComputeCustomBuffSlots(const RECT &box, RECT outSlots[kPssCustomBuffSlots]) {
+  ComputeFixedBuffGrid(box, outSlots);
+}
+
+RECT CustomBuffSlotRc(int index) {
+  RECT slots[kPssCustomBuffSlots];
+  ComputeCustomBuffSlots(CustomBuffBoxRc(), slots);
+  if (index < 0 || index >= kPssCustomBuffSlots)
+    return slots[0];
+  return slots[index];
+}
+
+// 道具格：id+count>0 才算填了；技能格沒有數量概念，id>0 就算。
+bool CustomBuffFilled(const PssSlot &s) {
+  if (s.kind == PssSlot_Item)
+    return s.id > 0 && s.count > 0;
+  if (s.kind == PssSlot_Skill)
+    return s.id > 0;
+  return false;
+}
+
+void ClearCustomBuffSlotUnlocked(int index) {
+  if (index < 0 || index >= kPssCustomBuffSlots)
+    return;
+  PssSlot &s = g_cfg.customBuff.slots[index];
   s.kind = PssSlot_None;
   s.id = 0;
   s.gfxid = 0;
@@ -733,6 +875,23 @@ void ClearSlotCache(int section, int slot) {
   PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
   sec.slots[slot].name[0] = 0;
   sec.slots[slot].count = 0;
+}
+
+/** 治療／補魔整格清空（跟 BUFF-固定/自訂一樣，收到 count<=0 推播時用）。 */
+void ClearSectionSlotUnlocked(int section, int slot) {
+  if (section != 0 && section != 1) {
+    return;
+  }
+  if (slot < 0 || slot >= kPssSlotsPerSection) {
+    return;
+  }
+  PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
+  PssSlot &s = sec.slots[slot];
+  s.kind = PssSlot_None;
+  s.id = 0;
+  s.gfxid = 0;
+  s.count = 0;
+  s.name[0] = 0;
 }
 
 /** 排到遊戲主執行緒：寫 cfg、送 75 喝水＋128 flags／名單。 */
@@ -853,34 +1012,194 @@ void DrawItemPlaceholderIcon(Gdiplus::Graphics &g, const RECT &rc, bool isSkill)
 }
 
 /** 單一藥水格：圖示／佔位、選取框、下方 %。 */
+// 治療格空著時的預設底圖。index 0~3＝一般自由選格，統一用 healHp.png；
+// index 4＝傳送道具或傳送技能（白名單）；index 5＝生存的吶喊（固定功能，不能挑）。
+// 這個陣列是「編譯進 DLL 的保底值」；實際顯示的檔名優先看 ui.pak 裡的
+// PssIcons.xml（見 ResolvePssIconPng），這樣之後只改圖示對應關係（哪一格用
+// 哪張圖）就不用重編譯 DLL，只要改 XML＋重打包 ui.pak。
+const char *kHealSlotPng[kPssSlotsPerSection] = {
+    "healHp.png", "healHp.png", "healHp.png", "healHp.png", "back_home.png",
+    "heal_survival.png"};
+
+// 補魔格空著時的預設底圖。index 0~3＝一般自由選格，統一用 healMp.png；
+// index 4 維持空白（沒有專屬用途）；index 5＝MP恢復技能（白名單，仍可挑）。
+const char *kManaSlotPng[kPssSlotsPerSection] = {
+    "healMp.png", "healMp.png", "healMp.png", "healMp.png", "", "soultomp.png"};
+
+// 2026-09-17：PssIcons.xml 覆寫表（可選，沒這個檔就完全用內建保底值，不是
+// 錯誤）。格式：<Slot category="FixedBuff" index="N" png="xxx.png"/>，一行
+// 一個；category 目前有 "FixedBuff"、"Heal"，之後新分類（例如 BUFF-自訂空格
+// 底圖）直接加新的 category 值即可，不用改這裡的解析邏輯——只有全新分類第一次
+// 接上時，才需要在對應的畫格函式多加一行 ResolvePssIconPng 呼叫。
+namespace {
+bool g_pssIconOverridesLoaded = false;
+std::map<std::string, std::string> g_pssIconOverride; // key: "<category>:<index>"
+
+bool ExtractPssIconAttr(const char *line, const char *key, char *out, size_t outSize) {
+  char pat[32];
+  sprintf_s(pat, "%s=\"", key);
+  const char *p = strstr(line, pat);
+  if (!p) {
+    return false;
+  }
+  p += strlen(pat);
+  size_t i = 0;
+  while (*p && *p != '"' && i < outSize - 1) {
+    out[i++] = *p++;
+  }
+  out[i] = 0;
+  return i > 0;
+}
+
+void EnsurePssIconOverridesLoaded() {
+  if (g_pssIconOverridesLoaded) {
+    return;
+  }
+  g_pssIconOverridesLoaded = true;
+  EnsureAssetsLoaded();
+  if (!g_assets) {
+    return;
+  }
+  const BYTE *data = nullptr;
+  size_t len = 0;
+  if (!OverlayAssets_GetRawBytes(g_assets, "PssIcons.xml", &data, &len) || !data || len == 0) {
+    return; // 沒這個檔＝全部沿用寫死的保底值，不是錯誤
+  }
+  size_t pos = 0;
+  while (pos < len) {
+    size_t lineEnd = pos;
+    while (lineEnd < len && data[lineEnd] != '\n') {
+      lineEnd++;
+    }
+    size_t lineLen = lineEnd - pos;
+    if (lineLen > 255) {
+      lineLen = 255;
+    }
+    char line[256] = {0};
+    memcpy(line, data + pos, lineLen);
+    pos = lineEnd + 1;
+
+    if (!strstr(line, "<Slot")) {
+      continue;
+    }
+    char categoryBuf[32] = {0}, idxBuf[8] = {0}, pngBuf[64] = {0};
+    if (ExtractPssIconAttr(line, "category", categoryBuf, sizeof(categoryBuf)) &&
+        ExtractPssIconAttr(line, "index", idxBuf, sizeof(idxBuf)) &&
+        ExtractPssIconAttr(line, "png", pngBuf, sizeof(pngBuf))) {
+      char key[40];
+      sprintf_s(key, "%s:%s", categoryBuf, idxBuf);
+      g_pssIconOverride[key] = pngBuf;
+    }
+  }
+}
+} // namespace
+
+// category："FixedBuff"、"Heal"，之後新分類直接傳新字串即可。builtinDefault
+// 是 XML 沒這格時的保底檔名（通常傳對應的 kXxxPng[index]）。
+const char *ResolvePssIconPng(const char *category, int index, const char *builtinDefault) {
+  EnsurePssIconOverridesLoaded();
+  char key[40];
+  sprintf_s(key, "%s:%d", category, index);
+  auto it = g_pssIconOverride.find(key);
+  if (it != g_pssIconOverride.end() && !it->second.empty()) {
+    return it->second.c_str();
+  }
+  return builtinDefault;
+}
+
+void DrawHealSlotDefaultIcon(Gdiplus::Graphics &g, const RECT &rc, int index) {
+  if (index < 0 || index >= kPssSlotsPerSection) {
+    return;
+  }
+  const char *png = ResolvePssIconPng("Heal", index, kHealSlotPng[index]);
+  if (!png || !png[0]) {
+    return;
+  }
+  Gdiplus::Bitmap *icon = GetUiNamedBitmap(png);
+  if (!icon) {
+    return;
+  }
+  g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+  g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+  int pad = (int)(3 * g_scaleX);
+  int maxW = (rc.right - rc.left) - pad * 2;
+  int maxH = (rc.bottom - rc.top) - pad * 2;
+  int iw = (int)(icon->GetWidth() * g_scaleX);
+  int ih = (int)(icon->GetHeight() * g_scaleY);
+  if (iw > maxW || ih > maxH) {
+    double s = min((double)maxW / iw, (double)maxH / ih);
+    iw = (int)(iw * s);
+    ih = (int)(ih * s);
+  }
+  int dx = rc.left + ((rc.right - rc.left) - iw) / 2;
+  int dy = rc.top + ((rc.bottom - rc.top) - ih) / 2;
+  g.DrawImage(icon, dx, dy, iw, ih);
+}
+
+void DrawManaSlotDefaultIcon(Gdiplus::Graphics &g, const RECT &rc, int index) {
+  if (index < 0 || index >= kPssSlotsPerSection) {
+    return;
+  }
+  const char *png = ResolvePssIconPng("Mana", index, kManaSlotPng[index]);
+  if (!png || !png[0]) {
+    return;
+  }
+  Gdiplus::Bitmap *icon = GetUiNamedBitmap(png);
+  if (!icon) {
+    return;
+  }
+  g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+  g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+  int pad = (int)(3 * g_scaleX);
+  int maxW = (rc.right - rc.left) - pad * 2;
+  int maxH = (rc.bottom - rc.top) - pad * 2;
+  int iw = (int)(icon->GetWidth() * g_scaleX);
+  int ih = (int)(icon->GetHeight() * g_scaleY);
+  if (iw > maxW || ih > maxH) {
+    double s = min((double)maxW / iw, (double)maxH / ih);
+    iw = (int)(iw * s);
+    ih = (int)(ih * s);
+  }
+  int dx = rc.left + ((rc.right - rc.left) - iw) / 2;
+  int dy = rc.top + ((rc.bottom - rc.top) - ih) / 2;
+  g.DrawImage(icon, dx, dy, iw, ih);
+}
+
 void DrawSlot(Gdiplus::Graphics &g, int section, int index, const PssSlot &slot) {
   RECT rc = SlotRc(section, index);
-  // g_editMode: 0/1=heal/mana 道具編號輸入，2/3=heal/mana 百分比輸入（畫在
-  // SlotLabelRc 那一行，見下面），都用同一個 g_editSlot 記是哪一槽。
-  const bool editing =
-      (g_editMode == section && g_editSlot == index);
+  // g_editMode: 2/3=heal/mana 百分比輸入（畫在 SlotLabelRc 那一行，見下面），
+  // 4=補魔第6格第二門檻（畫在 SlotLabel2Rc）。2026-09-17：拿掉舊的 0/1（道具
+  // 編號打字模式），點格子只做「開始選道具/技能」一件事，不會再進打字模式。
   const bool editingPct =
-      (g_editMode == section + 2 && g_editSlot == index);
+      (g_editMode == section + 2 && g_editSlot == index) ||
+      (section == 1 && index == kManaSkillSlotIndex &&
+       g_editMode == kEditModeManaHpGuard && g_editSlot == index);
   const bool picking =
       (g_pickSection.load() == section && g_pickSlot.load() == index);
   Gdiplus::Color fill(255, 40, 32, 28);
   Gdiplus::Color stroke(255, 160, 130, 70);
-  if (editing || picking)
+  if (editingPct || picking)
     stroke = Gdiplus::Color(255, 255, 220, 120);
   else if (slot.kind != PssSlot_None)
     stroke = Gdiplus::Color(255, 200, 170, 90);
-  DrawRoundRect(g, rc, fill, stroke, (editing || picking) ? 2.5f : 1.5f);
+  DrawRoundRect(g, rc, fill, stroke, (editingPct || picking) ? 2.5f : 1.5f);
 
-  if (editing) {
-    wchar_t line[64] = {};
-    FormatEditCaret(line, _countof(line), g_editBuf);
-    DrawTextIn(g, rc, line, Gdiplus::Color(255, 240, 230, 200), 12, false, true);
-  } else if (slot.kind != PssSlot_None && slot.id > 0) {
+  if (slot.kind != PssSlot_None && slot.id > 0) {
     // 2026-09-09：優先畫真的道具圖示（item_<gfxid>.png，來自 Sprite.pak 離線
     // 轉出來的靜態圖，見交接文件第 6 節），找不到（法術槽 gfxid 目前一定是 0、
-    // 或這個道具還沒轉圖）才退回瓶子造型佔位圖。
+    // 或這個道具還沒轉圖）才退回瓶子造型佔位圖。技能格（kind==Skill，目前只有
+    // 補魔第6格會用到）改用 SpellListTable 那套 skill_<icon>.png 查詢，不能用
+    // 道具那條路徑——item_<gfxid>.png 對技能來說永遠查不到。
     // OverlayAssets 對 item_* 會把 tbt 匯出常見的紅底色鍵轉成透明。
-    Gdiplus::Bitmap *icon = GetItemIconBitmap(slot.gfxid);
+    Gdiplus::Bitmap *icon = nullptr;
+    if (slot.kind == PssSlot_Skill) {
+      // slot.id 是伺服器 skill_id；XML／pak 圖以 packed = skill_id − 1 索引
+      // （跟 DrawCustomBuffSlotIcon 同一套換算）。
+      const int packed = slot.id > 0 ? slot.id - 1 : 0;
+      icon = SpellList_GetIconBitmap(packed);
+    } else {
+      icon = GetItemIconBitmap(slot.gfxid);
+    }
     if (icon) {
       // 2026-09-09：道具圖是從 Sprite.pak 轉出來的原生尺寸（多半 24~31px），
       // 遠比格子(48 設計px)小；先前整張拉滿格子畫，導致圖示看起來被放大
@@ -910,7 +1229,8 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const PssSlot &slot)
 
     // 數量：開面板／用盡由伺服器推送寫入 slot.count；平常不即時刷新
     int count = slot.count;
-    // 用盡（count==0）：半透明灰遮罩；有數量才畫右上角數字
+    // 用盡（count==0）：半透明灰遮罩；有數量才畫左下角數字（右上角留給取消鈕，
+    // 跟 BUFF-固定/自訂同一套版面，避免疊在一起）。
     if (count <= 0) {
       Gdiplus::SolidBrush mask(Gdiplus::Color(140, 40, 40, 40));
       g.FillRectangle(&mask, rc.left + 1, rc.top + 1, (rc.right - rc.left) - 2,
@@ -920,24 +1240,30 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const PssSlot &slot)
       swprintf_s(cnt, L"%d", count);
       int cw = (int)(22 * g_scaleX);
       int ch = (int)(14 * g_scaleY);
-      RECT cntRc = {rc.right - cw, rc.top, rc.right, rc.top + ch};
+      RECT cntRc = {rc.left, rc.bottom - ch, rc.left + cw, rc.bottom};
       DrawTextIn(g, cntRc, cnt, Gdiplus::Color(255, 235, 225, 200), 8, false, true);
     }
+    DrawFixedBuffCancel(g, rc);
+  } else if (section == 0) {
+    // 空格：只有特定治療格（第5格＝傳送道具、第6格＝生存的吶喊）有專屬底圖，
+    // 其餘維持空白。
+    DrawHealSlotDefaultIcon(g, rc, index);
+  } else if (section == 1) {
+    // 空格：只有補魔第6格（MP恢復技能）有專屬底圖，其餘維持空白。
+    DrawManaSlotDefaultIcon(g, rc, index);
   }
 
-  // 2026-09-10：格子正下方同一行，依狀態顯示「輸入中」/百分比門檻徽章——
-  // 百分比輸入框跟著移到這裡（原本在數量文字下方另一行，現在數量搬進格子
-  // 內，這行往上移到緊貼格子下緣）。「請點背包道具」改成浮動 tooltip（見
+  // 2026-09-10：格子正下方同一行顯示百分比門檻徽章——百分比輸入框跟著移到
+  // 這裡（原本在數量文字下方另一行，現在數量搬進格子內，這行往上移到緊貼
+  // 格子下緣）。「請選背包道具或技能」改成浮動 tooltip（見
   // DrawPickingTooltip），不佔用這行的空間——選擇中的格子邊框本身已經會
   // 高亮（見上面 stroke），這裡繼續正常顯示百分比徽章即可。
   RECT lab = SlotLabelRc(section, index);
-  if (editing) {
-    DrawTextIn(g, lab, L"輸入中", Gdiplus::Color(255, 255, 220, 120), 10, false, true);
-  } else {
-    DrawRoundRect(g, lab, Gdiplus::Color(255, 30, 24, 20),
-                 editingPct ? Gdiplus::Color(255, 255, 220, 120)
-                            : Gdiplus::Color(255, 130, 105, 60),
-                 editingPct ? 2.0f : 1.0f);
+  DrawRoundRect(g, lab, Gdiplus::Color(255, 30, 24, 20),
+               editingPct ? Gdiplus::Color(255, 255, 220, 120)
+                          : Gdiplus::Color(255, 130, 105, 60),
+               editingPct ? 2.0f : 1.0f);
+  {
     wchar_t pctBuf[16] = {};
     if (editingPct) {
       FormatEditCaret(pctBuf, _countof(pctBuf), g_editBuf);
@@ -949,18 +1275,63 @@ void DrawSlot(Gdiplus::Graphics &g, int section, int index, const PssSlot &slot)
                          : Gdiplus::Color(255, 190, 170, 130),
               9, false, true);
   }
+
+  // 補魔第6格（MP恢復技能）專屬第二門檻（HP% 安全下限），畫在第一個徽章下方。
+  if (section == 1 && index == kManaSkillSlotIndex) {
+    const bool editingGuard =
+        (g_editMode == kEditModeManaHpGuard && g_editSlot == index);
+    RECT lab2 = SlotLabel2Rc(section, index);
+    DrawRoundRect(g, lab2, Gdiplus::Color(255, 30, 24, 20),
+                 editingGuard ? Gdiplus::Color(255, 255, 220, 120)
+                              : Gdiplus::Color(255, 105, 130, 190),
+                 editingGuard ? 2.0f : 1.0f);
+    wchar_t pctBuf2[24] = {};
+    if (editingGuard) {
+      wchar_t caret[16] = {};
+      FormatEditCaret(caret, _countof(caret), g_editBuf);
+      swprintf_s(pctBuf2, L"HP≥%s", caret);
+    } else {
+      swprintf_s(pctBuf2, L"HP≥%d%%", slot.thresholdPercent2);
+    }
+    DrawTextIn(g, lab2, pctBuf2,
+              editingGuard ? Gdiplus::Color(255, 255, 240, 200)
+                           : Gdiplus::Color(255, 170, 190, 235),
+              9, false, true);
+  }
 }
 
 /** 滑鼠停在已填格子上時顯示名稱。 */
 void DrawHoverTooltip(Gdiplus::Graphics &g, const PssConfig &cfg) {
   if (g_hoverSection < 0 || g_hoverSlot < 0)
     return;
+  // 治療第6格（生存的吶喊）：固定功能格，kind/id 永遠是 None/0，不看 slot
+  // 資料，一律顯示固定文字。
+  if (g_hoverSection == 0 && g_hoverSlot == kHealSurvivalCrySlotIndex) {
+    RECT slotRc = SlotRectAny(g_hoverSection, g_hoverSlot);
+    int tipW = (int)(140 * g_scaleX);
+    int tipH = (int)(24 * g_scaleY);
+    int tipX = slotRc.left;
+    int tipY = slotRc.top - tipH - (int)(4 * g_scaleY);
+    if (tipY < (int)((kTitleH + kTabH) * g_scaleY))
+      tipY = slotRc.bottom + (int)(4 * g_scaleY);
+    RECT tipRc = {tipX, tipY, tipX + tipW, tipY + tipH};
+    DrawRoundRect(g, tipRc, Gdiplus::Color(240, 20, 16, 14),
+                  Gdiplus::Color(255, 240, 230, 200), 1.0f);
+    DrawTextIn(g, tipRc, L"生存的吶喊", Gdiplus::Color(255, 240, 230, 200), 11,
+              false, true);
+    return;
+  }
   const PssSlot *slotPtr = nullptr;
   PssSlot slotCopy;
   if (g_hoverSection == 2) {
     if (g_hoverSlot < 0 || g_hoverSlot >= kPssFixedBuffSlots)
       return;
     slotCopy = cfg.fixedBuff.slots[g_hoverSlot];
+    slotPtr = &slotCopy;
+  } else if (g_hoverSection == 3) {
+    if (g_hoverSlot < 0 || g_hoverSlot >= kPssCustomBuffSlots)
+      return;
+    slotCopy = cfg.customBuff.slots[g_hoverSlot];
     slotPtr = &slotCopy;
   } else {
     if (g_hoverSlot < 0 || g_hoverSlot >= kPssSlotsPerSection)
@@ -1015,10 +1386,74 @@ void DrawPickingTooltip(Gdiplus::Graphics &g) {
   RECT tipRc = {tipX, tipY, tipX + tipW, tipY + tipH};
   DrawRoundRect(g, tipRc, Gdiplus::Color(240, 20, 16, 14), Gdiplus::Color(255, 255, 220, 120),
                 1.5f);
-  DrawTextIn(g, tipRc, L"請點背包道具", Gdiplus::Color(255, 255, 220, 120), 11, false, true);
+  DrawTextIn(g, tipRc, L"請選背包道具或技能", Gdiplus::Color(255, 255, 220, 120), 11, false,
+            true);
 }
 
-/** 治療或補魔整塊：標題、HP/MP 條、五格。 */
+// 2026-09-17：resolve 失敗（白名單不符／道具已不在背包）的畫面回饋。這時
+// g_pickSection/g_pickSlot 已經被 ClearEdit() 清成 -1，沒辦法再定位到原本
+// 選的那一格，所以固定畫在分頁列正下方置中，2.2 秒後自動消失（見
+// TIMER_VITALS 每 200ms 觸發的重繪，過期後這個函式直接不畫，畫面就恢復乾淨）。
+void DrawResolveFailBanner(Gdiplus::Graphics &g) {
+  wchar_t msg[64] = {};
+  {
+    std::lock_guard<std::mutex> lock(g_resolveFailLock);
+    if (GetTickCount64() >= g_resolveFailUntilMs)
+      return;
+    wcscpy_s(msg, g_resolveFailMsg);
+  }
+  if (!msg[0])
+    return;
+  int tipW = (int)(200 * g_scaleX);
+  int tipH = (int)(24 * g_scaleY);
+  int tipX = (int)((kBaseW * g_scaleX - tipW) / 2);
+  int tipY = (int)((kTitleH + kTabH) * g_scaleY) + (int)(4 * g_scaleY);
+  RECT tipRc = {tipX, tipY, tipX + tipW, tipY + tipH};
+  DrawRoundRect(g, tipRc, Gdiplus::Color(240, 60, 24, 20), Gdiplus::Color(255, 235, 130, 120),
+                1.5f);
+  DrawTextIn(g, tipRc, msg, Gdiplus::Color(255, 255, 200, 190), 11, false, true);
+}
+
+// 2026-09-16：百分比門檻輸入比照上面 DrawPickingTooltip 同一套浮動提示，不要只
+// 靠格子下方那個小徽章顯示打字內容——跟「點格子選道具」給玩家一致的等待輸入
+// 體感。觸發條件是 g_editMode==2/3（heal/mana 百分比）或 4（補魔第6格第二門檻）。
+// 2026-09-17：文字改成依區塊分別顯示「HP%設定」／「MP%設定」，不用泛用字樣。
+void DrawPercentEditTooltip(Gdiplus::Graphics &g) {
+  int section = -1;
+  const wchar_t *label = L"";
+  if (g_editMode == 2 || g_editMode == 3) {
+    section = g_editMode - 2;
+    label = (section == 0) ? L"HP%%設定：%s" : L"MP%%設定：%s";
+  } else if (g_editMode == kEditModeManaHpGuard) {
+    section = 1;
+    label = L"HP%%下限設定：%s";
+  } else {
+    return;
+  }
+  const int slot = g_editSlot;
+  if (slot < 0 || slot >= kPssSlotsPerSection) {
+    return;
+  }
+
+  wchar_t caretBuf[32] = {};
+  FormatEditCaret(caretBuf, _countof(caretBuf), g_editBuf);
+  wchar_t text[48] = {};
+  swprintf_s(text, label, caretBuf);
+
+  RECT slotRc = SlotRc(section, slot);
+  int tipW = (int)(150 * g_scaleX);
+  int tipH = (int)(24 * g_scaleY);
+  int tipX = slotRc.left;
+  int tipY = slotRc.top - tipH - (int)(4 * g_scaleY);
+  if (tipY < (int)((kTitleH + kTabH) * g_scaleY))
+    tipY = slotRc.bottom + (int)(4 * g_scaleY);
+  RECT tipRc = {tipX, tipY, tipX + tipW, tipY + tipH};
+  DrawRoundRect(g, tipRc, Gdiplus::Color(240, 20, 16, 14), Gdiplus::Color(255, 255, 220, 120),
+                1.5f);
+  DrawTextIn(g, tipRc, text, Gdiplus::Color(255, 255, 220, 120), 11, false, true);
+}
+
+/** 治療或補魔整塊：標題、HP/MP 條、六格。 */
 void DrawSection(Gdiplus::Graphics &g, int section, const PssSection &sec,
                  const wchar_t *title, Gdiplus::Color barColor, int cur, int maxv) {
   RECT box = (section == 0) ? HealBoxRc() : ManaBoxRc();
@@ -1066,15 +1501,68 @@ void DrawSection(Gdiplus::Graphics &g, int section, const PssSection &sec,
     DrawSlot(g, section, i, sec.slots[i]);
 }
 
-/** BUFF-固定：3×3＝9 格，圖檔在 ui.pak（檔名見 kFixedBuffPng）。 */
+/** BUFF-固定：0~8 是 3×3＝9 格，9 是慎重藥水（畫面借用變身面板第三格），圖檔在 ui.pak（檔名見 kFixedBuffPng）。 */
+// 2026-09-16：索引 7 從智慧藥水改成自動解毒，改用專屬解毒圖示 fixedbuff_cure.png。
+// 2026-09-17：檔名改成「分類_用途」風格（例如 01_speed.png -> fixedbuff_haste.png），
+// 跟 PssIcons.xml 的 category="FixedBuff" 對齊，一看檔名就知道用途。同一天：
+// 慎重藥水恢復成獨立格（index 9，不再跟解毒共用/互換畫面位置），沿用歷史
+// 圖示 fixedbuff_wisdom.png——這個檔名目前 ui_sample\png 底下還沒有實體檔案，
+// 需要另外提供，否則這格會 fallback 成通用預留框（DrawItemPlaceholderIcon）。
 const char *kFixedBuffPng[kPssFixedBuffSlots] = {
-    "01_speed.png",      "02_secondspeed.png", "03_thridspeed.png",
-    "04_exp.png",        "05_cook.png",        "06_cook2.png",
-    "07_blue.png",       "08_wisdom.png",      "09_eva.png",
+    "fixedbuff_haste.png",  "fixedbuff_brave.png",      "fixedbuff_bravecake.png",
+    "fixedbuff_expbuff.png", "fixedbuff_cooka.png",      "fixedbuff_cookb.png",
+    "fixedbuff_bluepotion.png", "fixedbuff_cure.png",    "fixedbuff_waterbreath.png",
+    "fixedbuff_wisdom.png",
 };
 
-void DrawFixedBuffItemIcon(Gdiplus::Graphics &g, const RECT &rc, int gfxid) {
-  Gdiplus::Bitmap *icon = GetItemIconBitmap(gfxid);
+const char *ResolveFixedBuffPng(int index) {
+  return ResolvePssIconPng("FixedBuff", index, kFixedBuffPng[index]);
+}
+
+void DrawFixedBuffItemIcon(Gdiplus::Graphics &g, const RECT &rc, const PssSlot &slot) {
+  // 2026-09-17：第 7 格（解毒）可能是技能（解毒術/聖潔之光），圖示要用
+  // SpellList_GetIconBitmap，不能沿用道具的 GetItemIconBitmap（找不到會退成
+  // 預留框），跟 DrawCustomBuffSlotIcon 同一套判斷。
+  Gdiplus::Bitmap *icon = nullptr;
+  if (slot.kind == PssSlot_Skill) {
+    const int packed = slot.id > 0 ? slot.id - 1 : 0;
+    icon = SpellList_GetIconBitmap(packed);
+  } else {
+    icon = GetItemIconBitmap(slot.gfxid);
+  }
+  if (!icon) {
+    DrawItemPlaceholderIcon(g, rc, false);
+    return;
+  }
+  g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+  g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+  const int pad = (int)(4 * g_scaleX);
+  const int maxW = (rc.right - rc.left) - pad * 2;
+  const int maxH = (rc.bottom - rc.top) - pad * 2;
+  constexpr double kIconUpscale = 1.05;
+  int iw = (int)(icon->GetWidth() * g_scaleX * kIconUpscale);
+  int ih = (int)(icon->GetHeight() * g_scaleY * kIconUpscale);
+  if (iw > maxW || ih > maxH) {
+    double s = min((double)maxW / iw, (double)maxH / ih);
+    iw = (int)(iw * s);
+    ih = (int)(ih * s);
+  }
+  int dx = rc.left + ((rc.right - rc.left) - iw) / 2;
+  int dy = rc.top + ((rc.bottom - rc.top) - ih) / 2;
+  g.DrawImage(icon, dx, dy, iw, ih);
+}
+
+// BUFF-自訂：道具格用 item icon（跟固定格同一套），技能格用 SpellListTable
+// 的 skill_<icon>.png（見 SpellList_GetIconBitmap）。都找不到就畫預留框。
+void DrawCustomBuffSlotIcon(Gdiplus::Graphics &g, const RECT &rc, const PssSlot &slot) {
+  Gdiplus::Bitmap *icon = nullptr;
+  if (slot.kind == PssSlot_Item) {
+    icon = GetItemIconBitmap(slot.gfxid);
+  } else if (slot.kind == PssSlot_Skill) {
+    // slot.id 是伺服器 skill_id；XML／pak 圖以 packed = skill_id − 1 索引。
+    const int packed = slot.id > 0 ? slot.id - 1 : 0;
+    icon = SpellList_GetIconBitmap(packed);
+  }
   if (!icon) {
     DrawItemPlaceholderIcon(g, rc, false);
     return;
@@ -1098,7 +1586,7 @@ void DrawFixedBuffItemIcon(Gdiplus::Graphics &g, const RECT &rc, int gfxid) {
 }
 
 void DrawFixedBuffDefaultIcon(Gdiplus::Graphics &g, const RECT &rc, int index) {
-  Gdiplus::Bitmap *icon = GetUiNamedBitmap(kFixedBuffPng[index]);
+  Gdiplus::Bitmap *icon = GetUiNamedBitmap(ResolveFixedBuffPng(index));
   if (!icon)
     return;
   g.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
@@ -1143,7 +1631,7 @@ void DrawFixedBuffQuad(Gdiplus::Graphics &g, const RECT &box, const PssConfig &c
     DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28), stroke,
                   picking ? 2.5f : 1.2f);
     if (FixedBuffFilled(slot)) {
-      DrawFixedBuffItemIcon(g, rc, slot.gfxid);
+      DrawFixedBuffItemIcon(g, rc, slot);
       if (slot.count > 0) {
         wchar_t cnt[16];
         swprintf_s(cnt, L"%d", slot.count);
@@ -1160,63 +1648,51 @@ void DrawFixedBuffQuad(Gdiplus::Graphics &g, const RECT &box, const PssConfig &c
   }
 }
 
-/** 尚未接線的宮格（BUFF-自訂）空格佔位。 */
-void DrawPlaceholderQuad(Gdiplus::Graphics &g, const RECT &box, const wchar_t *title,
-                         int cols, int rows, bool crossLayout) {
+/** BUFF-自訂：3×3＝9 格，每格可為道具或技能（PssSlot.kind），不像固定格鎖死種類。 */
+void DrawCustomBuffQuad(Gdiplus::Graphics &g, const RECT &box, const PssConfig &cfg) {
   DrawRoundRect(g, box, Gdiplus::Color(255, 48, 36, 30),
                 Gdiplus::Color(255, 120, 95, 55), 1.5f);
   RECT titleRc = box;
   titleRc.left += (int)(6 * g_scaleX);
   titleRc.top += (int)(4 * g_scaleY);
   titleRc.bottom = titleRc.top + (int)(18 * g_scaleY);
-  DrawTextIn(g, titleRc, title, Gdiplus::Color(255, 230, 210, 160), 12, true, false);
+  DrawTextIn(g, titleRc, L"BUFF-自訂", Gdiplus::Color(255, 230, 210, 160), 12, true,
+             false);
 
-  const int slot = (int)(36 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
-  const int gap = (int)(6 * g_scaleX);
-  if (crossLayout) {
-    // 十字 5 槽（截圖 BUFF-固定）
-    int cx = (box.left + box.right) / 2;
-    int cy = (box.top + box.bottom) / 2 + (int)(6 * g_scaleY);
-    POINT pts[5] = {
-        {cx, cy - slot - gap},
-        {cx - slot - gap, cy},
-        {cx, cy},
-        {cx + slot + gap, cy},
-        {cx, cy + slot + gap},
-    };
-    for (int i = 0; i < 5; i++) {
-      RECT rc = {pts[i].x - slot / 2, pts[i].y - slot / 2, pts[i].x + slot / 2,
-                 pts[i].y + slot / 2};
-      DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28),
-                    Gdiplus::Color(255, 160, 130, 70), 1.2f);
-    }
-  } else {
-    int gridW = cols * slot + (cols - 1) * gap;
-    int gridH = rows * slot + (rows - 1) * gap;
-    int ox = (box.left + box.right - gridW) / 2;
-    int oy = titleRc.bottom + (int)(8 * g_scaleY);
-    if (oy + gridH > box.bottom - 4)
-      oy = box.bottom - gridH - 4;
-    for (int r = 0; r < rows; r++) {
-      for (int c = 0; c < cols; c++) {
-        RECT rc;
-        rc.left = ox + c * (slot + gap);
-        rc.top = oy + r * (slot + gap);
-        rc.right = rc.left + slot;
-        rc.bottom = rc.top + slot;
-  DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28),
-                    Gdiplus::Color(255, 160, 130, 70), 1.2f);
+  RECT slots[kPssCustomBuffSlots];
+  ComputeCustomBuffSlots(box, slots);
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    RECT rc = slots[i];
+    const PssSlot &slot = cfg.customBuff.slots[i];
+    const bool picking = (g_pickSection.load() == 3 && g_pickSlot.load() == i);
+    Gdiplus::Color stroke(255, 160, 130, 70);
+    if (picking)
+      stroke = Gdiplus::Color(255, 255, 220, 120);
+    else if (CustomBuffFilled(slot))
+      stroke = Gdiplus::Color(255, 200, 170, 90);
+    DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28), stroke,
+                  picking ? 2.5f : 1.2f);
+    if (CustomBuffFilled(slot)) {
+      DrawCustomBuffSlotIcon(g, rc, slot);
+      if (slot.kind == PssSlot_Item && slot.count > 0) {
+        wchar_t cnt[16];
+        swprintf_s(cnt, L"%d", slot.count);
+        int cw = (int)(22 * g_scaleX);
+        int ch = (int)(14 * g_scaleY);
+        RECT cntRc = {rc.left, rc.bottom - ch, rc.left + cw, rc.bottom};
+        DrawTextIn(g, cntRc, cnt, Gdiplus::Color(255, 235, 225, 200), 8, false,
+                   true);
       }
+      DrawFixedBuffCancel(g, rc);
     }
   }
 }
 
-/** BUFF 頁：左上固定 9 格／右上自訂佔位、左下恢復、右下變身。 */
+/** BUFF 頁：左上固定 9 格／右上自訂 9 格、左下恢復、右下變身。 */
 void DrawBuffPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
   RECT tl, tr, br;
   ContentQuads(&tl, &tr, nullptr, &br);
-  DrawFixedBuffQuad(g, tl, cfg);
-  DrawPlaceholderQuad(g, tr, L"BUFF-自訂", 3, 3, false);
+  DrawCustomBuffQuad(g, tr, cfg);
 
   // 左下：恢復道具——條上顯示伺服器權威 cur/max（g_vitals）
   int curHp = 0, maxHp = 0, curMp = 0, maxMp = 0;
@@ -1231,12 +1707,12 @@ void DrawBuffPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
       maxMp = g_vitals.maxMp;
     }
   }
-  DrawSection(g, 0, cfg.heal, L"治療設定", Gdiplus::Color(255, 180, 50, 50), curHp,
+  DrawSection(g, 0, cfg.heal, L"HP恢復設定", Gdiplus::Color(255, 180, 50, 50), curHp,
               maxHp);
-  DrawSection(g, 1, cfg.mana, L"補魔設定", Gdiplus::Color(255, 50, 90, 180), curMp,
+  DrawSection(g, 1, cfg.mana, L"MP恢復設定", Gdiplus::Color(255, 50, 90, 180), curMp,
               maxMp);
 
-  // 右下變身佔位
+  // 右下變身：先畫底，再畫 BUFF 格（含慎重藥水，index 9），避免第三格被變身底蓋掉
   DrawRoundRect(g, br, Gdiplus::Color(255, 48, 36, 30),
                 Gdiplus::Color(255, 120, 95, 55), 1.5f);
   RECT morphTitle = br;
@@ -1254,15 +1730,18 @@ void DrawBuffPage(Gdiplus::Graphics &g, const PssConfig &cfg) {
                 Gdiplus::Color(255, 100, 80, 50), 1.0f);
   DrawTextIn(g, preview, L"（預覽）", Gdiplus::Color(255, 120, 110, 90), 11, false,
              true);
-  const int slot = (int)(36 * ((g_scaleX < g_scaleY) ? g_scaleX : g_scaleY));
-  int sx = preview.right + (int)(8 * g_scaleX);
-  int sy = preview.top;
-  for (int i = 0; i < 3; i++) {
-    RECT rc = {sx, sy + i * (slot + (int)(8 * g_scaleY)), sx + slot,
-               sy + i * (slot + (int)(8 * g_scaleY)) + slot};
-    DrawRoundRect(g, rc, Gdiplus::Color(255, 40, 32, 28),
+  RECT morphSlots[kMorphSlotCount];
+  ComputeMorphSlots(br, morphSlots);
+  for (int i = 0; i < kMorphSlotCount; i++) {
+    if (i == kMorphThirdIndex) {
+      // 第三格的畫面位置被慎重藥水（BUFF-固定 index 9）借走，框＋圖示交給
+      // DrawFixedBuffQuad 統一畫（見 ComputeFixedBuffSlots），這裡不重複畫空框。
+      continue;
+    }
+    DrawRoundRect(g, morphSlots[i], Gdiplus::Color(255, 40, 32, 28),
                   Gdiplus::Color(255, 160, 130, 70), 1.2f);
   }
+  DrawFixedBuffQuad(g, tl, cfg);
 }
 
 /** 道具頁：左欄目前標籤的宮格，格子黑底。 */
@@ -1478,6 +1957,7 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
   DrawTextIn(g, cx, L"X", Gdiplus::Color(255, 255, 255, 255), 12, true, true);
 
   DrawTabs(g);
+  DrawResolveFailBanner(g);
 
   PssConfig cfg;
   {
@@ -1489,6 +1969,7 @@ void DrawInto(HDC hdc, void * /*bits*/, int winW, int winH) {
     DrawBuffPage(g, cfg);
     DrawHoverTooltip(g, cfg);
     DrawPickingTooltip(g);
+    DrawPercentEditTooltip(g);
   } else if (g_activeTab == Tab_Item) {
     DrawItemPage(g, cfg);
   } else if (g_activeTab == Tab_Teleport) {
@@ -1632,6 +2113,14 @@ void CommitEdit(bool asSkill) {
         val = 100;
       if (g_editSlot >= 0 && g_editSlot < kPssSlotsPerSection)
         sec.slots[g_editSlot].thresholdPercent = val;
+    } else if (g_editMode == kEditModeManaHpGuard) {
+      // 補魔第 6 格（MP恢復技能）的第二門檻：HP% 安全下限。
+      if (val < 0)
+        val = 0;
+      if (val > 100)
+        val = 100;
+      if (g_editSlot >= 0 && g_editSlot < kPssSlotsPerSection)
+        g_cfg.mana.slots[g_editSlot].thresholdPercent2 = val;
     }
   } // 釋放鎖，QueueSave() 內部自己也會上鎖，兩邊不能疊在一起
   // 這裡是「玩家真的手動打字提交」，跟道具選擇流程無關，兩邊狀態都清掉沒問題。
@@ -1809,6 +2298,56 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
     return;
   }
 
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    RECT src = CustomBuffSlotRc(i);
+    PssSlot slot;
+    {
+      std::lock_guard<std::mutex> lock(g_lock);
+      slot = g_cfg.customBuff.slots[i];
+    }
+    if (CustomBuffFilled(slot) && PtIn(FixedBuffCancelRc(src), x, y)) {
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        ClearCustomBuffSlotUnlocked(i);
+      }
+      ClearEdit();
+      QueueSave();
+      PaintLayered(hwnd);
+      return;
+    }
+  }
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    if (!PtIn(CustomBuffSlotRc(i), x, y))
+      continue;
+    ClearEdit();
+    // section=3：等玩家下一步點技能欄還是背包，由 HookProc 決定實際 section
+    // (3=道具/4=技能)，見 LauncherDll.cpp。
+    g_pickSection.store(3);
+    g_pickSlot.store(i);
+    PaintLayered(hwnd);
+    return;
+  }
+
+  for (int s = 0; s < 2; s++) {
+    for (int i = 0; i < kPssSlotsPerSection; i++) {
+      RECT src = SlotRc(s, i);
+      PssSlot slot;
+      {
+        std::lock_guard<std::mutex> lock(g_lock);
+        slot = (s == 0) ? g_cfg.heal.slots[i] : g_cfg.mana.slots[i];
+      }
+      if (slot.kind != PssSlot_None && slot.id > 0 && PtIn(FixedBuffCancelRc(src), x, y)) {
+        {
+          std::lock_guard<std::mutex> lock(g_lock);
+          ClearSectionSlotUnlocked(s, i);
+        }
+        ClearEdit();
+        QueueSave();
+        PaintLayered(hwnd);
+        return;
+      }
+    }
+  }
   for (int s = 0; s < 2; s++) {
     for (int i = 0; i < kPssSlotsPerSection; i++) {
       if (PtIn(SlotLabelRc(s, i), x, y)) {
@@ -1824,27 +2363,37 @@ void OnLButtonDown(HWND hwnd, int x, int y) {
         PaintLayered(hwnd);
         return;
       }
+      // 補魔第 6 格（MP恢復技能）專屬第二門檻（HP% 安全下限）。
+      if (s == 1 && i == kManaSkillSlotIndex &&
+          PtIn(SlotLabel2Rc(s, i), x, y)) {
+        CancelTextEdit();
+        g_editMode = kEditModeManaHpGuard;
+        g_editSlot = i;
+        {
+          std::lock_guard<std::mutex> lock(g_lock);
+          const PssSlot &slot = g_cfg.mana.slots[i];
+          swprintf_s(g_editBuf, L"%d", slot.thresholdPercent2);
+        }
+        PaintLayered(hwnd);
+        return;
+      }
     }
     for (int i = 0; i < kPssSlotsPerSection; i++) {
       if (!PtIn(SlotRc(s, i), x, y))
         continue;
-      PssSlot slot;
-      {
-        std::lock_guard<std::mutex> lock(g_lock);
-        slot = (s == 0) ? g_cfg.heal.slots[i] : g_cfg.mana.slots[i];
-      }
-      if (slot.kind != PssSlot_None && slot.id > 0) {
+      // 治療第 6 格（生存的吶喊）：固定功能格，完全不能挑道具/技能，點圖示
+      // 只留 hover 提示（見 DrawHoverTooltip），這裡直接吃掉點擊、不做任何事。
+      if (s == 0 && i == kHealSurvivalCrySlotIndex) {
         ClearEdit();
-        g_pickSection.store(s);
-        g_pickSlot.store(i);
-      } else {
-        ClearEdit();
-        g_editMode = s;
-        g_editSlot = i;
-        g_editBuf[0] = 0;
-        g_pickSection.store(s);
-        g_pickSlot.store(i);
+        PaintLayered(hwnd);
+        return;
       }
+      ClearEdit();
+      // 2026-09-17：拿掉「空格點擊同時進道具編號打字模式」那段（g_editMode=s）
+      // ——原本是道具編號直接輸入的舊 fallback，現在只留點格子選道具/技能一種
+      // 互動，不然格子內部/下方徽章會冒出多餘的打字游標。
+      g_pickSection.store(s);
+      g_pickSlot.store(i);
       PaintLayered(hwnd);
       return;
     }
@@ -2045,32 +2594,79 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   case WM_PSS_RESOLVE_REPLY: {
     ResolveReplyMsg *m = (ResolveReplyMsg *)lp;
     if (m) {
-      if (g_pickSection.load() == m->section && g_pickSlot.load() == m->slot) {
+      // BUFF-自訂點格子時 g_pickSection 固定存 3（見 mousedown 處理），實際
+      // 送出的 resolve 請求依玩家點的是背包還是技能欄分成 section 3(道具)／
+      // 4(技能)，這裡兩種都要接受，只認 slot。補魔第 6 格（MP恢復技能）同理：
+      // 點擊時 g_pickSection 存 1（一般補魔 section），但實際只會送
+      // section=5（kSectionManaSkill）的技能 resolve。BUFF-固定解毒格（index 7）
+      // 同理：點擊時 g_pickSection 存 2（一般 BUFF-固定 section），但技能 resolve
+      // 實際送的是 section=6（kSectionFixedBuffSkill）。
+      const bool sectionMatches =
+          (g_pickSection.load() == m->section) ||
+          (g_pickSection.load() == 3 && (m->section == 3 || m->section == 4)) ||
+          (g_pickSection.load() == 1 && m->section == kSectionManaSkill) ||
+          (g_pickSection.load() == 2 && m->section == kSectionFixedBuffSkill) ||
+          (g_pickSection.load() == 0 && m->section == kSectionHealTeleportSkill);
+      if (sectionMatches && g_pickSlot.load() == m->slot) {
         if (m->success) {
           bool changed = false;
           {
             std::lock_guard<std::mutex> lock(g_lock);
             PssSlot *dst = nullptr;
+            int newKind = PssSlot_Item;
             if (m->section == 2) {
               if (m->slot >= 0 && m->slot < kPssFixedBuffSlots)
                 dst = &g_cfg.fixedBuff.slots[m->slot];
+            } else if (m->section == 3 || m->section == 4) {
+              if (m->slot >= 0 && m->slot < kPssCustomBuffSlots)
+                dst = &g_cfg.customBuff.slots[m->slot];
+              newKind = (m->section == 4) ? PssSlot_Skill : PssSlot_Item;
+            } else if (m->section == kSectionManaSkill) {
+              if (m->slot >= 0 && m->slot < kPssSlotsPerSection)
+                dst = &g_cfg.mana.slots[m->slot];
+              newKind = PssSlot_Skill;
+            } else if (m->section == kSectionFixedBuffSkill) {
+              if (m->slot >= 0 && m->slot < kPssFixedBuffSlots)
+                dst = &g_cfg.fixedBuff.slots[m->slot];
+              newKind = PssSlot_Skill;
+            } else if (m->section == kSectionHealTeleportSkill) {
+              if (m->slot >= 0 && m->slot < kPssSlotsPerSection)
+                dst = &g_cfg.heal.slots[m->slot];
+              newKind = PssSlot_Skill;
             } else if (m->section == 0 || m->section == 1) {
               PssSection &sec = (m->section == 0) ? g_cfg.heal : g_cfg.mana;
               if (m->slot >= 0 && m->slot < kPssSlotsPerSection)
                 dst = &sec.slots[m->slot];
             }
             if (dst) {
-              changed = (dst->kind != PssSlot_Item) ||
+              int gfxid = m->gfxid;
+              wchar_t name[64] = {};
+              wcsncpy_s(name, m->name, _TRUNCATE);
+              int count = m->count;
+              if (newKind == PssSlot_Skill) {
+                count = 1;
+                const int packed =
+                    m->templateItemId > 0 ? m->templateItemId - 1 : 0;
+                int xmlIcon = 0;
+                wchar_t xmlName[64] = {};
+                if (SpellList_Find(packed, &xmlIcon, xmlName,
+                                   _countof(xmlName))) {
+                  if (gfxid <= 0 && xmlIcon > 0)
+                    gfxid = xmlIcon;
+                  if (!name[0] && xmlName[0])
+                    wcsncpy_s(name, xmlName, _TRUNCATE);
+                }
+              }
+              changed = (dst->kind != newKind) ||
                         (dst->id != m->templateItemId) ||
-                        (dst->gfxid != m->gfxid) ||
-                        (dst->count != m->count) ||
-                        (wcscmp(dst->name, m->name) != 0);
+                        (dst->gfxid != gfxid) || (dst->count != count) ||
+                        (wcscmp(dst->name, name) != 0);
               if (changed) {
-                dst->kind = PssSlot_Item;
+                dst->kind = newKind;
                 dst->id = m->templateItemId;
-                dst->gfxid = m->gfxid;
-                wcscpy_s(dst->name, m->name);
-                dst->count = m->count;
+                dst->gfxid = gfxid;
+                wcscpy_s(dst->name, name);
+                dst->count = count;
               }
             }
           } // 釋放鎖，QueueSave() 內部自己也會上鎖，兩邊不能疊在一起
@@ -2087,6 +2683,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         } else {
           ApLog("resolve failed section=%d slot=%d", m->section, m->slot);
           ClearEdit();
+          ShowResolveFailMsg(L"這格不能選這個道具/技能");
         }
         PaintLayered(hwnd);
       }
@@ -2110,22 +2707,48 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             PssSlot &dst = g_cfg.fixedBuff.slots[slot];
             if (dst.kind == PssSlot_Item && dst.id > 0) {
               dst.count = count;
-              ApLog("slot-count section=2 slot=%d count=%d", slot, count);
+              ApLog("slot-count section=2 slot=%d itemId=%d count=%d", slot,
+                    dst.id, count);
               if (count <= 0) {
+                ApLog("[Pss][diag] auto-clearing fixed-buff slot=%d itemId=%d "
+                      "due to count<=0 push",
+                      slot, dst.id);
                 ClearFixedBuffSlotUnlocked(slot);
                 needSave = true;
               }
             }
             continue;
           }
-          if (section < 0 || section > 1 || slot < 0 || slot >= 5)
+          if (section == 3) {
+            if (slot < 0 || slot >= kPssCustomBuffSlots)
+              continue;
+            PssSlot &dst = g_cfg.customBuff.slots[slot];
+            if (dst.kind == PssSlot_Item && dst.id > 0) {
+              dst.count = count;
+              ApLog("slot-count section=3 slot=%d itemId=%d count=%d", slot,
+                    dst.id, count);
+              if (count <= 0) {
+                ClearCustomBuffSlotUnlocked(slot);
+                needSave = true;
+              }
+            }
+            continue;
+          }
+          if (section < 0 || section > 1 || slot < 0 || slot >= kPssSlotsPerSection)
             continue;
           PssSection &sec = (section == 0) ? g_cfg.heal : g_cfg.mana;
           PssSlot &dst = sec.slots[slot];
           if (dst.kind == PssSlot_Item && dst.id > 0) {
             dst.count = m->items[i].count;
-            ApLog("slot-count section=%d slot=%d count=%d", section, slot,
-                  m->items[i].count);
+            ApLog("slot-count section=%d slot=%d itemId=%d count=%d", section,
+                  slot, dst.id, m->items[i].count);
+            if (m->items[i].count <= 0) {
+              ApLog("[Pss][diag] auto-clearing section=%d slot=%d itemId=%d "
+                    "due to count<=0 push",
+                    section, slot, dst.id);
+              ClearSectionSlotUnlocked(section, slot);
+              needSave = true;
+            }
           }
         }
       }
@@ -2205,6 +2828,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       return HTCAPTION;
     return HTCLIENT;
   }
+  case WM_ENTERSIZEMOVE:
+    // 2026-09-18：PaintLayered 每次都會呼叫 PositionWindow，在 g_userMoved
+    // 還是 false（每次 DLL 重新載入後、使用者完成過第一次拖曳之前）時會把
+    // 視窗強制拉回置中——如果拖曳過程中有任何重繪（例如 200ms 的
+    // TIMER_VITALS）觸發，就會在使用者手動拖曳的同時被拉回中間，兩邊互搶造成
+    // 卡頓／跳動。改成「一開始拖曳」（滑鼠在標題列按下、進入拖曳）就立刻標記
+    // g_userMoved=true，而不是等放開滑鼠（WM_EXITSIZEMOVE）才標記，這樣整段
+    // 拖曳過程都不會再被 PositionWindow 打斷。
+    g_userMoved = true;
+    return 0;
   case WM_EXITSIZEMOVE:
     g_userMoved = true;
     return 0;
@@ -2441,6 +3074,7 @@ static void PumpPendingSaveUnlocked() {
   PssConfig_SendStatusToServer(cfg);
   PssConfig_SendCraftToServer(cfg);
   PssConfig_SendFixedBuffToServer(cfg);
+  PssConfig_SendCustomBuffToServer(cfg);
   PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
   PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
 }
@@ -2461,6 +3095,7 @@ static void PumpPendingUiNotifyUnlocked() {
     PssConfig_SendStatusToServer(cfg);
     PssConfig_SendCraftToServer(cfg);
     PssConfig_SendFixedBuffToServer(cfg);
+    PssConfig_SendCustomBuffToServer(cfg);
     PssConfig_SendItemFilterList(kItemFilterListDelete, cfg.autoDelete);
     PssConfig_SendItemFilterList(kItemFilterListDissolve, cfg.autoDissolve);
     PssConfig_RequestItemFilterList(kItemFilterListDelete);

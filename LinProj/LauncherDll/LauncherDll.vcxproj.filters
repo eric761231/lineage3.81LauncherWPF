@@ -54,6 +54,9 @@
     <ClCompile Include="GroundTrapIconHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PoisonBuffIconHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="WindShackleTimePatch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -140,6 +143,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GroundTrapIconHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PoisonBuffIconHook.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="WindShackleTimePatch.h">

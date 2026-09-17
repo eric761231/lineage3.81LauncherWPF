@@ -33,6 +33,10 @@ constexpr BYTE kMagicMiscFlags = 0x5A;         // 僅 128：其他頁打勾
 constexpr BYTE kMagicItemFilterAppend = 0x5B;  // 僅 128：名單續段（追加，勿清）
 constexpr BYTE kMagicCraftFlags = 0x5C;        // 僅 128：提煉黑魔石四勾
 constexpr BYTE kMagicFixedBuff = 0x5D;         // 僅 128：BUFF-固定九格 itemId
+constexpr BYTE kMagicCustomBuff = 0x5E;        // 僅 128：BUFF-自訂九格 kind+id
+constexpr BYTE kMagicEnabledFlag = 0x5F;       // 僅 128：啟動／停止旗標（取代 opcode 75 62-byte 包裡的 enabled）
+constexpr BYTE kMagicHealSlots = 0x60;         // 僅 128：治療五槽（同上，取代 opcode 75 62-byte 包）
+constexpr BYTE kMagicManaSlots = 0x61;         // 僅 128：補魔五槽（同上）
 constexpr int kItemFilterChunk = 20;           // 每包最多 20 個 d；40 個分兩包，避免 164-byte 打亂加密
 
 typedef void(__cdecl *SendPacketDataFn)(const char *format, ...);
@@ -108,6 +112,12 @@ void ClampPssSlot(PssSlot &s) {
   }
   if (s.thresholdPercent > 100) {
     s.thresholdPercent = 100;
+  }
+  if (s.thresholdPercent2 < 0) {
+    s.thresholdPercent2 = 0;
+  }
+  if (s.thresholdPercent2 > 100) {
+    s.thresholdPercent2 = 100;
   }
 }
 
@@ -252,10 +262,17 @@ void ClampPssFixedBuff(PssFixedBuff &sec) {
   }
 }
 
+void ClampPssCustomBuff(PssCustomBuff &sec) {
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    ClampPssSlot(sec.slots[i]);
+  }
+}
+
 void ClampPssConfig(PssConfig &cfg) {
   ClampPssSection(cfg.heal);
   ClampPssSection(cfg.mana);
   ClampPssFixedBuff(cfg.fixedBuff);
+  ClampPssCustomBuff(cfg.customBuff);
   ClampItemFilterList(cfg.autoDelete);
   ClampItemFilterList(cfg.autoDissolve);
   if (cfg.eatMeatItemId < 0) {
@@ -285,6 +302,12 @@ bool PssConfig_HasAnySlot(const PssConfig &cfg) {
   for (int i = 0; i < kPssFixedBuffSlots; i++) {
     if (cfg.fixedBuff.slots[i].kind != PssSlot_None &&
         cfg.fixedBuff.slots[i].id > 0) {
+      return true;
+    }
+  }
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    if (cfg.customBuff.slots[i].kind != PssSlot_None &&
+        cfg.customBuff.slots[i].id > 0) {
       return true;
     }
   }
@@ -372,6 +395,8 @@ PssConfig PssConfig_Load() {
         sec->slots[idx].gfxid = atoi(value.c_str());
       } else if (field == "threshold") {
         sec->slots[idx].thresholdPercent = atoi(value.c_str());
+      } else if (field == "threshold2") {
+        sec->slots[idx].thresholdPercent2 = atoi(value.c_str());
       } else if (field == "name") {
         Utf8ToWide(value, sec->slots[idx].name, _countof(sec->slots[idx].name));
       } else if (field == "count") {
@@ -402,6 +427,32 @@ PssConfig PssConfig_Load() {
                    _countof(cfg.fixedBuff.slots[idx].name));
       } else if (field == "count") {
         cfg.fixedBuff.slots[idx].count = atoi(value.c_str());
+      }
+    } else if (key.rfind("buffCustom.slot", 0) == 0) {
+      size_t slotPos = key.find(".slot");
+      if (slotPos == std::string::npos) {
+        continue;
+      }
+      int idx = key[slotPos + 5] - '0';
+      if (idx < 0 || idx >= kPssCustomBuffSlots) {
+        continue;
+      }
+      size_t fieldDot = key.find('.', slotPos + 6);
+      if (fieldDot == std::string::npos) {
+        continue;
+      }
+      std::string field = key.substr(fieldDot + 1);
+      if (field == "kind") {
+        cfg.customBuff.slots[idx].kind = atoi(value.c_str());
+      } else if (field == "id") {
+        cfg.customBuff.slots[idx].id = atoi(value.c_str());
+      } else if (field == "gfxid") {
+        cfg.customBuff.slots[idx].gfxid = atoi(value.c_str());
+      } else if (field == "name") {
+        Utf8ToWide(value, cfg.customBuff.slots[idx].name,
+                   _countof(cfg.customBuff.slots[idx].name));
+      } else if (field == "count") {
+        cfg.customBuff.slots[idx].count = atoi(value.c_str());
       }
     }
     // 舊版 heal.threshold / mana.threshold、status.eatMeatThreshold 忽略。
@@ -438,6 +489,8 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
     fout << "heal.slot" << i << ".gfxid=" << cfg.heal.slots[i].gfxid << "\n";
     fout << "heal.slot" << i << ".threshold=" << cfg.heal.slots[i].thresholdPercent
          << "\n";
+    fout << "heal.slot" << i << ".threshold2=" << cfg.heal.slots[i].thresholdPercent2
+         << "\n";
     fout << "heal.slot" << i << ".name=" << WideToUtf8(cfg.heal.slots[i].name)
          << "\n";
     fout << "heal.slot" << i << ".count=" << cfg.heal.slots[i].count << "\n";
@@ -445,6 +498,8 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
     fout << "mana.slot" << i << ".id=" << cfg.mana.slots[i].id << "\n";
     fout << "mana.slot" << i << ".gfxid=" << cfg.mana.slots[i].gfxid << "\n";
     fout << "mana.slot" << i << ".threshold=" << cfg.mana.slots[i].thresholdPercent
+         << "\n";
+    fout << "mana.slot" << i << ".threshold2=" << cfg.mana.slots[i].thresholdPercent2
          << "\n";
     fout << "mana.slot" << i << ".name=" << WideToUtf8(cfg.mana.slots[i].name)
          << "\n";
@@ -458,6 +513,18 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
          << WideToUtf8(cfg.fixedBuff.slots[i].name) << "\n";
     fout << "buff.slot" << i << ".count=" << cfg.fixedBuff.slots[i].count
          << "\n";
+  }
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    fout << "buffCustom.slot" << i
+         << ".kind=" << cfg.customBuff.slots[i].kind << "\n";
+    fout << "buffCustom.slot" << i << ".id=" << cfg.customBuff.slots[i].id
+         << "\n";
+    fout << "buffCustom.slot" << i
+         << ".gfxid=" << cfg.customBuff.slots[i].gfxid << "\n";
+    fout << "buffCustom.slot" << i << ".name="
+         << WideToUtf8(cfg.customBuff.slots[i].name) << "\n";
+    fout << "buffCustom.slot" << i
+         << ".count=" << cfg.customBuff.slots[i].count << "\n";
   }
   // status：一律 0/1，跟 enabled= 風格一致。
   fout << "status.eatMeat=" << (cfg.eatMeat ? 1 : 0) << "\n";
@@ -483,36 +550,58 @@ bool PssConfig_Save(const PssConfig &cfgIn) {
   return true;
 }
 
+/** opcode 128 magic 0x5F：啟動／停止旗標。cccc = opcode+magic+enabled+pad，4 bytes。 */
+void PssConfig_SendEnabledToServer(const PssConfig &cfgIn) {
+  PssConfig cfg = cfgIn;
+  ClampPssConfig(cfg);
+  SendPacketData("cccc", (int)kOpcodeItemFilter, (int)kMagicEnabledFlag,
+                 (int)(cfg.enabled ? 1 : 0), 0);
+  ApCfgLog("[Pss] send enabled=%d (128/0x5F 4-byte)", (int)cfg.enabled);
+}
+
 /**
- * @brief 送治療／補魔設定（opcode 75、剛好 62 bytes）。
- * 後端 C_PlaySupport 用 length==62 分流；不可再加長這包。
+ * opcode 128 magic 0x60/0x61：治療／補魔六槽（kPssSlotsPerSection）。
+ * 2026-09-17：每格多加一個 threshold2（目前只有補魔第 6 格的「HP% 安全下限」
+ * 在用，其餘一律 0）。header(cccc=opcode+magic+pad+n) +
+ * 6×(threshold(c)+threshold2(c)+kind(c)+id(d)) = 4+24=28 chars,
+ * bytes = 22c + 6d = 22+24 = 46。
+ */
+static void SendSectionSlots(BYTE magic, const PssSection &sec) {
+  SendPacketData(
+      "cccc" "cccdcccdcccdcccdcccdcccd", (int)kOpcodeItemFilter, (int)magic,
+      0, kPssSlotsPerSection,
+      (int)sec.slots[0].thresholdPercent, (int)sec.slots[0].thresholdPercent2,
+      (int)sec.slots[0].kind, (int)sec.slots[0].id,
+      (int)sec.slots[1].thresholdPercent, (int)sec.slots[1].thresholdPercent2,
+      (int)sec.slots[1].kind, (int)sec.slots[1].id,
+      (int)sec.slots[2].thresholdPercent, (int)sec.slots[2].thresholdPercent2,
+      (int)sec.slots[2].kind, (int)sec.slots[2].id,
+      (int)sec.slots[3].thresholdPercent, (int)sec.slots[3].thresholdPercent2,
+      (int)sec.slots[3].kind, (int)sec.slots[3].id,
+      (int)sec.slots[4].thresholdPercent, (int)sec.slots[4].thresholdPercent2,
+      (int)sec.slots[4].kind, (int)sec.slots[4].id,
+      (int)sec.slots[5].thresholdPercent, (int)sec.slots[5].thresholdPercent2,
+      (int)sec.slots[5].kind, (int)sec.slots[5].id);
+}
+
+/**
+ * 送啟動／停止＋治療／補魔槽設定。
+ *
+ * 2026-09-16：原本用單一 opcode 75、62-byte（33 個參數）的 SendPacketData 送出，
+ * 實測伺服器每次都收成 64 bytes（多 2 bytes），導致 enabled 旗標／恢復槽設定
+ * 完全送不到、BUFF-固定跟著判斷不到啟動狀態——已用 client 端 launcher.log 核對過
+ * client 這邊確實組出剛好 62 bytes 送出，問題發生在送出之後、原生封包層看不到的
+ * 地方，原因不明。改拆成三個各自獨立、跟 BUFF-固定／自訂九格同一套已驗證可靠寫法
+ * 的小封包（opcode 128 / magic 0x5F、0x60、0x61）繞過去。
  */
 void PssConfig_SendToServer(const PssConfig &cfgIn) {
   PssConfig cfg = cfgIn;
   ClampPssConfig(cfg);
-  ApCfgLog("[Pss] send potion: opcode=%u enabled=%d",
-                       (unsigned)kOpcodePlaySupport, (int)cfg.enabled);
-
-  // "c"×2 + 5×("c","c","d") heal + 5× mana = 2+30+30=62（含 opcode）
-  SendPacketData(
-      "ccccdccdccdccdccdccdccdccdccdccd", (int)kOpcodePlaySupport,
-      (int)(cfg.enabled ? 1 : 0),
-      (int)cfg.heal.slots[0].thresholdPercent, (int)cfg.heal.slots[0].kind,
-      (int)cfg.heal.slots[0].id, (int)cfg.heal.slots[1].thresholdPercent,
-      (int)cfg.heal.slots[1].kind, (int)cfg.heal.slots[1].id,
-      (int)cfg.heal.slots[2].thresholdPercent, (int)cfg.heal.slots[2].kind,
-      (int)cfg.heal.slots[2].id, (int)cfg.heal.slots[3].thresholdPercent,
-      (int)cfg.heal.slots[3].kind, (int)cfg.heal.slots[3].id,
-      (int)cfg.heal.slots[4].thresholdPercent, (int)cfg.heal.slots[4].kind,
-      (int)cfg.heal.slots[4].id, (int)cfg.mana.slots[0].thresholdPercent,
-      (int)cfg.mana.slots[0].kind, (int)cfg.mana.slots[0].id,
-      (int)cfg.mana.slots[1].thresholdPercent, (int)cfg.mana.slots[1].kind,
-      (int)cfg.mana.slots[1].id, (int)cfg.mana.slots[2].thresholdPercent,
-      (int)cfg.mana.slots[2].kind, (int)cfg.mana.slots[2].id,
-      (int)cfg.mana.slots[3].thresholdPercent, (int)cfg.mana.slots[3].kind,
-      (int)cfg.mana.slots[3].id, (int)cfg.mana.slots[4].thresholdPercent,
-      (int)cfg.mana.slots[4].kind, (int)cfg.mana.slots[4].id);
-  ApCfgLog("[Pss] send potion: done (62-byte)");
+  PssConfig_SendEnabledToServer(cfg);
+  SendSectionSlots(kMagicHealSlots, cfg.heal);
+  SendSectionSlots(kMagicManaSlots, cfg.mana);
+  ApCfgLog("[Pss] send potion: done (128/0x5F+0x60+0x61, enabled=%d)",
+          (int)cfg.enabled);
 }
 
 /**
@@ -564,25 +653,56 @@ void PssConfig_SendCraftToServer(const PssConfig &cfgIn) {
 void PssConfig_SendFixedBuffToServer(const PssConfig &cfgIn) {
   PssConfig cfg = cfgIn;
   ClampPssConfig(cfg);
+  int kind[kPssFixedBuffSlots] = {};
   int id[kPssFixedBuffSlots] = {};
   for (int i = 0; i < kPssFixedBuffSlots; i++) {
-    if (cfg.fixedBuff.slots[i].kind == PssSlot_Item &&
-        cfg.fixedBuff.slots[i].id > 0) {
-      id[i] = cfg.fixedBuff.slots[i].id;
+    const PssSlot &s = cfg.fixedBuff.slots[i];
+    // 2026-09-17：第 7 格（解毒）以外一律只能是道具；第 7 格才可能是技能
+    // （解毒術/聖潔之光），跟伺服器 FIXED_BUFF_SLOT_DETOX 對齊。
+    if (s.kind == PssSlot_Item && s.id > 0) {
+      kind[i] = PssSlot_Item;
+      id[i] = s.id;
+    } else if (i == kFixedBuffDetoxSlotIndex && s.kind == PssSlot_Skill &&
+               s.id > 0) {
+      kind[i] = PssSlot_Skill;
+      id[i] = s.id;
     }
   }
-  // opcode + 0x5D + pad + n=9 + 9×itemId
-  SendPacketData("ccccddddddddd", (int)kOpcodeItemFilter, (int)kMagicFixedBuff, 0,
-                 kPssFixedBuffSlots, id[0], id[1], id[2], id[3], id[4], id[5],
-                 id[6], id[7], id[8]);
+  // opcode + 0x5D + pad + n=10 (4 c's) + 10×kind (10 c's) + 10×itemId/skillId (10 d's) = 24 chars
+  SendPacketData("cccc" "cccccccccc" "dddddddddd", (int)kOpcodeItemFilter,
+                 (int)kMagicFixedBuff, 0, kPssFixedBuffSlots, kind[0], kind[1],
+                 kind[2], kind[3], kind[4], kind[5], kind[6], kind[7],
+                 kind[8], kind[9], id[0], id[1], id[2], id[3], id[4], id[5],
+                 id[6], id[7], id[8], id[9]);
   ApCfgLog("[Pss] send fixed buff 128/0x5D");
+}
+
+void PssConfig_SendCustomBuffToServer(const PssConfig &cfgIn) {
+  PssConfig cfg = cfgIn;
+  ClampPssConfig(cfg);
+  int kind[kPssCustomBuffSlots] = {};
+  int id[kPssCustomBuffSlots] = {};
+  for (int i = 0; i < kPssCustomBuffSlots; i++) {
+    const PssSlot &s = cfg.customBuff.slots[i];
+    if ((s.kind == PssSlot_Item || s.kind == PssSlot_Skill) && s.id > 0) {
+      kind[i] = s.kind;
+      id[i] = s.id;
+    }
+  }
+  // opcode + 0x5E + pad + n=9 (4 c's) + 9×kind (9 c's) + 9×itemId/skillId (9 d's) = 22 chars
+  SendPacketData("cccc" "ccccccccc" "ddddddddd", (int)kOpcodeItemFilter,
+                 (int)kMagicCustomBuff, 0, kPssCustomBuffSlots, kind[0],
+                 kind[1], kind[2], kind[3], kind[4], kind[5], kind[6],
+                 kind[7], kind[8], id[0], id[1], id[2], id[3], id[4], id[5],
+                 id[6], id[7], id[8]);
+  ApCfgLog("[Pss] send custom buff 128/0x5E");
 }
 
 /**
  * @brief 發送道具解析請求至伺服器。
- * @param section 區塊 (0: heal, 1: mana)
- * @param slotIndex 欄位索引 (0~4)
- * @param objId 道具之 Object ID
+ * @param section 0 治療／1 補魔／2 固定／3 自訂道具／4 自訂技能
+ * @param slotIndex 欄位索引
+ * @param objId section 0–3：背包實例 id；section 4：伺服器 skillId（packed+1）
  */
 void PssConfig_SendResolveItemRequest(int section, int slotIndex,
                                              DWORD objId) {

@@ -7,7 +7,8 @@
 //
 // 位址／行為抄自 S_SkillHaste handler（0x52C410）反組譯結果，見
 // C:\python_training\LinBin3.81\docs\hooks\SKILLHASTE_CUSTOM_ICON_PACKET_BRIEF.md。
-// Detour 分派入口 0x544A20：opcode==254 時自己處理並直接返回（不呼叫原生
-// dispatch，因為原生對這個 opcode 沒有對應 case）；其他 opcode 一律照原樣
-// 呼叫原生 dispatch，不影響任何既有封包。
+// Detour 分派入口 0x544A20：
+//   - opcode==254：地面障礙圖示（自處理，不轉原生）
+//   - PacketBox 250 + sub 161 且 len>=8：毒圖示可選 effectId（見 PoisonBuffIconHook）
+//   - 其餘：轉原生 dispatch
 void InstallGroundTrapIconHook();

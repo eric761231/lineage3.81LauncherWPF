@@ -8,7 +8,7 @@
 //     焦點。密米爾在獨立 overlay thread；若 SW_SHOW 搶焦點，會把 LineageIme 掛在
 //     遊戲 thread 的 TSF／IME 弄壞，人物重登也救不回（要關整個 client）。
 // 版面/素材（背景、卡片圖、hover/pressed 圖、圖示對照表）走 mimir_ui.pak/idx +
-// mimir_ui.xml，改版面/圖片不用重編 DLL，見 ParseMimirXml。
+// MimirUI.xml，改版面/圖片不用重編 DLL，見 ParseMimirXml。
 #include <windows.h>
 #include <windowsx.h> // GET_X_LPARAM/GET_Y_LPARAM
 #include <gdiplus.h>
@@ -198,7 +198,7 @@ void NetLog(const char *fmt, ...) {
   fclose(fp);
 }
 
-// ---- mimir_ui.xml 解析：跟 OverlayAssets.cpp 的 strings.xml 同一種手工
+// ---- MimirUI.xml 解析：跟 OverlayAssets.cpp 的 strings.xml 同一種手工
 // line-scan 風格，但 schema 完全不同（卡片清單，不是單一 title/body），所以
 // 獨立在這裡解析，不動 OverlayAssets 既有的 disconnect 專用 schema。----
 
@@ -259,7 +259,7 @@ std::wstring Utf8ToWide(const char *utf8) {
 
 // Java 端 writeS() 送出的字串是 Big5（碼頁 950）雙位元組編碼，不是 UTF-8（這點
 // 是從真實封包 dump 逐 byte 比對確認的）。密米爾 name/desc 這兩個欄位是直接從
-// wire 讀出來的原始文字，要用這個轉換，不能用上面的 Utf8ToWide；mimir_ui.xml
+// wire 讀出來的原始文字，要用這個轉換，不能用上面的 Utf8ToWide；MimirUI.xml
 // 本身是我們自己準備的檔案，維持存 UTF-8，繼續用 Utf8ToWide。
 std::wstring Big5ToWide(const char *big5) {
   if (!big5 || !big5[0])
@@ -459,12 +459,12 @@ void EnsureAssetsLoaded() {
   }
   const BYTE *data = nullptr;
   size_t len = 0;
-  if (OverlayAssets_GetRawBytes(g_assets, "mimir_ui.xml", &data, &len)) {
+  if (OverlayAssets_GetRawBytes(g_assets, "MimirUI.xml", &data, &len)) {
     ParseMimirXml(data, len, &g_cfg);
-    NetLog("[mimir-ui] parsed mimir_ui.xml (%u bytes), %u icon mappings", (unsigned)len,
+    NetLog("[mimir-ui] parsed MimirUI.xml (%u bytes), %u icon mappings", (unsigned)len,
            (unsigned)g_cfg.iconById.size());
   } else {
-    NetLog("[mimir-ui] mimir_ui.xml entry missing from idx, using built-in layout");
+    NetLog("[mimir-ui] MimirUI.xml entry missing from idx, using built-in layout");
     g_cfg.loaded = true;
   }
 }
@@ -786,7 +786,7 @@ void DrawInto(HDC memDc, void *bits, int winW, int winH) {
     // 新版：3 張並排完整卡片，各自同時顯示圖示/名稱/描述/6 行統計。
     DrawCards(g, memDc);
   } else {
-    // 舊版 fallback：mimir_ui.xml 沒有 <Card> 標籤時維持原本畫法，確保新 DLL
+    // 舊版 fallback：MimirUI.xml 沒有 <Card> 標籤時維持原本畫法，確保新 DLL
     // 可以先部署、畫面不會壞，等新版 XML/圖片備妥再一起換過去。
     // Rows: base card always drawn first, then (if hovered OR the pending
     // selection) the glow-border image is overlaid on top of it -- not a full

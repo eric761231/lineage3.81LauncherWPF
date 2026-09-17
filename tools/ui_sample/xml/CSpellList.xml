@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  由 xml_check_database/SpellList.xml 轉成 CSpellListXML schema。
+  已排除 warrior（戰士）。knight（騎士）仍保留。
+  desc = 顯示名稱（原 name）；icon 用 icon（非 xicon）。
+  遊戲客戶端不會 parse 此檔；PSS 要顯示圖示/名稱需自行讀取。
+  SpellList id 0 = 初級治癒術；點技能欄 packedSkillId 通常等於此 id。
+-->
+<spells>
+	<spell id="0" desc="初級治癒術" duration="0" delay="10" icon="383" range="0" align="Lawful" required="1">
+		<required mp="4" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="1" desc="日光術" duration="3600" delay="10" icon="384" range="0" align="Neutral" required="1">
+		<required mp="4" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="2" desc="保護罩" duration="1800" delay="10" icon="385" range="0" align="Neutral" required="1">
+		<required mp="8" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="3" desc="光箭" duration="0" delay="10" icon="386" range="10" align="Neutral" required="1">
+		<required mp="3" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="4" desc="指定傳送" duration="0" delay="10" icon="387" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="5" desc="冰箭" duration="0" delay="10" icon="657" range="10" align="Neutral" required="1">
+		<required mp="4" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="6" desc="風刃" duration="0" delay="10" icon="663" range="10" align="Neutral" required="1">
+		<required mp="4" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="7" desc="神聖武器" duration="1200" delay="10" icon="775" range="15" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="8" desc="解毒術" duration="1200" delay="10" icon="388" range="15" align="Lawful" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="9" desc="寒冷戰慄" duration="1200" delay="10" icon="389" range="3" align="Lawful" required="1">
+		<required mp="8" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="10" desc="毒咒" duration="30" delay="500" icon="390" range="3" align="Chaotic" required="2">
+		<required mp="10" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="11" desc="擬似魔法武器" duration="1800" delay="10" icon="391" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="12" desc="無所遁形術" duration="0" delay="500" icon="392" range="15" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="13" desc="負重強化" duration="1800" delay="10" icon="755" range="15" align="Neutral" required="1">
+		<required mp="10" hp="50">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="14" desc="火箭" duration="0" delay="10" icon="651" range="10" align="Neutral" required="1">
+		<required mp="6" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="15" desc="地獄之牙" duration="0" delay="10" icon="659" range="10" align="Neutral" required="1">
+		<required mp="6" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="16" desc="極光雷電" duration="0" delay="500" icon="393" range="6" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="17" desc="起死回生術" duration="0" delay="500" icon="394" range="10" align="Lawful" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="18" desc="中級治癒術" duration="0" delay="100" icon="395" range="10" align="Lawful" required="1">
+		<required mp="12" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="19" desc="闇盲咒術" duration="10" delay="500" icon="396" range="3" align="Chaotic" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="20" desc="鎧甲護持" duration="1800" delay="10" icon="397" range="0" align="Lawful" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="21" desc="寒冰氣息" duration="1800" delay="300" icon="655" range="6" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="22" desc="能量感測" duration="0" delay="10" icon="848" range="15" align="Neutral" required="1">
+		<required mp="8" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="24" desc="燃燒的火球" duration="0" delay="500" icon="398" range="6" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="25" desc="通暢氣脈術" duration="1200" delay="10" icon="399" range="15" align="Lawful" required="1">
+		<required mp="50" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="26" desc="壞物術" duration="0" delay="3000" icon="400" range="4" align="Chaotic" required="2">
+		<required mp="32" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="27" desc="吸血鬼之吻" duration="0" delay="50" icon="401" range="4" align="Chaotic" required="1">
+		<required mp="12" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="28" desc="緩速術" duration="64" delay="500" icon="402" range="10" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="29" desc="岩牢" duration="0" delay="500" icon="647" range="8" align="Neutral" required="1">
+		<required mp="24" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="30" desc="魔法屏障" duration="16" delay="10" icon="746" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="31" desc="冥想術" duration="640" delay="10" icon="793" range="0" align="Neutral" required="1">
+		<required mp="5" hp="30">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="32" desc="木乃伊的詛咒" duration="4" delay="5000" icon="403" range="1" align="Chaotic" required="2">
+		<required mp="80" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="33" desc="極道落雷" duration="0" delay="100" icon="404" range="6" align="Neutral" required="1">
+		<required mp="18" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="34" desc="高級治癒術" duration="0" delay="200" icon="405" range="15" align="Lawful" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="35" desc="迷魅術" duration="3600" delay="10" icon="406" range="15" align="Neutral" required="2">
+		<required mp="30" hp="20">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="36" desc="聖潔之光" duration="0" delay="10" icon="407" range="15" align="Lawful" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="37" desc="冰錐" duration="0" delay="10" icon="643" range="6" align="Neutral" required="1">
+		<required mp="18" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="38" desc="魔力奪取" duration="0" delay="500" icon="791" range="4" align="Neutral" required="1">
+		<required mp="1" hp="50">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="39" desc="黑闇之影" duration="0" delay="500" icon="749" range="3" align="Neutral" required="2">
+		<required mp="15" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="40" desc="造屍術" duration="0" delay="10" icon="408" range="0" align="Neutral" required="2">
+		<required mp="5" hp="80">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="41" desc="體魄強健術" duration="0" delay="10" icon="409" range="15" align="Neutral" required="1">
+		<required mp="50" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="42" desc="加速術" duration="0" delay="10" icon="410" range="0" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="43" desc="魔法相消術" duration="0" delay="500" icon="411" range="0" align="Neutral" required="2">
+		<required mp="40" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="44" desc="地裂術" duration="0" delay="100" icon="412" range="8" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="45" desc="烈炎術" duration="0" delay="500" icon="661" range="3" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="46" desc="弱化術" duration="0" delay="500" icon="850" range="3" align="Neutral" required="2">
+		<required mp="10" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="47" desc="祝福魔法武器" duration="0" delay="10" icon="726" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="48" desc="體力回復術" duration="0" delay="500" icon="413" range="0" align="Neutral" required="1">
+		<required mp="50" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="49" desc="冰矛圍籬" duration="0" delay="500" icon="414" range="6" align="Neutral" required="1">
+		<required mp="36" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="50" desc="召喚術" duration="0" delay="1000" icon="415" range="0" align="Neutral" required="2">
+		<required mp="80" hp="30">
+			<catalyst nameid="166" count="20"/>
+		</required>
+	</spell>
+	<spell id="51" desc="神聖疾走" duration="0" delay="10" icon="1578" range="0" align="Neutral" required="1">
+		<required mp="11" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="52" desc="龍捲風" duration="0" delay="1500" icon="417" range="0" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="53" desc="強力加速術" duration="0" delay="10" icon="622" range="0" align="Neutral" required="1">
+		<required mp="60" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="54" desc="狂暴術" duration="0" delay="10" icon="1570" range="0" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="55" desc="疾病術" duration="0" delay="500" icon="758" range="3" align="Neutral" required="2">
+		<required mp="10" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="56" desc="全部治癒術" duration="0" delay="500" icon="418" range="0" align="Neutral" required="1">
+		<required mp="48" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="57" desc="火牢" duration="0" delay="10" icon="419" range="0" align="Neutral" required="1">
+		<required mp="60" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="58" desc="冰雪暴" duration="0" delay="1500" icon="420" range="0" align="Neutral" required="1">
+		<required mp="60" hp="10">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="59" desc="隱身術" duration="0" delay="0" icon="421" range="0" align="Neutral" required="2">
+		<required mp="15" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="60" desc="返生術" duration="0" delay="10" icon="422" range="0" align="Neutral" required="1">
+		<required mp="50" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="61" desc="震裂術" duration="0" delay="1500" icon="649" range="0" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="62" desc="治癒能量風暴" duration="0" delay="10" icon="784" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="63" desc="魔法封印" duration="0" delay="500" icon="822" range="3" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="64" desc="雷霆風暴" duration="0" delay="2000" icon="1579" range="10" align="Neutral" required="1">
+		<required mp="48" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="65" desc="沉睡之霧" duration="0" delay="1500" icon="424" range="10" align="Neutral" required="2">
+		<required mp="40" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="66" desc="變形術" duration="0" delay="10" icon="425" range="0" align="Neutral" required="2">
+		<required mp="60" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="67" desc="聖結界" duration="0" delay="1500" icon="426" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="68" desc="集體傳送術" duration="0" delay="10" icon="427" range="0" align="Neutral" required="2">
+		<required mp="60" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="69" desc="火風暴" duration="0" delay="2000" icon="653" range="0" align="Neutral" required="1">
+		<required mp="48" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="70" desc="藥水霜化術" duration="0" delay="500" icon="752" range="3" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="71" desc="強力無所遁形術" duration="0" delay="500" icon="1571" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="72" desc="創造魔法武器" duration="10" delay="500" icon="428" range="10" align="Chaotic" required="2">
+		<required mp="60" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="73" desc="流星雨" duration="0" delay="3000" icon="429" range="10" align="Neutral" required="1">
+		<required mp="60" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="74" desc="終極返生術" duration="0" delay="10" icon="1577" range="0" align="Neutral" required="2">
+		<required mp="100" hp="0">
+			<catalyst nameid="166" count="1"/>
+		</required>
+	</spell>
+	<spell id="75" desc="集體緩速術" duration="0" delay="3000" icon="1582" range="10" align="Chaotic" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="76" desc="究極光裂術" duration="0" delay="4000" icon="432" range="10" align="Neutral" required="1">
+		<required mp="70" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="77" desc="絕對屏障" duration="0" delay="12000" icon="715" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="166" count="2"/>
+		</required>
+	</spell>
+	<spell id="78" desc="靈魂昇華" duration="0" delay="10" icon="1610" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="79" desc="冰雪颶風" duration="0" delay="100" icon="1576" range="8" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="86" desc="衝擊之暈" duration="0" delay="9000" icon="1624" range="1" align="Neutral" required="1">
+		<required mp="13" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="87" desc="增幅防禦" duration="192" delay="3000" icon="1887" range="0" align="Neutral" required="1">
+		<required mp="7" hp="50">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="88" desc="尖刺盔甲" duration="64" delay="5000" icon="1881" range="0" align="Neutral" required="1">
+		<required mp="10" hp="60">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="89" desc="堅固防護" duration="64" delay="3000" icon="2349" range="0" align="Neutral" required="1">
+		<required mp="10" hp="100">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="90" desc="反擊屏障" duration="64" delay="3000" icon="2343" range="0" align="Neutral" required="1">
+		<required mp="10" hp="100">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="96" desc="暗隱術" duration="32" delay="9990" icon="1097" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="97" desc="附加劇毒" duration="320" delay="0" icon="1100" range="0" align="Neutral" required="2">
+		<required mp="10" hp="1">
+			<catalyst nameid="837" count="1"/>
+		</required>
+	</spell>
+	<spell id="98" desc="影之防護" duration="960" delay="10" icon="1103" range="0" align="Neutral" required="1">
+		<required mp="12" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="99" desc="提煉魔石" duration="0" delay="0" icon="1106" range="0" align="Neutral" required="1">
+		<required mp="5" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="108" desc="力量提升" duration="960" delay="0" icon="1574" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="100" desc="行走加速" duration="960" delay="0" icon="1109" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="101" desc="燃燒鬥志" duration="300" delay="990" icon="1112" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="102" desc="暗黑盲咒" duration="3" delay="990" icon="1115" range="3" align="Chaotic" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="103" desc="毒性抵抗" duration="320" delay="0" icon="1118" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="109" desc="敏捷提升" duration="960" delay="0" icon="1575" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="104" desc="雙重破壞" duration="192" delay="0" icon="1121" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="837" count="1"/>
+		</required>
+	</spell>
+	<spell id="105" desc="暗影閃避" duration="192" delay="0" icon="1124" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="106" desc="暗影之牙" duration="192" delay="0" icon="1127" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="837" count="1"/>
+		</required>
+	</spell>
+	<spell id="107" desc="會心一擊" duration="0" delay="0" icon="1130" range="1" align="Neutral" required="2">
+		<required mp="0" hp="100">
+			<catalyst nameid="837" count="3"/>
+		</required>
+	</spell>
+	<spell id="110" desc="迴避提升" duration="192" delay="0" icon="1611" range="0" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="111" desc="破壞盔甲" duration="8" delay="2000" icon="4471" range="1" align="Neutral" required="2">
+		<required mp="25" hp="50">
+			<catalyst nameid="837" count="2"/>
+		</required>
+	</spell>
+	<spell id="112" desc="精準目標" duration="0" delay="8000" icon="894" range="0" align="Lawful" required="1">
+		<required mp="2" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="113" desc="灼熱武器" duration="640" delay="0" icon="878" range="0" align="Lawful" required="1">
+		<required mp="25" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="114" desc="閃亮之盾" duration="640" delay="0" icon="875" range="0" align="Lawful" required="1">
+		<required mp="25" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="115" desc="呼喚盟友" duration="0" delay="0" icon="883" range="0" align="Lawful" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="116" desc="勇猛意志" duration="640" delay="100" icon="885" range="0" align="Lawful" required="1">
+		<required mp="25" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="117" desc="援護盟友" duration="0" delay="0" icon="1751" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="128" desc="魔法防禦" duration="1200" delay="0" icon="811" range="0" align="Neutral" required="2">
+		<required mp="5" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="129" desc="心靈轉換" duration="0" delay="100" icon="731" range="0" align="Neutral" required="1">
+		<required mp="0" hp="8">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="130" desc="世界樹的呼喚" duration="0" delay="0" icon="846" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="131" desc="三重矢" duration="0" delay="300" icon="1755" range="10" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="136" desc="淨化精神" duration="1200" delay="0" icon="743" range="0" align="Neutral" required="2">
+		<required mp="10" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="137" desc="屬性防禦" duration="1200" delay="0" icon="802" range="0" align="Neutral" required="2">
+		<required mp="10" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="144" desc="釋放元素" duration="0" delay="0" icon="820" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="569" count="2"/>
+		</required>
+	</spell>
+	<spell id="145" desc="魂體轉換" duration="0" delay="1200" icon="729" range="0" align="Neutral" required="1">
+		<required mp="0" hp="63">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="146" desc="單屬性防禦" duration="64" delay="0" icon="871" range="0" align="Neutral" required="2">
+		<required mp="6" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="147" desc="火焰武器" duration="960" delay="0" icon="772" range="0" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="148" desc="風之神射" duration="960" delay="0" icon="853" range="0" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="149" desc="風之疾走" duration="960" delay="0" icon="856" range="0" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="150" desc="大地防護" duration="960" delay="0" icon="761" range="0" align="Neutral" required="1">
+		<required mp="15" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="151" desc="地面障礙" duration="64" delay="0" icon="764" range="10" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="169" desc="水之元氣" duration="64" delay="0" icon="1756" range="0" align="Neutral" required="2">
+		<required mp="1" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="132" desc="弱化屬性" duration="64" delay="0" icon="1744" range="10" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="132" desc="鏡反射" duration="16" delay="0" icon="1731" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="152" desc="魔法消除" duration="32" delay="300" icon="767" range="6" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="153" desc="召喚屬性精靈" duration="3600" delay="100" icon="867" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="569" count="2"/>
+		</required>
+	</spell>
+	<spell id="154" desc="舞躍之火" duration="480" delay="0" icon="5731" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="86" count="1"/>
+		</required>
+	</spell>
+	<spell id="155" desc="暴風之眼" duration="960" delay="0" icon="769" range="0" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="156" desc="大地屏障" duration="12" delay="600" icon="891" range="8" align="Neutral" required="2">
+		<required mp="18" hp="0">
+			<catalyst nameid="569" count="2"/>
+		</required>
+	</spell>
+	<spell id="157" desc="生命之泉" duration="320" delay="0" icon="799" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="158" desc="大地的護衛" duration="600" delay="2000" icon="723" range="0" align="Neutral" required="1">
+		<required mp="30" hp="10">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="159" desc="水之防護" duration="960" delay="100" icon="2340" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="160" desc="封印禁地" duration="16" delay="10000" icon="720" range="0" align="Neutral" required="2">
+		<required mp="40" hp="0">
+			<catalyst nameid="569" count="8"/>
+		</required>
+	</spell>
+	<spell id="161" desc="召喚強力屬性精靈" duration="3600" delay="0" icon="869" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="569" count="4"/>
+		</required>
+	</spell>
+	<spell id="162" desc="烈炎武器" duration="960" delay="0" icon="736" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="163" desc="生命的祝福" duration="0" delay="300" icon="796" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="569" count="3"/>
+		</required>
+	</spell>
+	<spell id="165" desc="暴風神射" duration="960" delay="0" icon="825" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="166" desc="風之枷鎖" duration="16" delay="100" icon="1621" range="8" align="Neutral" required="2">
+		<required mp="15" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="167" desc="鋼鐵防護" duration="960" delay="0" icon="781" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="168" desc="體能激發" duration="960" delay="100" icon="1737" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="170" desc="屬性之火" duration="320" delay="100" icon="1734" range="0" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="172" desc="污濁之水" duration="32" delay="1000" icon="2346" range="5" align="Neutral" required="2">
+		<required mp="20" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="173" desc="精準射擊" duration="64" delay="3000" icon="2355" range="6" align="Neutral" required="2">
+		<required mp="15" hp="0">
+			<catalyst nameid="569" count="3"/>
+		</required>
+	</spell>
+	<spell id="174" desc="烈焰之魂" duration="128" delay="300" icon="2352" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="569" count="3"/>
+		</required>
+	</spell>
+	<spell id="175" desc="能量激發" duration="960" delay="100" icon="2337" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="569" count="1"/>
+		</required>
+	</spell>
+	<spell id="164" desc="生命呼喚" duration="0" delay="10" icon="739" range="0" align="Neutral" required="2">
+		<required mp="50" hp="0">
+			<catalyst nameid="569" count="3"/>
+		</required>
+	</spell>
+	<spell id="180" desc="龍之護鎧" duration="1800" delay="10" icon="3079" range="0" align="Neutral" required="1">
+		<required mp="0" hp="12">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="181" desc="燃燒擊砍" duration="60" delay="2000" icon="3076" range="0" align="Neutral" required="1">
+		<required mp="0" hp="6">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="182" desc="護衛毀滅" duration="32" delay="1000" icon="3083" range="3" align="Neutral" required="1">
+		<required mp="0" hp="20">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="183" desc="岩漿噴吐" duration="0" delay="1000" icon="3087" range="10" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="184" desc="覺醒：安塔瑞斯" duration="32" delay="10" icon="3181" range="0" align="Neutral" required="2">
+		<required mp="20" hp="10">
+			<catalyst nameid="3605" count="1"/>
+		</required>
+	</spell>
+	<spell id="185" desc="血之渴望" duration="300" delay="10" icon="3074" range="0" align="Neutral" required="2">
+		<required mp="0" hp="30">
+			<catalyst nameid="3605" count="1"/>
+		</required>
+	</spell>
+	<spell id="186" desc="屠宰者" duration="0" delay="2000" icon="3081" range="1" align="Neutral" required="1">
+		<required mp="0" hp="16">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="187" desc="恐懼無助" duration="16" delay="1000" icon="3090" range="5" align="Neutral" required="1">
+		<required mp="0" hp="12">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="188" desc="岩漿之箭" duration="0" delay="10" icon="4559" range="10" align="Neutral" required="1">
+		<required mp="5" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="189" desc="覺醒：法利昂" duration="600" delay="10" icon="3183" range="0" align="Neutral" required="2">
+		<required mp="30" hp="20">
+			<catalyst nameid="3605" count="1"/>
+		</required>
+	</spell>
+	<spell id="190" desc="致命身軀" duration="300" delay="1000" icon="3088" range="0" align="Neutral" required="1">
+		<required mp="0" hp="50">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="191" desc="奪命之雷" duration="1~4" delay="4000" icon="3093" range="5" align="Neutral" required="1">
+		<required mp="0" hp="35">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="192" desc="驚悚死神" duration="32" delay="1000" icon="3085" range="5" align="Neutral" required="1">
+		<required mp="0" hp="20">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="193" desc="暴龍之眼" duration="0" delay="500" icon="4583" range="0" align="Neutral" required="1">
+		<required mp="10" hp="10">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="194" desc="覺醒：巴拉卡斯" duration="600" delay="10" icon="3077" range="0" align="Neutral" required="2">
+		<required mp="50" hp="30">
+			<catalyst nameid="3605" count="1"/>
+		</required>
+	</spell>
+	<spell id="200" desc="鏡像" duration="1200" delay="10" icon="3122" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="201" desc="混亂" duration="2" delay="3000" icon="3098" range="3" align="Neutral" required="1">
+		<required mp="15" hp="10">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="202" desc="粉碎能量" duration="0" delay="600" icon="3130" range="10" align="Neutral" required="1">
+		<required mp="5" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="203" desc="幻覺：歐吉" duration="128" delay="1200" icon="3116" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="204" desc="立方：燃燒" duration="20" delay="5000" icon="3102" range="0" align="Neutral" required="2">
+		<required mp="30" hp="0">
+			<catalyst nameid="3606" count="1"/>
+		</required>
+	</spell>
+	<spell id="205" desc="專注" duration="600" delay="1000" icon="3096" range="0" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="206" desc="心靈破壞" duration="0" delay="3000" icon="3121" range="5" align="Neutral" required="1">
+		<required mp="20" hp="15">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="207" desc="骷髏毀壞" duration="2" delay="2000" icon="3095" range="1" align="Neutral" required="1">
+		<required mp="30" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="208" desc="幻覺：巫妖" duration="128" delay="1200" icon="3114" range="0" align="Neutral" required="1">
+		<required mp="20" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="209" desc="立方：地裂" duration="20" delay="4500" icon="3105" range="0" align="Neutral" required="2">
+		<required mp="35" hp="0">
+			<catalyst nameid="3606" count="1"/>
+		</required>
+	</spell>
+	<spell id="210" desc="耐力" duration="600" delay="1000" icon="3126" range="0" align="Neutral" required="1">
+		<required mp="25" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="211" desc="幻想" duration="5" delay="3000" icon="3128" range="4" align="Neutral" required="1">
+		<required mp="30" hp="25">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="212" desc="隱身破壞者" duration="0" delay="1200" icon="3094" range="0" align="Neutral" required="1">
+		<required mp="10" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="213" desc="幻覺：鑽石高崙" duration="128" delay="1200" icon="3112" range="0" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="214" desc="立方：衝擊" duration="20" delay="4500" icon="3107" range="0" align="Neutral" required="2">
+		<required mp="55" hp="0">
+			<catalyst nameid="3606" count="1"/>
+		</required>
+	</spell>
+	<spell id="215" desc="洞察" duration="640" delay="1000" icon="3118" range="0" align="Neutral" required="1">
+		<required mp="60" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="216" desc="恐慌" duration="64" delay="3500" icon="3124" range="5" align="Neutral" required="1">
+		<required mp="30" hp="30">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="217" desc="疼痛的歡愉" delay="3000" icon="3120" range="2" align="Neutral" required="1">
+		<required mp="40" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="218" desc="幻覺：化身" duration="128" delay="3000" icon="3110" range="0" align="Neutral" required="1">
+		<required mp="50" hp="0">
+			<catalyst nameid="0" count="0"/>
+		</required>
+	</spell>
+	<spell id="219" desc="立方：和諧" duration="20" delay="4500" icon="3099" range="0" align="Neutral" required="2">
+		<required mp="55" hp="0">
+			<catalyst nameid="3606" count="2"/>
+		</required>
+	</spell>
+</spells>

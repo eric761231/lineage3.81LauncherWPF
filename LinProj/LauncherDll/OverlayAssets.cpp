@@ -28,6 +28,11 @@
 #include <vector>
 #include "OverlayAssets.h"
 
+// 不直接 #include "LauncherDll.h"：它先含 winsock2.h 才含 windows.h，這個檔案
+// 已經先含了 <windows.h>（會連帶拉進舊版 winsock.h），兩邊 winsock 標頭順序
+// 對調會炸掉（sockaddr/fd_set 等重複定義）。只借這一個函式，直接前置宣告。
+void launcherdll_hook_log(const char *fmt, ...);
+
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "ole32.lib")
 
@@ -71,8 +76,16 @@ bool g_gdiplusStarted = false;
 ULONG_PTR g_gdiplusToken = 0;
 std::map<std::string, OverlayAssetSet *> g_instances; // key: folderName+"|"+pakBaseName
 
+// 2026-09-17：原本是 no-op，診斷「BUFF-固定空格預設圖不出現」時完全看不到
+// 任何失敗原因，改接到 launcherdll_hook_log（[Pss] 前綴才會真的寫進
+// Core\launcher.log，見 LauncherDll.cpp 的 launcherdll_vlog 過濾規則）。
 void NetLog(const char *fmt, ...) {
-  (void)fmt;
+  char body[512] = {0};
+  va_list args;
+  va_start(args, fmt);
+  vsprintf_s(body, fmt, args);
+  va_end(args);
+  launcherdll_hook_log("[Pss] %s", body);
 }
 
 bool ResolveExeRelativePath(const char *relPath, char *outPath, size_t outSize) {

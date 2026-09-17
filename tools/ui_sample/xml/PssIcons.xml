@@ -1,0 +1,43 @@
+<!--
+  PSS 空格預設底圖對應表。改這個檔案＋重新打包 ui.pak 就會生效，不用重編譯 DLL。
+  沒有列出的格子，DLL 會用內建的寫死預設值（見 PssOverlay.cpp 的
+  kFixedBuffPng / kHealSlotPng，當作 ResolvePssIconPng 的保底值）。
+
+  格式：<Slot category="..." index="N" png="檔名.png"/>，一行一個。
+  category 目前有 FixedBuff（9 格，index 0~8）、Heal（治療設定 6 格，index 0~5）。
+  之後新增其他分類（例如 BUFF-自訂空格底圖）比照加 <Slot category="新分類" .../>，
+  不用改這個檔案的 schema，也不用改 DLL 的 XML 解析邏輯——只有全新分類第一次
+  接上時才需要在對應的畫格函式加一行 ResolvePssIconPng 呼叫（見計畫文件）。
+-->
+<PssIcons>
+  <Slot category="FixedBuff" index="0" png="fixedbuff_haste.png"/>
+  <Slot category="FixedBuff" index="1" png="fixedbuff_brave.png"/>
+  <Slot category="FixedBuff" index="2" png="fixedbuff_bravecake.png"/>
+  <Slot category="FixedBuff" index="3" png="fixedbuff_expbuff.png"/>
+  <Slot category="FixedBuff" index="4" png="fixedbuff_cooka.png"/>
+  <Slot category="FixedBuff" index="5" png="fixedbuff_cookb.png"/>
+  <Slot category="FixedBuff" index="6" png="fixedbuff_bluepotion.png"/>
+  <!-- 原智慧藥水格，已改成自動解毒 -->
+  <Slot category="FixedBuff" index="7" png="fixedbuff_cure.png"/>
+  <Slot category="FixedBuff" index="8" png="fixedbuff_waterbreath.png"/>
+  <!-- 2026-09-17：慎重藥水獨立成 index 9（畫面位置在「設定變身」面板右下角小格） -->
+  <Slot category="FixedBuff" index="9" png="fixedbuff_wisdom.png"/>
+
+  <!-- 治療設定 index 0~3：一般自由選格，統一預設圖 -->
+  <Slot category="Heal" index="0" png="healHp.png"/>
+  <Slot category="Heal" index="1" png="healHp.png"/>
+  <Slot category="Heal" index="2" png="healHp.png"/>
+  <Slot category="Heal" index="3" png="healHp.png"/>
+  <!-- 治療設定第 5 格（index 4）：傳送道具（白名單，仍可挑） -->
+  <Slot category="Heal" index="4" png="back_home.png"/>
+  <!-- 治療設定第 6 格（index 5）：生存的吶喊（固定功能，不能挑） -->
+  <Slot category="Heal" index="5" png="heal_survival.png"/>
+
+  <!-- 補魔設定 index 0~3：一般自由選格，統一預設圖 -->
+  <Slot category="Mana" index="0" png="healMp.png"/>
+  <Slot category="Mana" index="1" png="healMp.png"/>
+  <Slot category="Mana" index="2" png="healMp.png"/>
+  <Slot category="Mana" index="3" png="healMp.png"/>
+  <!-- 補魔設定第 6 格（index 5）：MP恢復技能（skillId 130/146，白名單，仍可挑） -->
+  <Slot category="Mana" index="5" png="soultomp.png"/>
+</PssIcons>

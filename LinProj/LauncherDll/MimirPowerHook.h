@@ -20,7 +20,7 @@ struct MimirOption {
   char desc[192];    // 能力敘述（只有詳情卡顯示，卡片列表不顯示）
   char pvpText[16];  // PVP 適用範圍（"適用"/"專屬"），後端算好直接送字串，client 端
                       // 不用自己判斷規則；其餘統計欄位（效果類型/來源/持續時間/是否
-                      // 可疊加/冷卻時間）改成 mimir_ui.xml 每張卡各自寫死，不走封包。
+                      // 可疊加/冷卻時間）改成 MimirUI.xml 每張卡各自寫死，不走封包。
 };
 
 // 在 code 解密完成、DetourTransactionCommit 之後呼叫一次（比照

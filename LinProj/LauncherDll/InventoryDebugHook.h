@@ -20,8 +20,10 @@ bool InventoryDebug_FindJustClickedItem(ClickedItemInfo *out);
 
 // 剛被點擊那個技能的資訊。
 struct ClickedSkillInfo {
-  DWORD packedSkillId = 0;  // spell_book entry +0x04：玩家實際學會的 packed
-                            // skill id（送 C_SKILL 用這個，不是技能編號本身）
+  DWORD packedSkillId = 0;  // spell_book entry +0x04：C_SKILL 用的 packed id。
+                            // 伺服器 SkillsTable／isSkillMastery 用 skillId =
+                            // packedSkillId + 1（2026-09-15 實機核對：初級治癒
+                            // 術／負重強化／援護盟友／閃亮之盾皆吻合）。
   char nameBig5[128] = {};  // 技能名稱原始位元組（Big5），含 "(mp/range)" 字尾
 };
 

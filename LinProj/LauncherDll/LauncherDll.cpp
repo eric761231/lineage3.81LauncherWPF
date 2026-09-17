@@ -138,18 +138,79 @@ static LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     }
     // WM_LBUTTONUP：遊戲已處理完這次點擊，才能讀到當格道具。
     if (pMsg->message == WM_LBUTTONUP) {
-      // 2026-09-15：暫時診斷，驗證「點技能欄」能否比照背包點選抓到 skillId
-      // （見 InventoryDebugHook.cpp，已實機驗證成功）。先不受 PssOverlay
-      // picking 狀態限制，玩家點技能欄時就直接嘗試抓一次。
-      ClickedSkillInfo clickedSkill;
-      InventoryDebug_FindJustClickedSkill(&clickedSkill);
-
       int pickSection = -1, pickSlot = -1;
       if (PssOverlay_IsPicking(&pickSection, &pickSlot)) {
-        ClickedItemInfo clicked;
-        if (InventoryDebug_FindJustClickedItem(&clicked)) {
-          PssConfig_SendResolveItemRequest(pickSection, pickSlot,
-                                                  clicked.objId);
+        if (pickSection == 3) {
+          // BUFF-自訂：先試技能欄，沒點到技能才當成點背包。
+          // packedSkillId + 1 = 伺服器 skill_id（見 InventoryDebugHook.h）。
+          ClickedSkillInfo clickedSkill;
+          if (InventoryDebug_FindJustClickedSkill(&clickedSkill)) {
+            const DWORD skillId = clickedSkill.packedSkillId + 1;
+            launcherdll_hook_log(
+                "[Pss] custom-buff skill packed=%u skillId=%u slot=%d",
+                (unsigned)clickedSkill.packedSkillId, (unsigned)skillId,
+                pickSlot);
+            PssConfig_SendResolveItemRequest(4, pickSlot, skillId);
+          } else {
+            ClickedItemInfo clicked;
+            if (InventoryDebug_FindJustClickedItem(&clicked)) {
+              PssConfig_SendResolveItemRequest(3, pickSlot, clicked.objId);
+            }
+          }
+        } else if (pickSection == 1 && pickSlot == 5) {
+          // 補魔第 6 格（MP恢復技能，心靈轉換/魂體轉換）：只收技能，不 fallback
+          // 道具——點背包沒有任何反應。section=5 對齊伺服器
+          // C_PlaySupport.SECTION_MANA_SKILL。
+          ClickedSkillInfo clickedSkill;
+          if (InventoryDebug_FindJustClickedSkill(&clickedSkill)) {
+            const DWORD skillId = clickedSkill.packedSkillId + 1;
+            launcherdll_hook_log("[Pss] mana-skill packed=%u skillId=%u slot=%d",
+                                 (unsigned)clickedSkill.packedSkillId,
+                                 (unsigned)skillId, pickSlot);
+            PssConfig_SendResolveItemRequest(5, pickSlot, skillId);
+          }
+        } else if (pickSection == 2 && pickSlot == 7) {
+          // BUFF-固定第 8 格（解毒）：先試技能欄（解毒術/聖潔之光），沒點到
+          // 技能才當成點背包道具（Disintoxicat_Potion）。技能 resolve 走
+          // section=6，對齊伺服器 C_PlaySupport.SECTION_FIXED_BUFF_SKILL。
+          ClickedSkillInfo clickedSkill;
+          if (InventoryDebug_FindJustClickedSkill(&clickedSkill)) {
+            const DWORD skillId = clickedSkill.packedSkillId + 1;
+            launcherdll_hook_log(
+                "[Pss] fixed-buff detox skill packed=%u skillId=%u slot=%d",
+                (unsigned)clickedSkill.packedSkillId, (unsigned)skillId,
+                pickSlot);
+            PssConfig_SendResolveItemRequest(6, pickSlot, skillId);
+          } else {
+            ClickedItemInfo clicked;
+            if (InventoryDebug_FindJustClickedItem(&clicked)) {
+              PssConfig_SendResolveItemRequest(2, pickSlot, clicked.objId);
+            }
+          }
+        } else if (pickSection == 0 && pickSlot == 4) {
+          // 治療第 5 格（傳送）：先試技能欄（指定傳送/集體傳送術/世界樹的呼喚），
+          // 沒點到技能才當成點背包傳送道具。技能 resolve 走 section=7，對齊
+          // C_PlaySupport.SECTION_HEAL_TELEPORT_SKILL。
+          ClickedSkillInfo clickedSkill;
+          if (InventoryDebug_FindJustClickedSkill(&clickedSkill)) {
+            const DWORD skillId = clickedSkill.packedSkillId + 1;
+            launcherdll_hook_log(
+                "[Pss] heal-teleport skill packed=%u skillId=%u slot=%d",
+                (unsigned)clickedSkill.packedSkillId, (unsigned)skillId,
+                pickSlot);
+            PssConfig_SendResolveItemRequest(7, pickSlot, skillId);
+          } else {
+            ClickedItemInfo clicked;
+            if (InventoryDebug_FindJustClickedItem(&clicked)) {
+              PssConfig_SendResolveItemRequest(0, pickSlot, clicked.objId);
+            }
+          }
+        } else {
+          ClickedItemInfo clicked;
+          if (InventoryDebug_FindJustClickedItem(&clicked)) {
+            PssConfig_SendResolveItemRequest(pickSection, pickSlot,
+                                                    clicked.objId);
+          }
         }
       }
     }

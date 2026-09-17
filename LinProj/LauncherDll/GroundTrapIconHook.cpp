@@ -10,6 +10,7 @@
 // 固定 10 bytes 格式，沒有「舊格式」。
 #include "stdafx.h"
 #include "GroundTrapIconHook.h"
+#include "PoisonBuffIconHook.h"
 #include "LauncherDll.h"
 #include "detours.h"
 #include <cstring>
@@ -121,6 +122,10 @@ void HandleGroundTrapIcon(const BYTE *pkt) {
 
 void __cdecl Hook_Dispatch(void *pkt, int len) {
   __try {
+    // PacketBox 161 新包（尾端 H effectId）：併在此處理，避免再 Detour 一次 0x544A20
+    if (TryHandlePoisonBuffIconPacket(pkt, len)) {
+      return;
+    }
     if (pkt && *reinterpret_cast<BYTE *>(pkt) == kOpcodeGroundTrapIcon) {
       launcherdll_hook_log("[Pss][diag] GroundTrapIcon dispatch hit len=%d", len);
       if (len < 10) {

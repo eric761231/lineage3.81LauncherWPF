@@ -1,6 +1,6 @@
 ﻿// MimirPowerOverlay.h: 密米爾之泉自繪清單視窗（卡片列表＋選中詳情＋確認鈕）。
 // 不用原生 HTML UI（互動效果太少），自己畫，素材/版面走 mimir_ui.pak/idx +
-// mimir_ui.xml，改素材/版面不用重編 DLL。
+// MimirUI.xml，改素材/版面不用重編 DLL。
 #pragma once
 #include <windows.h>
 #include "MimirPowerHook.h" // MimirOption, MIMIR_OPTION_COUNT
